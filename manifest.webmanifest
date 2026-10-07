@@ -32,5 +32,29 @@
    "type": "image/png",
    "purpose": "maskable"
   }
+ ],
+ "shortcuts": [
+  {
+   "name": "مسح جديد",
+   "short_name": "مسح",
+   "url": "./?s=scan",
+   "icons": [
+    {
+     "src": "icon-192.png",
+     "sizes": "192x192"
+    }
+   ]
+  },
+  {
+   "name": "مستنداتي",
+   "short_name": "مستنداتي",
+   "url": "./?s=lib",
+   "icons": [
+    {
+     "src": "icon-192.png",
+     "sizes": "192x192"
+    }
+   ]
+  }
  ]
 }

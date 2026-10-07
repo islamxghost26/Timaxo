@@ -1529,7 +1529,7 @@ async function ocrModal(p,box){let lang=localStorage.getItem('tx_ol')||(AR()?'ar
    sg='worker';logCb=x=>{if(id===run&&!dead&&x.status==='recognizing text')st.textContent=(AR()?'جاري القراءة: ':'Reading: ')+Math.round(x.progress*100)+'%';};
    const wk=await getW(lang);sg='recognize';await wk.setParameters({tessedit_pageseg_mode:box?'6':'3'});const r=await wk.recognize(cv);if(dead||id!==run)return;
    let T=(r.data.text||'').trim();const Ls=r.data.lines;if(Ls&&Ls.length){T=Ls.map(l=>(l.words||[]).filter(w=>w.confidence>=50).map(w=>w.text).join(' ').trim()).filter(Boolean).join('\n');}
-   ta.value=T;ta.hidden=false;try{ocrIdx(p,T,box)}catch(_){}st.textContent=T?(AR()?'راجع النص وعدّله قبل الاستخدام':'Review and edit the text'):(AR()?'ما لقيتش نص واضح، جرّب لغة تانية':'No clear text, try another language');
+   ta.value=T;ta.hidden=false;try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}st.textContent=T?(AR()?'راجع النص وعدّله قبل الاستخدام':'Review and edit the text'):(AR()?'ما لقيتش نص واضح، جرّب لغة تانية':'No clear text, try another language');
    m.querySelectorAll('[data-a=c],[data-a=d],[data-a=r]').forEach(x=>x.hidden=false);}
   catch(e){if(!dead&&id===run){console.error(e);st.textContent=(AR()?'تعذّر استخراج النص عند مرحلة ':'OCR failed at stage ')+sg+': '+String(e&&e.message||e).slice(0,160);}}};
  m.onclick=async e=>{const l=e.target.dataset&&e.target.dataset.l,a=e.target.dataset&&e.target.dataset.a;
@@ -1713,4 +1713,60 @@ addEventListener('offline',()=>{const t=document.getElementById('toast');t.textC
 function done(){if(!s.parentNode)return;s.classList.add('out');setTimeout(function(){s.remove()},650)}
 setTimeout(done,2300);s.addEventListener('pointerdown',done);
 if(typeof window.show==='function'){var o=window.show;window.show=function(){try{b.classList.remove('go');void b.offsetWidth;b.classList.add('go')}catch(e){}return o.apply(this,arguments)}}
+})();</script><style id="ui19">
+.upd{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);z-index:9990;padding:11px 18px;border-radius:999px;background:var(--grad);color:#031033;font-weight:800;font-size:14px;box-shadow:0 10px 30px -8px rgba(34,211,245,.8);animation:updin .5s var(--ease)}
+@keyframes updin{from{opacity:0;transform:translate(-50%,-30px)}}
+#qrFab{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);width:46px;height:46px;border-radius:50%;z-index:60;display:none;place-items:center;background:var(--surface);color:var(--cyan);box-shadow:0 0 0 1px color-mix(in srgb,var(--cyan) 40%,transparent),0 8px 20px -8px var(--shadow)}
+#qrFab.on{display:grid}#qrFab svg{width:22px;height:22px}
+#qrOv{position:fixed;inset:0;z-index:9600;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#qrOv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#qrOv .qf{position:relative;width:min(68vw,280px);aspect-ratio:1;border:3px solid #22d3f5;border-radius:22px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55),0 0 24px #22d3f5}
+#qrOv .qx{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:18px}
+#qrOv .qres{position:absolute;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);background:var(--surface);color:var(--ink);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#qrOv .qres p{margin:0 0 10px;word-break:break-all;max-height:30vh;overflow:auto;-webkit-user-select:text;user-select:text}
+#qrOv .qres div{display:flex;gap:8px;flex-wrap:wrap}
+.ocx{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+</style><script>(function(){
+const A=()=>{try{return AR()}catch(e){return true}},L=(a,b)=>A()?a:b;
+/* ---- update banner ---- */
+if('serviceWorker' in navigator){let want=0,rl=0;
+ const show=w=>{if(document.querySelector('.upd'))return;const b=document.createElement('button');b.className='upd';b.textContent=L('✨ فيه تحديث جديد — اضغط للتحديث','✨ New update — tap to refresh');b.onclick=()=>{want=1;b.textContent='…';w.postMessage('skip');setTimeout(()=>location.reload(),2500)};document.body.appendChild(b);};
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(want&&!rl){rl=1;location.reload()}});
+ navigator.serviceWorker.ready.then(reg=>{if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
+  reg.addEventListener('updatefound',()=>{const w=reg.installing;if(!w)return;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)show(w)})});
+  const up=()=>reg.update().catch(()=>{});setInterval(up,30*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)up()});up();}).catch(()=>{});}
+/* ---- OCR extras: auto-name + Word/CSV/TXT ---- */
+const dl=(name,mime,txt)=>{const u=URL.createObjectURL(new Blob([txt],{type:mime}));const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
+const esc=x=>String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+window.ocrExtras=function(ta,p,T,box){
+ if(!box&&state.pages[0]&&state.pages[0].id===p.id&&(!state.name||/^(Scan|مستند) \d\d-\d\d$/.test(state.name))){
+  const ln=(T.split('\n').map(x=>x.replace(/[^\p{L}\p{N} \-_.]/gu,' ').replace(/\s+/g,' ').trim()).find(x=>x.length>=3)||'').slice(0,36).trim();
+  if(ln){state.name=ln;const d=document.getElementById('docName');if(d)d.value=ln;try{persistMeta()}catch(e){}toast(L('اسم المستند: ','Name: ')+ln);}}
+ if(ta._x)return;ta._x=1;const bar=document.createElement('div');bar.className='ocx';
+ const nm=()=>(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_');
+ const mk=(t,f)=>{const b=document.createElement('button');b.className='btn sm';b.textContent=t;b.onclick=f;bar.appendChild(b)};
+ mk('Word',()=>dl(nm()+'.doc','application/msword','\ufeff<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"></head><body dir="'+(A()?'rtl':'ltr')+'">'+ta.value.split('\n').map(l=>'<p>'+esc(l)+'</p>').join('')+'</body></html>'));
+ mk(L('جدول CSV','CSV table'),()=>dl(nm()+'.csv','text/csv;charset=utf-8','\ufeff'+ta.value.split('\n').filter(l=>l.trim()).map(l=>l.split(/\t| {2,}| \| /).map(c=>'"'+c.trim().replace(/"/g,'""')+'"').join(',')).join('\r\n')));
+ mk('TXT',()=>dl(nm()+'.txt','text/plain;charset=utf-8','\ufeff'+ta.value));
+ ta.insertAdjacentElement('afterend',bar);};
+/* ---- QR / barcode reader ---- */
+const fab=document.createElement('button');fab.id='qrFab';fab.setAttribute('aria-label','QR');
+fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M7 12h10"/></svg>';
+document.body.appendChild(fab);
+const hv=document.getElementById('vHome');if(hv){const sync=()=>fab.classList.toggle('on',hv.classList.contains('on'));new MutationObserver(sync).observe(hv,{attributes:true,attributeFilter:['class']});sync();}
+fab.onclick=async()=>{
+ if(!('BarcodeDetector' in window)||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){toast(L('المتصفح ده مش بيدعم قراءة QR','QR scanning is not supported here'));return;}
+ let st;try{st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});}catch(e){toast(L('الكاميرا غير متاحة','Camera unavailable'));return;}
+ const ov=document.createElement('div');ov.id='qrOv';ov.innerHTML='<video playsinline muted autoplay></video><div class="qf"></div><button class="qx">✕</button>';document.body.appendChild(ov);
+ const v=ov.querySelector('video');v.srcObject=st;const det=new BarcodeDetector();let shown=0,res=null;
+ const close=()=>{clearInterval(tm);st.getTracks().forEach(t=>t.stop());ov.remove();};
+ ov.querySelector('.qx').onclick=close;
+ const tm=setInterval(()=>{if(shown||!v.videoWidth)return;det.detect(v).then(r=>{if(!r.length||shown)return;shown=1;const t=r[0].rawValue||'';res=document.createElement('div');res.className='qres';
+  const pp=document.createElement('p');pp.textContent=t;res.appendChild(pp);const row=document.createElement('div');
+  const b=(x,f)=>{const e=document.createElement('button');e.className='btn sm';e.textContent=x;e.onclick=f;row.appendChild(e)};
+  if(/^https?:\/\//i.test(t))b(L('فتح','Open'),()=>window.open(t,'_blank','noopener'));
+  b(L('نسخ','Copy'),()=>{navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast(L('اتنسخ','Copied')))});
+  b(L('مسح تاني','Scan again'),()=>{res.remove();shown=0});res.appendChild(row);ov.appendChild(res);}).catch(()=>{});},250);};
+/* ---- home-screen shortcuts ---- */
+const q=new URLSearchParams(location.search).get('s');if(q){setTimeout(()=>{const e=document.getElementById(q==='lib'?'libBtn':'scanBtn');if(e)e.click()},900);}
 })();</script></body></html>
