@@ -1769,9 +1769,9 @@ fab.onclick=async()=>{
   b(L('مسح تاني','Scan again'),()=>{res.remove();shown=0});res.appendChild(row);ov.appendChild(res);}).catch(()=>{});},250);};
 /* ---- home-screen shortcuts ---- */
 const q=new URLSearchParams(location.search).get('s');if(q){setTimeout(()=>{const e=document.getElementById(q==='lib'?'libBtn':'scanBtn');if(e)e.click()},900);}
-})();</script><script>/* ===== v19: system Back gesture = in-app back ===== */
+})();</script><script>/* ===== v19.1: system Back gesture = in-app back ===== */
 (function(){
-const A=()=>{try{return AR()}catch(e){return true}};let armed=0,on=0;
+const A=()=>{try{return AR()}catch(e){return true}};let armed=0,ready=0,busy=0;
 const q=x=>document.querySelector(x);
 function closeTop(){
  let e=q('#qrOv .qx');if(e){e.click();return true}
@@ -1787,14 +1787,19 @@ function back(){
  if(cur==='vEdit'){const b=q('#editBack');if(b){b.click();return true}}
  if(cur==='vCrop'){const b=q('#cropBack');if(b){b.click();return true}}
  return false;}
-function arm(){if(on)return;on=1;try{history.replaceState({tx:'base'},'');history.pushState({tx:'app'},'')}catch(e){}}
-addEventListener('pointerdown',arm,{once:true,capture:true});
-addEventListener('keydown',arm,{once:true,capture:true});
+const isApp=()=>history.state&&history.state.tx==='app';
+function ensure(){ if(busy||isApp())return; busy=1;
+ try{ if(!ready){history.replaceState({tx:'base'},'');ready=1;} history.pushState({tx:'app'},''); }catch(e){}
+ busy=0;}
+/* touch only counts as user activation on pointerup/touchend/click, so arm on those */
+['touchend','pointerup','click','keydown'].forEach(t=>addEventListener(t,ensure,{capture:true,passive:true}));
+addEventListener('pageshow',()=>{ready=ready;});
 addEventListener('popstate',()=>{
- if(!on)return;
+ if(!ready)return;
  const keep=()=>{try{history.pushState({tx:'app'},'')}catch(e){}};
  if(back()){keep();return}
- if(Date.now()-armed<2200){on=0;history.back();return}
+ if(Date.now()-armed<2200){ready=0;history.back();return}
  armed=Date.now();try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
  keep();});
+const st=document.createElement('style');st.textContent='#libUse::after{content:" · v19.1"}';document.head.appendChild(st);
 })();</script></body></html>
