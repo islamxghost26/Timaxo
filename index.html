@@ -1769,37 +1769,43 @@ fab.onclick=async()=>{
   b(L('مسح تاني','Scan again'),()=>{res.remove();shown=0});res.appendChild(row);ov.appendChild(res);}).catch(()=>{});},250);};
 /* ---- home-screen shortcuts ---- */
 const q=new URLSearchParams(location.search).get('s');if(q){setTimeout(()=>{const e=document.getElementById(q==='lib'?'libBtn':'scanBtn');if(e)e.click()},900);}
-})();</script><script>/* ===== v19.1: system Back gesture = in-app back ===== */
+})();</script><script>/* ===== v19.2: system Back = in-app back (one history entry per open layer) ===== */
 (function(){
-const A=()=>{try{return AR()}catch(e){return true}};let armed=0,ready=0,busy=0;
+const A=()=>{try{return AR()}catch(e){return true}};
 const q=x=>document.querySelector(x);
-function closeTop(){
- let e=q('#qrOv .qx');if(e){e.click();return true}
- e=q('div[style*="z-index:9500"] [data-a=x]');if(e){e.click();return true}
- e=document.body.querySelector(':scope > div[style*="z-index:9000"]');
- if(e){const b=e.querySelector('[data-a=x],[data-a=close]');if(b)b.click();else e.remove();return true}
- e=q('#textBar:not([hidden]) #textCancel');if(e){e.click();return true}
- const sc=q('#scrim.on');if(sc){sc.click();document.querySelectorAll('.sheet.on').forEach(x=>{if(!window.X||!X.busy)x.classList.remove('on')});return true}
- return false;}
+let pushed=0,syncing=0,sT=0,raf=0,act=0;
+const vcur=()=>{try{return V.cur}catch(e){return'vHome'}};
+const bodyDiv=z=>[...document.body.children].find(e=>e.tagName==='DIV'&&e.style.zIndex===z);
+function layers(){let n=0;
+ if(q('#qrOv'))n++;
+ if(bodyDiv('9500'))n++;
+ if(bodyDiv('9000'))n++;
+ if(q('#textBar:not([hidden])'))n++;
+ if(q('#scrim.on'))n++;
+ if(vcur()!=='vHome')n++;
+ return n;}
 function back(){
- if(closeTop())return true;
- const cur=window.V&&V.cur;
- if(cur==='vEdit'){const b=q('#editBack');if(b){b.click();return true}}
- if(cur==='vCrop'){const b=q('#cropBack');if(b){b.click();return true}}
+ let e=q('#qrOv .qx');if(e){e.click();return true}
+ e=bodyDiv('9500');if(e){const b=e.querySelector('[data-a=x]');if(b){b.click();return true}}
+ e=bodyDiv('9000');if(e){const b=e.querySelector('[data-a=x],[data-a=close]');if(b)b.click();else e.remove();return true}
+ e=q('#textBar:not([hidden]) #textCancel');if(e){e.click();return true}
+ if(q('#scrim.on')){q('#scrim').click();document.querySelectorAll('.sheet.on').forEach(x=>{try{if(!X.busy)x.classList.remove('on')}catch(_){x.classList.remove('on')}});return true}
+ const c=vcur();
+ if(c==='vEdit'){e=q('#editBack');if(e){e.click();return true}}
+ if(c==='vCrop'){e=q('#cropBack');if(e){e.click();return true}}
  return false;}
-const isApp=()=>history.state&&history.state.tx==='app';
-function ensure(){ if(busy||isApp())return; busy=1;
- try{ if(!ready){history.replaceState({tx:'base'},'');ready=1;} history.pushState({tx:'app'},''); }catch(e){}
- busy=0;}
-/* touch only counts as user activation on pointerup/touchend/click, so arm on those */
-['touchend','pointerup','click','keydown'].forEach(t=>addEventListener(t,ensure,{capture:true,passive:true}));
-addEventListener('pageshow',()=>{ready=ready;});
+function sync(){
+ const want=1+layers();
+ if(pushed<want){if(!act)return;try{while(pushed<want){history.pushState({tx:pushed+1},'');pushed++}}catch(e){}}
+ else if(pushed>want&&!syncing){const n=pushed-want;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);pushed=want;history.go(-n);}}
+/* a real tap/key is required before Chrome treats pushed entries as back-able */
+['touchend','pointerup','click','keydown'].forEach(t=>addEventListener(t,()=>{act=1;sync()},{capture:true,passive:true}));
+new MutationObserver(()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;sync()})}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
 addEventListener('popstate',()=>{
- if(!ready)return;
- const keep=()=>{try{history.pushState({tx:'app'},'')}catch(e){}};
- if(back()){keep();return}
- if(Date.now()-armed<2200){ready=0;history.back();return}
- armed=Date.now();try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
- keep();});
-const st=document.createElement('style');st.textContent='#libUse::after{content:" · v19.1"}';document.head.appendChild(st);
+ if(syncing){syncing=0;return}
+ pushed=Math.max(0,pushed-1);
+ if(layers()>0){back();return}
+ try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
+});
+const st=document.createElement('style');st.textContent='#libUse::after{content:" · v19.2"}';document.head.appendChild(st);
 })();</script></body></html>
