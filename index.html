@@ -1769,4 +1769,32 @@ fab.onclick=async()=>{
   b(L('مسح تاني','Scan again'),()=>{res.remove();shown=0});res.appendChild(row);ov.appendChild(res);}).catch(()=>{});},250);};
 /* ---- home-screen shortcuts ---- */
 const q=new URLSearchParams(location.search).get('s');if(q){setTimeout(()=>{const e=document.getElementById(q==='lib'?'libBtn':'scanBtn');if(e)e.click()},900);}
+})();</script><script>/* ===== v19: system Back gesture = in-app back ===== */
+(function(){
+const A=()=>{try{return AR()}catch(e){return true}};let armed=0,on=0;
+const q=x=>document.querySelector(x);
+function closeTop(){
+ let e=q('#qrOv .qx');if(e){e.click();return true}
+ e=q('div[style*="z-index:9500"] [data-a=x]');if(e){e.click();return true}
+ e=document.body.querySelector(':scope > div[style*="z-index:9000"]');
+ if(e){const b=e.querySelector('[data-a=x],[data-a=close]');if(b)b.click();else e.remove();return true}
+ e=q('#textBar:not([hidden]) #textCancel');if(e){e.click();return true}
+ const sc=q('#scrim.on');if(sc){sc.click();document.querySelectorAll('.sheet.on').forEach(x=>{if(!window.X||!X.busy)x.classList.remove('on')});return true}
+ return false;}
+function back(){
+ if(closeTop())return true;
+ const cur=window.V&&V.cur;
+ if(cur==='vEdit'){const b=q('#editBack');if(b){b.click();return true}}
+ if(cur==='vCrop'){const b=q('#cropBack');if(b){b.click();return true}}
+ return false;}
+function arm(){if(on)return;on=1;try{history.replaceState({tx:'base'},'');history.pushState({tx:'app'},'')}catch(e){}}
+addEventListener('pointerdown',arm,{once:true,capture:true});
+addEventListener('keydown',arm,{once:true,capture:true});
+addEventListener('popstate',()=>{
+ if(!on)return;
+ const keep=()=>{try{history.pushState({tx:'app'},'')}catch(e){}};
+ if(back()){keep();return}
+ if(Date.now()-armed<2200){on=0;history.back();return}
+ armed=Date.now();try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
+ keep();});
 })();</script></body></html>
