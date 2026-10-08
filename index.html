@@ -1694,8 +1694,8 @@ document.body.appendChild(fab);
 setInterval(()=>{const hv=q('#vHome');fab.classList.toggle('on',!!(hv&&hv.classList.contains('on')&&state.pages.length&&!q('#idOv')));},700);
 const cover=(x,img,dx,dy,dw,dh)=>{const k=Math.max(dw/img.width,dh/img.height),w=img.width*k,h=img.height*k;x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();x.drawImage(img,dx+(dw-w)/2,dy+(dh-h)/2,w,h);x.restore();x.strokeStyle='#b8bec9';x.lineWidth=2;x.strokeRect(dx,dy,dw,dh);};
 fab.onclick=()=>{
- const ov=document.createElement('div');ov.id='idOv';ov.style.zIndex='9000';let sel=[],lay='card',cnt=8;
- ov.innerHTML='<button class="x" data-a="x">✕</button><h2></h2><p class="h"></p><div class="tg"></div><span class="l" id="i1"></span><div class="chips" id="iL"></div><span class="l" id="i2"></span><div class="chips" id="iC"></div><button class="btn go" id="iGo"></button>';
+ const ov=document.createElement('div');ov.id='idOv';ov.style.zIndex='9000';let sel=state.pages.length===1?[0]:[],lay='card',cnt=8;
+ ov.innerHTML='<button class="x" data-a="x">✕</button><h2></h2><p class="h"></p><div class="tg"></div><span class="l" id="i1"></span><div class="chips" id="iL"></div><span class="l" id="i2"></span><div class="chips" id="iC"></div><p class="msg" id="iMsg"></p><button class="btn go" id="iGo"></button>';
  const $o=s=>ov.querySelector(s);$o('h2').textContent=L('بطاقة وصور شخصية','Card & ID photos');
  $o('.h').textContent=L('اختار الصفحات بالترتيب (وش ثم ضهر) وبعدين الشكل. هتتضاف صفحة A4 جاهزة للطباعة.','Pick pages in order (front, then back), then a layout. A ready-to-print A4 page is added.');
  const tg=$o('.tg');state.pages.forEach((p,i)=>{const b=document.createElement('button');b.className='idt';b.innerHTML='<img alt="" src="'+p.thumb+'"><b></b>';b.onclick=()=>{const k=sel.indexOf(i);if(k>=0)sel.splice(k,1);else{if(sel.length>=2)sel.shift();sel.push(i)}draw()};tg.appendChild(b)});
@@ -1704,11 +1704,11 @@ fab.onclick=()=>{
   Object.keys(LAY).forEach(k=>{const b=document.createElement('button');b.className='chip'+(lay===k?' on':'');b.textContent=L(LAY[k].ar,LAY[k].en);b.onclick=()=>{lay=k;draw()};lc.appendChild(b)});
   const ph=lay!=='card';$o('#i2').hidden=!ph;$o('#iC').hidden=!ph;$o('#i2').textContent=L('عدد النسخ','Copies');const cc=$o('#iC');cc.innerHTML='';
   [4,6,8,12].forEach(n=>{const b=document.createElement('button');b.className='chip'+(cnt===n?' on':'');b.textContent=n;b.onclick=()=>{cnt=n;draw()};cc.appendChild(b)});
-  $o('#iGo').textContent=L('إنشاء صفحة A4','Create A4 page');}
+  $o('#iGo').textContent=L('إنشاء صفحة A4','Create A4 page');const need=lay==='card'?2:1;$o('#iMsg').textContent=sel.length<need?(lay==='card'?L('اختار صفحتين من فوق: الوش ثم الضهر ('+sel.length+'/2)','Pick 2 pages above: front then back ('+sel.length+'/2)'):L('اختار صفحة واحدة من فوق ('+sel.length+'/1)','Pick one page above ('+sel.length+'/1)')):'';}
  draw();document.body.appendChild(ov);$o('.x').onclick=()=>ov.remove();
  $o('#iGo').onclick=async()=>{
-  if(lay==='card'&&sel.length<2){toast(L('اختار صفحتين: الوش ثم الضهر','Select 2 pages: front then back'));return}
-  if(!sel.length){toast(L('اختار صفحة','Select a page'));return}
+  if(lay==='card'&&sel.length<2){draw();return}
+  if(!sel.length){draw();return}
   busy(true);await new Promise(r=>setTimeout(r,30));
   try{const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
    if(lay==='card'){const a=await renderFinal(state.pages[sel[0]],1600),b=await renderFinal(state.pages[sel[1]],1600),cw=mm(85.6),ch=mm(54),dx=Math.round((W-cw)/2);
@@ -1718,7 +1718,7 @@ fab.onclick=()=>{
     for(let i=0;i<n;i++)cover(x,im,ox+(i%cols)*(cw+g),mg+Math.floor(i/cols)*(ch+g),cw,ch);}
    const blob=await toBlob(cv,'image/jpeg',.92),p={id:newId(),blob,src:cv,corners:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],rot:0,filter:'original',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
    p.thumb=await makeThumb(p);state.pages.push(p);await persist(p);await persistMeta();ov.remove();renderHome(p.id);toast(L('اتضافت صفحة A4 جديدة','New A4 page added'));
-  }catch(e){console.error(e);toast(L('حصلت مشكلة','Something went wrong'))}
+  }catch(e){console.error(e);$o('#iMsg').textContent=L('حصلت مشكلة: ','Error: ')+(e&&e.message||e)}
   busy(false);};};
 /* ---- 3) invoice → CSV (adds a button next to the OCR export buttons) ---- */
 const prev=window.ocrExtras;
@@ -1894,7 +1894,7 @@ if(typeof window.show==='function'){var o=window.show;window.show=function(){try
 .fab2{position:fixed;left:14px;width:46px;height:46px;border-radius:50%;z-index:60;display:none;place-items:center;background:var(--surface);color:var(--cyan);box-shadow:0 0 0 1px color-mix(in srgb,var(--cyan) 40%,transparent),0 8px 20px -8px var(--shadow)}
 .fab2.on{display:grid}.fab2 svg{width:22px;height:22px}
 #idOv{position:fixed;inset:0;z-index:9000;background:var(--bg,#041044);color:var(--ink,#fff);overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 24px)}
-#idOv h2{margin:0 0 4px;font-size:20px}#idOv p.h{margin:0 0 12px;color:var(--ink2);font-size:13px}
+#idOv h2{margin:0 0 4px;font-size:20px;padding-right:56px}#idOv p.h{margin:0 0 12px;color:var(--ink2);font-size:13px;padding-right:56px}#idOv .msg{margin:14px 0 0;font-size:13.5px;font-weight:700;color:#ff9e9e;min-height:20px}.toast{z-index:9700!important}.busy{z-index:9800!important}
 #idOv .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
 #idOv .idt{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:var(--surface2);box-shadow:0 0 0 1px var(--line)}
 #idOv .idt img{width:100%;height:100%;object-fit:cover;display:block}
