@@ -1808,4 +1808,97 @@ addEventListener('popstate',()=>{
  try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
 });
 const st=document.createElement('style');st.textContent='#libUse::after{content:" · v19.2"}';document.head.appendChild(st);
+})();</script><style id="ui20">
+.fab2{position:fixed;left:14px;width:46px;height:46px;border-radius:50%;z-index:60;display:none;place-items:center;background:var(--surface);color:var(--cyan);box-shadow:0 0 0 1px color-mix(in srgb,var(--cyan) 40%,transparent),0 8px 20px -8px var(--shadow)}
+.fab2.on{display:grid}.fab2 svg{width:22px;height:22px}
+#idOv{position:fixed;inset:0;z-index:9000;background:var(--bg,#041044);color:var(--ink,#fff);overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 24px)}
+#idOv h2{margin:0 0 4px;font-size:20px}#idOv p.h{margin:0 0 12px;color:var(--ink2);font-size:13px}
+#idOv .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+#idOv .idt{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:var(--surface2);box-shadow:0 0 0 1px var(--line)}
+#idOv .idt img{width:100%;height:100%;object-fit:cover;display:block}
+#idOv .idt.on{box-shadow:0 0 0 3px var(--cyan),0 0 18px rgba(34,211,245,.5)}
+#idOv .idt b{position:absolute;top:6px;left:6px;min-width:24px;height:24px;border-radius:12px;background:var(--grad);color:#031033;display:none;place-items:center;font-size:13px}
+#idOv .idt.on b{display:grid}
+#idOv .l{display:block;margin:10px 0 6px;font-weight:700;font-size:13px}
+#idOv .chips{display:flex;flex-wrap:wrap;gap:8px}
+#idOv .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:40px;height:40px;border-radius:50%;background:var(--surface2);color:var(--ink);font-size:18px}
+#idOv .go{width:100%;margin-top:18px}
+#libUse::after{content:" · v20"}
+</style><script>/* ===== v20: target size • card & ID-photo layouts • invoice→CSV ===== */
+(function(){
+const A=()=>{try{return AR()}catch(e){return true}},L=(a,b)=>A()?a:b,q=x=>document.querySelector(x);
+/* ---- 1) compress to a target size ---- */
+XO.limit=0;
+q('#xStamp').insertAdjacentHTML('afterend','<div class="fld" id="xLim"><span class="l" id="xLimL"></span><div class="chips" id="xLimC"></div></div>');
+function limUI(){q('#xLimL').textContent=L('الحد الأقصى للحجم','Max file size');const c=q('#xLimC');c.innerHTML='';
+ [0,1,2,5].forEach(v=>{const b=document.createElement('button');b.className='chip'+(XO.limit===v?' on':'');b.textContent=v?v+' MB'+(v===2?L(' (واتساب)',' (WhatsApp)'):''):L('بدون','None');b.onclick=()=>{XO.limit=v;limUI()};c.appendChild(b)});}
+limUI();q('#exportBtn').addEventListener('click',limUI);
+const xGo=q('#xGo'),orig=xGo.onclick;
+xGo.onclick=async()=>{
+ const idx=[...X.sel].sort((a,b)=>a-b);
+ if(X.busy||!XO.limit||X.fmt==='png'||!idx.length)return orig();
+ X.busy=true;q('#xGoLbl').textContent=L('بظبط الحجم…','Fitting size…');
+ let best=null,last=null;const lim=XO.limit*1048576*.94,N=idx.length;
+ try{const pick=[0,Math.floor(N/2),N-1].filter((v,i,a)=>a.indexOf(v)===i).map(k=>state.pages[idx[k]]);
+  const bigs=[];for(const p of pick)bigs.push(await renderFinal(p,2200));
+  const sc=(c,e)=>{const m=Math.max(c.width,c.height);if(e>=m)return c;const k=e/m,o=document.createElement('canvas');o.width=Math.round(c.width*k);o.height=Math.round(c.height*k);const x=o.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,o.width,o.height);return o;};
+  for(const [e,qq] of [[2200,.9],[2200,.8],[1800,.8],[1800,.7],[1400,.7],[1400,.6],[1100,.6],[1100,.5],[800,.5],[800,.4],[600,.4]]){
+   let tot=0;for(const b of bigs)tot+=(await toBlob(sc(b,e),'image/jpeg',qq)).size;
+   const est=tot/bigs.length*N;last={e,q:qq,est};if(est<=lim){best=last;break;}}
+  if(!best)best=last;}catch(e){console.error(e)}
+ X.busy=false;const Q=QUAL[X.size],sv={edge:Q.edge,q:Q.q};if(best){Q.edge=best.e;Q.q=best.q;}
+ try{await orig();}finally{Q.edge=sv.edge;Q.q=sv.q;}
+ if(best)try{toast(L('ضغط ذكي: حوالي ','Smart compress: ~')+(best.est/1048576).toFixed(1)+' MB')}catch(e){}};
+/* ---- 2) card (front+back) and ID-photo layouts ---- */
+const mm=v=>Math.round(v*7.874),W=mm(210),H=mm(297);
+const LAY={card:{ar:'بطاقة (وش + ضهر)',en:'ID card (front + back)'},p34:{ar:'صور 3×4 سم',en:'Photos 3×4 cm',w:30,h:40},pass:{ar:'جواز 3.5×4.5 سم',en:'Passport 3.5×4.5 cm',w:35,h:45},p46:{ar:'صور 4×6 سم',en:'Photos 4×6 cm',w:40,h:60}};
+const fab=document.createElement('button');fab.className='fab2';fab.style.bottom='calc(env(safe-area-inset-bottom,0px) + 160px)';fab.setAttribute('aria-label','ID');
+fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.2 3-2.2s2.4.6 3 2.2M14 10h4M14 13h3"/></svg>';
+document.body.appendChild(fab);
+setInterval(()=>{const hv=q('#vHome');fab.classList.toggle('on',!!(hv&&hv.classList.contains('on')&&state.pages.length&&!q('#idOv')));},700);
+const cover=(x,img,dx,dy,dw,dh)=>{const k=Math.max(dw/img.width,dh/img.height),w=img.width*k,h=img.height*k;x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();x.drawImage(img,dx+(dw-w)/2,dy+(dh-h)/2,w,h);x.restore();x.strokeStyle='#b8bec9';x.lineWidth=2;x.strokeRect(dx,dy,dw,dh);};
+fab.onclick=()=>{
+ const ov=document.createElement('div');ov.id='idOv';ov.style.zIndex='9000';let sel=[],lay='card',cnt=8;
+ ov.innerHTML='<button class="x" data-a="x">✕</button><h2></h2><p class="h"></p><div class="tg"></div><span class="l" id="i1"></span><div class="chips" id="iL"></div><span class="l" id="i2"></span><div class="chips" id="iC"></div><button class="btn go" id="iGo"></button>';
+ const $o=s=>ov.querySelector(s);$o('h2').textContent=L('بطاقة وصور شخصية','Card & ID photos');
+ $o('.h').textContent=L('اختار الصفحات بالترتيب (وش ثم ضهر) وبعدين الشكل. هتتضاف صفحة A4 جاهزة للطباعة.','Pick pages in order (front, then back), then a layout. A ready-to-print A4 page is added.');
+ const tg=$o('.tg');state.pages.forEach((p,i)=>{const b=document.createElement('button');b.className='idt';b.innerHTML='<img alt="" src="'+p.thumb+'"><b></b>';b.onclick=()=>{const k=sel.indexOf(i);if(k>=0)sel.splice(k,1);else{if(sel.length>=2)sel.shift();sel.push(i)}draw()};tg.appendChild(b)});
+ function draw(){[...tg.children].forEach((b,i)=>{const k=sel.indexOf(i);b.classList.toggle('on',k>=0);b.querySelector('b').textContent=k+1});
+  $o('#i1').textContent=L('الشكل','Layout');const lc=$o('#iL');lc.innerHTML='';
+  Object.keys(LAY).forEach(k=>{const b=document.createElement('button');b.className='chip'+(lay===k?' on':'');b.textContent=L(LAY[k].ar,LAY[k].en);b.onclick=()=>{lay=k;draw()};lc.appendChild(b)});
+  const ph=lay!=='card';$o('#i2').hidden=!ph;$o('#iC').hidden=!ph;$o('#i2').textContent=L('عدد النسخ','Copies');const cc=$o('#iC');cc.innerHTML='';
+  [4,6,8,12].forEach(n=>{const b=document.createElement('button');b.className='chip'+(cnt===n?' on':'');b.textContent=n;b.onclick=()=>{cnt=n;draw()};cc.appendChild(b)});
+  $o('#iGo').textContent=L('إنشاء صفحة A4','Create A4 page');}
+ draw();document.body.appendChild(ov);$o('.x').onclick=()=>ov.remove();
+ $o('#iGo').onclick=async()=>{
+  if(lay==='card'&&sel.length<2){toast(L('اختار صفحتين: الوش ثم الضهر','Select 2 pages: front then back'));return}
+  if(!sel.length){toast(L('اختار صفحة','Select a page'));return}
+  busy(true);await new Promise(r=>setTimeout(r,30));
+  try{const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+   if(lay==='card'){const a=await renderFinal(state.pages[sel[0]],1600),b=await renderFinal(state.pages[sel[1]],1600),cw=mm(85.6),ch=mm(54),dx=Math.round((W-cw)/2);
+    cover(x,a,dx,mm(40),cw,ch);cover(x,b,dx,mm(40)+ch+mm(14),cw,ch);}
+   else{const im=await renderFinal(state.pages[sel[0]],1400),d=LAY[lay],cw=mm(d.w),ch=mm(d.h),g=mm(3),mg=mm(10);
+    const cols=Math.max(1,Math.floor((W-2*mg+g)/(cw+g))),rows=Math.max(1,Math.floor((H-2*mg+g)/(ch+g))),n=Math.min(cnt,cols*rows),tw=cols*cw+(cols-1)*g,ox=Math.round((W-tw)/2);
+    for(let i=0;i<n;i++)cover(x,im,ox+(i%cols)*(cw+g),mg+Math.floor(i/cols)*(ch+g),cw,ch);}
+   const blob=await toBlob(cv,'image/jpeg',.92),p={id:newId(),blob,src:cv,corners:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],rot:0,filter:'original',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
+   p.thumb=await makeThumb(p);state.pages.push(p);await persist(p);await persistMeta();ov.remove();renderHome(p.id);toast(L('اتضافت صفحة A4 جديدة','New A4 page added'));
+  }catch(e){console.error(e);toast(L('حصلت مشكلة','Something went wrong'))}
+  busy(false);};};
+/* ---- 3) invoice → CSV (adds a button next to the OCR export buttons) ---- */
+const prev=window.ocrExtras;
+window.ocrExtras=function(ta){prev.apply(this,arguments);
+ if(ta._inv)return;ta._inv=1;const bar=ta.nextElementSibling;if(!bar||!bar.classList.contains('ocx'))return;
+ const b=document.createElement('button');b.className='btn sm';b.textContent=L('فاتورة → CSV','Invoice → CSV');
+ b.onclick=()=>{const dg=s=>s.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/٫/g,'.').replace(/٬/g,',');
+  const lines=dg(ta.value).split('\n').map(l=>l.trim()).filter(Boolean),num=l=>{const m=l.match(/\d[\d,]*\.?\d*/g);return m?parseFloat(m[m.length-1].replace(/,/g,'')):null};
+  const dm=lines.join(' ').match(/\b(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{4}[\/\-.]\d{1,2}[\/\-.]\d{1,2})\b/);
+  const isTot=l=>/(grand\s*total|amount\s*due|total|الاجمالي|الإجمالي|اجمالي|إجمالي|المجموع|المبلغ المستحق|الصافي)/i.test(l)&&!/sub\s*total|قبل/i.test(l),isTax=l=>/(vat|tax|ضريبة|القيمة المضافة)/i.test(l);
+  const tl=lines.filter(isTot).filter(l=>num(l)!==null).pop(),xl=lines.filter(isTax).filter(l=>num(l)!==null).pop();
+  const items=lines.filter(l=>!isTot(l)&&!isTax(l)).map(l=>l.match(/^(.*\p{L}.*?)\s+(\d[\d,]*\.?\d{0,2})$/u)).filter(Boolean).map(m=>[m[1].trim(),m[2].replace(/,/g,'')]);
+  const ven=(lines.find(l=>(l.match(/\p{L}/gu)||[]).length>=3)||'').slice(0,60),Q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const rows=[['Field','Value'],['Vendor',ven],['Date',dm?dm[1]:''],['Tax',xl?num(xl):''],['Total',tl?num(tl):''],[],['Item','Price'],...items];
+  const u=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.map(Q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');
+  a.href=u;a.download=((state.name||'invoice').replace(/[\\/:*?"<>|]/g,'_'))+'-invoice.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+  toast(L('اتصدّر: ','Exported: ')+items.length+L(' بند',' items'));};
+ bar.appendChild(b);};
 })();</script></body></html>
