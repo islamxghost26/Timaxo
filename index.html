@@ -628,7 +628,7 @@ let db=null;
 const idbReady=(async()=>{try{db=await new Promise((res,rej)=>{const r=indexedDB.open('timaxo-scan',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('pages'))d.createObjectStore('pages',{keyPath:'id'});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta');if(!d.objectStoreNames.contains('docs'))d.createObjectStore('docs',{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('blocked'));});}catch(e){db=null;}})();
 const tx=(store,mode,fn)=>new Promise(res=>{if(!db)return res();try{const tr=db.transaction(store,mode);fn(tr.objectStore(store));tr.oncomplete=tr.onerror=tr.onabort=()=>res();}catch(e){res();}});
 const persist=p=>tx('pages','readwrite',s=>s.put({id:p.id,blob:p.blob,corners:p.corners,rot:p.rot,filter:p.filter,br:p.br,ct:p.ct,sat:p.sat,ann:p.ann,thumb:p.thumb}));
-const persistMeta=()=>tx('meta','readwrite',s=>s.put({order:state.pages.map(p=>p.id),name:state.name,id:state.id},'doc'));
+const persistMeta=()=>tx('meta','readwrite',s=>s.put({order:state.pages.map(p=>p.id),name:state.name,id:state.id,tags:getTags()},'doc'));
 const unpersist=id=>tx('pages','readwrite',s=>s.delete(id));
 const clearStore=()=>tx('pages','readwrite',s=>s.clear());
 async function restore(){
@@ -637,7 +637,7 @@ async function restore(){
   const rows=(await get('pages'))||[]; const meta=await get('meta','doc');
   const map=new Map(rows.map(r=>[r.id,r])); const order=(meta&&meta.order)||rows.map(r=>r.id);
   state.pages=order.map(id=>map.get(id)).filter(Boolean).map(r=>({...r,src:null,hist:[],fut:[]}));
-  if(meta&&meta.name) state.name=meta.name;state.id=(meta&&meta.id)||newId();
+  if(meta&&meta.name) state.name=meta.name;state.id=(meta&&meta.id)||newId();state.tags=(meta&&meta.tags)||[];state.tagsFor=state.id;
 }
 
 /* ---------- image helpers ---------- */
@@ -1511,9 +1511,9 @@ const Lg=(a,e)=>lang==='ar'?a:e;
 const allSaved=()=>new Promise(res=>{if(!db)return res([]);try{const r=db.transaction('docs').objectStore('docs').getAll();r.onsuccess=()=>res((r.result||[]).filter(x=>!x.trashed));r.onerror=()=>res([]);}catch(e){res([]);}});
 function curRec(){if(!state.pages.length)return null;if(!state.id)state.id=newId();
   const rows=state.pages.map(p=>({id:p.id,blob:p.blob,corners:p.corners,rot:p.rot,filter:p.filter,br:p.br,ct:p.ct,sat:p.sat,ann:p.ann,thumb:p.thumb}));
-  return{id:state.id,name:state.name||defName(),rows,order:rows.map(r=>r.id),count:rows.length,thumb:rows[0].thumb,ts:Date.now(),pinned:state.pinnedId===state.id};}
+  return{id:state.id,name:state.name||defName(),rows,order:rows.map(r=>r.id),count:rows.length,thumb:rows[0].thumb,ts:Date.now(),pinned:state.pinnedId===state.id,tags:getTags()};}
 async function snapDoc(){const r=curRec();if(r)await tx('docs','readwrite',s=>s.put(r));}
-async function loadRec(rec){state.pinnedId=rec.pinned?rec.id:null;state.pages=rec.order.map(id=>rec.rows.find(r=>r.id===id)).filter(Boolean).map(r=>({...r,src:null,hist:[],fut:[]}));
+async function loadRec(rec){state.pinnedId=rec.pinned?rec.id:null;state.tags=rec.tags||[];state.tagsFor=rec.id;state.pages=rec.order.map(id=>rec.rows.find(r=>r.id===id)).filter(Boolean).map(r=>({...r,src:null,hist:[],fut:[]}));
   state.name=rec.name;state.id=rec.id;$('#docName').value=state.name;
   await tx('docs','readwrite',s=>s.delete(rec.id));await clearStore();for(const p of state.pages)await persist(p);await persistMeta();}
 async function startNew(){await snapDoc();state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();stagNext=true;renderHome();}
@@ -1526,10 +1526,15 @@ function libLabels(){$('#libT').textContent=Lg('مستنداتي','My documents'
 function closeLib(){libMode='docs';libSheet.classList.remove('on');if(!$('#sheet').classList.contains('on'))$('#scrim').classList.remove('on');}
 $('#scrim').addEventListener('click',closeLib);
 async function openLib(){libLabels();await renderLib();$('#scrim').classList.add('on');libSheet.classList.add('on');}
-async function renderLib0(){const box=$('#libList');box.innerHTML='';const saved=(await allSaved()).filter(matchQ).sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||b.ts-a.ts);const cur0=curRec();const cur=cur0&&matchQ(cur0)?cur0:null;let i=0;
+async function renderLib0(){const box=$('#libList');box.innerHTML='';const saved=(await allSaved()).filter(matchQ).filter(tagOk).sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||b.ts-a.ts);const cur0=curRec();const cur=cur0&&matchQ(cur0)&&tagOk(cur0)?cur0:null;let i=0;
   const item=(r,isCur)=>{const b=document.createElement('div');b.className='lib-it'+(isCur?' cur':'');b.style.setProperty('--i',i++);b.tabIndex=0;b.setAttribute('role','button');
     b.innerHTML=`<img alt="" src="${r.thumb}"><div class="tx"><b></b><small>${Lg(r.count+' صفحة',r.count+(r.count===1?' page':' pages'))}</small></div>${isCur?`<span class="go"><svg class="i" style="width:18px;height:18px"><use href="#i-cur"/></svg>${Lg('مفتوح','Open')}</span>`:''}<button class="libdel" aria-label="delete"><svg class="i"><use href="#i-trash"/></svg></button>`;
-    $('b',b).textContent=(r.pinned?'📌 ':'')+r.name;if(!isCur){const pn=document.createElement('button');pn.type='button';pn.textContent=r.pinned?Lg('إلغاء التثبيت','Unpin'):Lg('📌 تثبيت','📌 Pin');pn.style.cssText='margin-top:4px;padding:2px 10px;border-radius:10px;border:1px solid #8886;background:transparent;color:inherit;font-size:12px';pn.onclick=async e=>{e.stopPropagation();await tx('docs','readwrite',st=>st.put({...r,pinned:!r.pinned}));await renderLib();};$('.tx',b).appendChild(pn);}let arm=0;const del=$('.libdel',b);
+    $('b',b).textContent=(r.pinned?'📌 ':'')+r.name;if(!isCur){const pn=document.createElement('button');pn.type='button';pn.textContent=r.pinned?Lg('إلغاء التثبيت','Unpin'):Lg('📌 تثبيت','📌 Pin');pn.style.cssText='margin-top:4px;padding:2px 10px;border-radius:10px;border:1px solid #8886;background:transparent;color:inherit;font-size:12px';pn.onclick=async e=>{e.stopPropagation();await tx('docs','readwrite',st=>st.put({...r,pinned:!r.pinned}));await renderLib();};$('.tx',b).appendChild(pn);}
+    {const tags=isCur?getTags():(r.tags||[]);const bs='margin:4px 6px 0 0;padding:2px 10px;border-radius:10px;border:1px solid #8886;background:transparent;color:inherit;font-size:12px';
+     if(tags.length){const tl=document.createElement('small');tl.style.cssText='display:block;opacity:.8';tl.textContent=tags.map(x=>'#'+x).join(' ');$('.tx',b).appendChild(tl);}
+     const tb=document.createElement('button');tb.type='button';tb.textContent=Lg('🏷 وسوم','🏷 Tags');tb.style.cssText=bs;
+     tb.onclick=async e=>{e.stopPropagation();const v=prompt(Lg('اكتب الوسوم مفصولة بفاصلة (بتشتغل زي المجلدات)','Tags separated by commas (they work like folders)'),tags.join('، '));if(v===null)return;const arr=[...new Set(v.split(/[,،]/).map(x=>x.trim()).filter(Boolean))].slice(0,6);
+      if(isCur){setTags(arr);try{persistMeta();}catch(er){}}else await tx('docs','readwrite',st=>st.put({...r,tags:arr}));await renderLib();};$('.tx',b).appendChild(tb);}let arm=0;const del=$('.libdel',b);
     del.onclick=async e=>{e.stopPropagation();if(!arm){arm=1;del.classList.add('arm');del.textContent=Lg('تأكيد الحذف','Confirm');setTimeout(()=>{arm=0;del.classList.remove('arm');del.innerHTML='<svg class="i"><use href="#i-trash"/></svg>';},2600);return;}
       if(isCur){{const rr=curRec();if(rr)await tx('docs','readwrite',s=>s.put({...rr,trashed:Date.now()}));}state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}else{await tx('docs','readwrite',s=>s.put({...r,trashed:Date.now()}));toast(Lg('اتنقل لسلة المحذوفات (٣٠ يوم)','Moved to Trash (30 days)'));}
       renderHome();await renderLib();};
@@ -1567,7 +1572,7 @@ let libMode='docs';
 const norm=x=>String(x||'').toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
 const OI=()=>{try{return JSON.parse(localStorage.getItem('tx_oidx')||'{}')}catch(e){return{}}};
 function ocrIdx(p,T,box){if(!p||!T)return;const o=OI();o[p.id]=(box&&o[p.id]?o[p.id]+'\n':'')+T.slice(0,4000);const k=Object.keys(o);if(k.length>300)for(const x of k.slice(0,k.length-300))delete o[x];try{localStorage.setItem('tx_oidx',JSON.stringify(o))}catch(e){}}
-function matchQ(r){const q=norm($('#libQ').value).trim();if(!q)return true;if(norm(r.name).includes(q))return true;const o=OI();return (r.order||[]).some(id=>norm(o[id]).includes(q));}
+function matchQ(r){const q=norm($('#libQ').value).trim();if(!q)return true;if(norm(r.name).includes(q)||(r.tags||[]).some(x=>norm(x).includes(q)))return true;const o=OI();return (r.order||[]).some(id=>norm(o[id]).includes(q));}
 const allRaw=()=>new Promise(res=>{if(!db)return res([]);try{const r=db.transaction('docs').objectStore('docs').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>res([]);}catch(e){res([]);}});
 const allTrash=async()=>(await allRaw()).filter(x=>x.trashed);
 async function renderTrash(){const box=$('#libList');box.innerHTML='';const tr=(await allTrash()).sort((a,b)=>b.trashed-a.trashed);
@@ -1579,7 +1584,7 @@ async function renderTrash(){const box=$('#libList');box.innerHTML='';const tr=(
     xb.onclick=async()=>{if(!arm){arm=1;xb.classList.add('arm');xb.textContent=Lg('تأكيد','Confirm');setTimeout(()=>{arm=0;xb.classList.remove('arm');xb.innerHTML='<svg class="i"><use href="#i-trash"/></svg>';},2600);return;}await tx('docs','readwrite',s=>s.delete(r.id));renderLib();};
     box.appendChild(b);});}
 async function renderLib(){const trash=libMode==='trash',q=$('#libQ');q.hidden=trash;q.placeholder=Lg('ابحث بالاسم أو بنص الـOCR…','Search by name or OCR text…');
-  if(trash)await renderTrash();else{await renderLib0();if(norm(q.value).trim()&&$('#libList .empty p'))$('#libList .empty p').textContent=Lg('مفيش نتايج.','No results.');}
+  if(trash){await renderTrash();await libChips();}else{await renderLib0();await libChips();if(norm(q.value).trim()&&$('#libList .empty p'))$('#libList .empty p').textContent=Lg('مفيش نتايج.','No results.');}
   const n=(await allTrash()).length,tb=$('#libTr');tb.textContent=trash?Lg('→ رجوع للمستندات','← Back to documents'):Lg('🗑 المحذوفات ('+n+')','🗑 Trash ('+n+')');tb.hidden=!trash&&!n;
   try{const e=await navigator.storage.estimate();$('#libUse').textContent=Lg('المساحة المستخدمة: ','Storage used: ')+(e.usage/1048576).toFixed(1)+' MB';}catch(_){}}
 $('#libQ').oninput=()=>renderLib();
@@ -1831,7 +1836,7 @@ async function openLive(){
      await trk.applyConstraints({advanced:[adv]});await sleep(380);}
    if(fm.indexOf('continuous')>=0)await trk.applyConstraints({advanced:[{focusMode:'continuous'}]});shPk=shNow;return true;}catch(e){return false;}};
  const shoot=async()=>{if(gb||rfBusy)return;if(!fOk()&&trk){rfBusy=1;setHint(T('بيظبط الفوكس...','Focusing...'),false);try{await refocus();const t0=Date.now();while(!fOk()&&Date.now()-t0<600)await sleep(60);}catch(e){}rfBusy=0;}grab();};
- if(!document.getElementById('lvcss2')){const s2=document.createElement('style');s2.id='lvcss2';s2.textContent='#lv .fr{position:absolute;width:72px;height:72px;margin:-36px 0 0 -36px;border:2px solid #ffd60a;border-radius:50%;pointer-events:none;animation:lvfr .9s ease-out forwards}@keyframes lvfr{0%{transform:scale(1.6);opacity:0}25%{opacity:1}60%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}';document.head.appendChild(s2);}
+ if(!document.getElementById('lvcss2')){const s2=document.createElement('style');s2.id='lvcss2';s2.textContent='#lv .fr{position:absolute;width:72px;height:72px;margin:-36px 0 0 -36px;border:2px solid #ffd60a;border-radius:50%;pointer-events:none;animation:lvfr .9s ease-out forwards}@keyframes lvfr{0%{transform:scale(1.6);opacity:0}25%{opacity:1}60%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}#lv .ts{position:absolute;left:0;right:0;bottom:10px;display:flex;gap:8px;justify-content:center;direction:ltr;padding:6px 14px;overflow-x:auto}#lv .ts button{position:relative;flex:0 0 auto;width:44px;height:58px;border-radius:8px;border:2px solid rgba(255,255,255,.75);background:#222 center/cover no-repeat;padding:0}#lv .ts button b{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ff453a;color:#fff;font:700 14px/22px system-ui;text-align:center}';document.head.appendChild(s2);}
  const stg=document.querySelector('#lv .st');
  if(stg)stg.addEventListener('pointerdown',e=>{if(e.target.closest('button')||!v.videoWidth)return;const r=v.getBoundingClientRect(),vw=v.videoWidth,vh=v.videoHeight,sc=Math.min(r.width/vw,r.height/vh),dw=vw*sc,dh=vh*sc,ox=r.left+(r.width-dw)/2,oy=r.top+(r.height-dh)/2,nx=(e.clientX-ox)/dw,ny=(e.clientY-oy)/dh;if(nx<0||ny<0||nx>1||ny>1)return;
   const sr=stg.getBoundingClientRect(),ring=document.createElement('i');ring.className='fr';ring.style.left=(e.clientX-sr.left)+'px';ring.style.top=(e.clientY-sr.top)+'px';stg.appendChild(ring);setTimeout(()=>ring.remove(),900);buzz(6);refocus(nx,ny);});
@@ -1871,7 +1876,7 @@ async function openLive(){
   if(dA>.02&&dq){const lk=stable>=2;g.globalAlpha=dA;g.beginPath();dq.forEach((p,i)=>{i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p));});g.closePath();g.lineWidth=3;g.strokeStyle=lk?'#22e07a':'#ffd60a';g.fillStyle=lk?'rgba(34,224,122,.2)':'rgba(255,214,10,.12)';g.fill();g.stroke();
    g.fillStyle=lk?'#22e07a':'#ffd60a';dq.forEach(p=>{g.beginPath();g.arc(X(p),Y(p),5,0,7);g.fill();});g.globalAlpha=1;}
   const pc=(auto&&mode==='doc'&&lockT)?Math.min(100,(performance.now()-lockT)/800*100):0;const pk=pc.toFixed(0);if(pk!==pP){pP=pk;sh.style.setProperty('--p',pk+'%');}
-  if(pc>=100&&armed&&auto&&mode==='doc'&&fOk())grab();};
+  if(pc>=100&&armed&&auto&&mode==='doc'&&fOk()&&!(multi&&dupNow()))grab();};
  const rr=(g,x,y,w,h,r)=>{g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();};
  /* ---- detection loop (adaptive: never starves the UI) ---- */
  const sm=document.createElement('canvas'),sx=sm.getContext('2d',{willReadFrequently:true});
@@ -1890,9 +1895,9 @@ async function openLive(){
   if(!ok&&dtg&&miss<2){miss++;return;}   /* tolerate a couple of dropped frames so the outline doesn't flicker */
   if(ok)miss=0;
   last=ok?q:null;const was=stable;const fo=fOk();stable=(ok&&dl<.025&&fo)?stable+1:0;if(ok&&dl<.025&&!fo&&Date.now()-fT>1300){fT=Date.now();refocus(q.reduce((a,p)=>a+p.x,0)/4,q.reduce((a,p)=>a+p.y,0)/4);}if(ok&&stable>=2)lastGood=q;if(!ok)armed=true;
-  dtg=ok?q:null;const qm=ok?qualMsg(q):'';
+  dtg=ok?q:null;const qm=ok?qualMsg(q):'',dp=ok&&multi&&stable>=2&&dupNow();
   if(stable>=2&&was<2){lockT=performance.now();sfx.lock();}if(stable<2)lockT=0;
-  setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):qm?qm:stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):(!fo?T('بيظبط الفوكس...','Focusing...'):T('جاري التحديد','Detecting')),stable>=2&&!qm);};
+  setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):qm?qm:dp?T('نفس الصفحة — اقلب للصفحة التالية','Same page — turn to the next one'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):(!fo?T('بيظبط الفوكس...','Focusing...'):T('جاري التحديد','Detecting')),stable>=2&&!qm&&!dp);};
  const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);let q=detectCorners(sm,2);const f=detectCorners.found,b=detectCorners.best;if(f){try{q=refineQuad(sm,q,{R:.03,passes:2});}catch(e){}}judge(q,f,b);};
  const loop=()=>{if(!alive)return;const nx=ms=>{dtm=setTimeout(loop,ms)};
   if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
@@ -1903,11 +1908,17 @@ async function openLive(){
   const t0=performance.now();try{detect();}catch(e){}
   nx(Math.min(900,Math.max(150,(performance.now()-t0)*2)));};
  /* capture: grab the frame synchronously and hand the canvas straight to ingest (no encode/decode round-trip) */
- const grab=()=>{if(gb||!v.videoWidth)return;gb=1;lockT=0;sfx.shut();fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+ /* multi-page: duplicate-page guard + thumbnail strip with per-page delete */
+ let lastSig=null;
+ const sigOf=()=>{if(!v.videoWidth)return null;const c=sigOf.c||(sigOf.c=document.createElement('canvas'));c.width=24;c.height=32;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,24,32);const d=x.getImageData(0,0,24,32).data,o=new Float32Array(768);let mn=0;for(let i=0;i<768;i++){o[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;mn+=o[i];}mn/=768;for(let i=0;i<768;i++)o[i]-=mn;return o;};
+ const dupNow=()=>{if(!lastSig)return false;const g=sigOf();if(!g)return false;let a=0;for(let i=0;i<768;i++)a+=Math.abs(g[i]-lastSig[i]);return a/768<7;};
+ const strip=document.createElement('div');strip.className='ts';m.querySelector('.st').appendChild(strip);
+ const renderStrip=()=>{strip.innerHTML='';if(!multi)return;files.slice(-8).forEach(F=>{if(!F.__th)return;const b=document.createElement('button');b.type='button';b.style.backgroundImage='url('+F.__th+')';const x=document.createElement('b');x.textContent='×';x.onclick=e=>{e.stopPropagation();const i=files.indexOf(F);if(i>=0)files.splice(i,1);renderStrip();lab();toast(T('اتحذفت الصفحة','Page removed'));};b.appendChild(x);strip.appendChild(b);});strip.scrollLeft=strip.scrollWidth;};
+ const grab=()=>{if(gb||!v.videoWidth)return;gb=1;lastSig=sigOf();lockT=0;sfx.shut();fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
   const vw=v.videoWidth,vh=v.videoHeight,md=mode,q=md==='doc'?(dtg||null):guideQ();
   const c=document.createElement('canvas');c.width=vw;c.height=vh;c.getContext('2d',{alpha:false}).drawImage(v,0,0);
   const F={__cv:c,__q:q,__x:(md!=='doc'&&q)?1:0};files.push(F);
-  if(multi){c.toBlob(bl=>{if(bl){F.__blob=bl;F.__cv=null;}},'image/jpeg',.9);armed=false;stable=0;last=null;dtg=null;setTimeout(()=>armed=true,5000);lab();db.classList.remove('pop');void db.offsetWidth;db.classList.add('pop');gb=0;}else finish();};
+  if(multi){try{const tc=document.createElement('canvas');tc.width=60;tc.height=80;const k=Math.max(60/vw,80/vh);tc.getContext('2d').drawImage(c,(60-vw*k)/2,(80-vh*k)/2,vw*k,vh*k);F.__th=tc.toDataURL('image/jpeg',.6);}catch(e){}c.toBlob(bl=>{if(bl){F.__blob=bl;F.__cv=null;}},'image/jpeg',.9);armed=false;stable=0;last=null;dtg=null;setTimeout(()=>armed=true,5000);lab();renderStrip();db.classList.remove('pop');void db.offsetWidth;db.classList.add('pop');gb=0;}else finish();};
  const sw=async id=>{const prev=trk&&trk.getSettings().deviceId;stream.getTracks().forEach(t=>t.stop());
   try{attach(await ask(id));localStorage.setItem('tx_lens',id);}catch(e){try{attach(await ask(prev||null));}catch(e2){}toast(T('العدسة دي مش متاحة','Lens unavailable'));}};
  const score=d=>(/ultra|wide|tele|macro|depth|zoom/i.test(d.label)?10:0);
@@ -1920,7 +1931,7 @@ async function openLive(){
   const a=b.dataset.a;
   if(a==='x'||a==='d'){buzz(8);finish();}else if(a==='s')shoot();
   else if(a==='a'){auto=!auto;localStorage.setItem('tx_auto',auto?'1':'0');stable=0;lockT=0;lab();auto?sfx.on():sfx.off();}
-  else if(a==='mu'){multi=!multi;localStorage.setItem('tx_multi',multi?'1':'0');lab();multi?sfx.on():sfx.off();}
+  else if(a==='mu'){multi=!multi;localStorage.setItem('tx_multi',multi?'1':'0');lab();renderStrip();multi?sfx.on():sfx.off();}
   else if(a==='sn'){snd=!snd;localStorage.setItem('tx_snd',snd?'1':'0');lab();if(snd)sfx.on();buzz(8);}
   else if(a==='f'){setTorch(!torch);torch?sfx.on():sfx.off();}
   else if(a==='l'){if(backs.length<2){toast(T('مفيش عدسات تانية','No other lens'));return;}b.classList.remove('sp');void b.offsetWidth;b.classList.add('sp');sfx.sel();bi=(bi+1)%backs.length;sw(backs[bi].deviceId);toast(T('عدسة ','Lens ')+(bi+1)+'/'+backs.length);}});
@@ -1995,6 +2006,37 @@ async function bgOcr(){
 }
 {const _snap=snapDoc;snapDoc=async function(){const r=await _snap.apply(this,arguments);setTimeout(bgOcr,1500);return r;};}
 setTimeout(bgOcr,6000);
+/* ===== v22: tags (work as folders) + automatic category / name ===== */
+var libTag='';
+function getTags(){return state.tagsFor===state.id&&Array.isArray(state.tags)?state.tags:[];}
+function setTags(a){state.tags=[...new Set((a||[]).map(x=>String(x).trim()).filter(Boolean))].slice(0,6);state.tagsFor=state.id;}
+function tagOk(r){return !libTag||(r.tags||[]).includes(libTag);}
+async function libChips(){let row=document.getElementById('libTagRow');const list=document.getElementById('libList');if(!list)return;
+ if(libMode==='trash'){if(row)row.remove();return;}
+ const set=new Set(getTags());try{(await allSaved()).filter(r=>!r.trashed).forEach(r=>(r.tags||[]).forEach(x=>set.add(x)));}catch(e){}
+ if(libTag&&!set.has(libTag))libTag='';
+ if(!set.size){if(row)row.remove();return;}
+ if(!row){row=document.createElement('div');row.id='libTagRow';row.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px';list.parentNode.insertBefore(row,list);}
+ row.innerHTML='';const chip=(label,val)=>{const b=document.createElement('button');b.type='button';b.textContent=label;const on=libTag===val;
+  b.style.cssText='padding:5px 12px;border-radius:999px;font-size:13px;font-weight:700;border:1.5px solid '+(on?'#22d3f5':'#8886')+';background:'+(on?'rgba(34,211,245,.16)':'transparent')+';color:inherit';
+  b.onclick=()=>{libTag=val;renderLib();};row.appendChild(b);};
+ chip(Lg('الكل','All'),'');[...set].sort().forEach(x=>chip('#'+x,x));}
+const CATS=[['هوية','ID',/الرقم القومي|national id|passport|جواز سفر|رخصة قيادة|driving licen[cs]e/i],
+ ['فاتورة','Invoice',/فاتورة|invoice|إيصال|ايصال|receipt|الإجمالي|الاجمالي|total due/i],
+ ['بنك','Bank',/كشف حساب|bank statement|\biban\b|رقم الحساب/i],
+ ['عقد','Contract',/\bعقد\b|contract|agreement|الطرف الأول|الطرف الاول/i],
+ ['طبي','Medical',/روشتة|prescription|تحليل|مستشفى|hospital|clinic|عيادة/i],
+ ['شهادة','Certificate',/شهادة|certificate|diploma|دبلوم/i]];
+function autoClass(){try{if(!state.pages.length)return;const o=OI();let T=state.pages.map(p=>o[p.id]||'').join('\n');if(T.length<12)return;
+ T=T.replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c));
+ const hit=CATS.find(c=>c[2].test(T));if(!hit)return;const cat=Lg(hit[0],hit[1]);
+ if(!getTags().length){setTags([cat]);try{persistMeta();}catch(e){}}
+ const def=!state.name||/^(Scan|مستند) \d\d-\d\d$/.test(state.name);
+ if(def){const pd=n=>String(n).padStart(2,'0');let d='',m=T.match(/\b(20\d{2})[-\/.](0?[1-9]|1[0-2])[-\/.](0?[1-9]|[12]\d|3[01])\b/);
+  if(m)d=m[1]+'-'+pd(m[2])+'-'+pd(m[3]);else{m=T.match(/\b(0?[1-9]|[12]\d|3[01])[-\/.](0?[1-9]|1[0-2])[-\/.](20\d{2})\b/);if(m)d=m[3]+'-'+pd(m[2])+'-'+pd(m[1]);}
+  const nm=cat+' - '+(d||defName().replace(/^\D+/,''));state.name=nm;const di=document.getElementById('docName');if(di)di.value=nm;try{persistMeta();}catch(e){}toast(Lg('اسم المستند: ','Name: ')+nm);}
+}catch(e){console.warn('autoClass',e);}}
+{const _oi=ocrIdx;ocrIdx=function(){const r=_oi.apply(this,arguments);setTimeout(autoClass,400);return r;};}
 /* ===== v8: grouped tools, theme toggle ===== */
 function buildTools(){buildTools0();try{regroup();}catch(e){console.error(e);}}
 let tcat=-1;
