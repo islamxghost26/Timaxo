@@ -925,38 +925,70 @@ const warpRot=(src,p,edge)=>rotateCanvas(warp(src,p.corners,edge),p.rot);
 
 /* ---------- enhancement ---------- */
 function makeBase(canvas){
-  const w=canvas.width,h=canvas.height,img=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h),s8=img.data;
-  const s=Math.max(2,Math.round(Math.max(w,h)/140)),gw=Math.ceil(w/s),gh=Math.ceil(h/s);
-  const ch=[new Float32Array(gw*gh),new Float32Array(gw*gh),new Float32Array(gw*gh)],cnt=new Float32Array(gw*gh);
-  for(let y=0;y<h;y++){const gy=((y/s)|0)*gw;for(let x=0;x<w;x++){const gi=gy+((x/s)|0),i=(y*w+x)*4;cnt[gi]++;ch[0][gi]+=s8[i];ch[1][gi]+=s8[i+1];ch[2][gi]+=s8[i+2];}}
-  for(let c=0;c<3;c++){for(let i=0;i<cnt.length;i++)ch[c][i]/=cnt[i]||1;ch[c]=boxBlur(maxFilter(ch[c],gw,gh,2),gw,gh,2);}
+  const w=canvas.width,h=canvas.height,img=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h),s8=img.data,N=w*h;
+  const s=Math.max(2,Math.round(Math.max(w,h)/140)),gw=Math.ceil(w/s),gh=Math.ceil(h/s),G=gw*gh;
+  /* 1) how bright is the paper normally? (60th percentile) -> tells real glare apart from plain white paper */
+  const h0=new Uint32Array(256);for(let i=0;i<N;i++)h0[(s8[i*4]*77+s8[i*4+1]*150+s8[i*4+2]*29)>>8]++;
+  let ac0=0,p60=255;for(let i=0;i<256;i++){ac0+=h0[i];if(ac0>=N*.6){p60=i;break;}}
+  /* 2) flash / glare hot-spots: clipped in every channel while the page is clearly darker; grown a little to cover the bloom halo */
+  const gl=new Uint8Array(N);let gc=0;
+  if(p60<226)for(let i=0;i<N;i++){const k=i*4;if(s8[k]>=246&&s8[k+1]>=246&&s8[k+2]>=246){gl[i]=1;gc++;}}
+  let ga=null;const mxe=Math.max(w,h);
+  if(gc>N*.0004){const m0=new Float32Array(N);for(let i=0;i<N;i++)m0[i]=gl[i];const dl=boxBlur(m0,w,h,Math.max(3,Math.round(mxe/22))),m1=new Float32Array(N);
+    for(let i=0;i<N;i++){if(gl[i]){m1[i]=1;continue;}if(dl[i]>.02){const k=i*4;if(((s8[k]*77+s8[k+1]*150+s8[k+2]*29)>>8)>p60+18)m1[i]=1;}}
+    for(let i=0;i<N;i++)gl[i]=m1[i];ga=boxBlur(m1,w,h,Math.max(2,Math.round(mxe/300)));}else gc=0;
+  /* 3) paper-colour field, glare pixels excluded then filled from their neighbours; dilate+blur drops text so the field is the lit paper (shadows included) */
+  const ch=[new Float32Array(G),new Float32Array(G),new Float32Array(G)],cnt=new Float32Array(G);
+  for(let y=0;y<h;y++){const gy=((y/s)|0)*gw;for(let x=0;x<w;x++){const i=y*w+x;if(gl[i])continue;const gi=gy+((x/s)|0),k=i*4;cnt[gi]++;ch[0][gi]+=s8[k];ch[1][gi]+=s8[k+1];ch[2][gi]+=s8[k+2];}}
+  const need=s*s*.12,ok=new Uint8Array(G);
+  for(let i=0;i<G;i++){if(cnt[i]>=need){ok[i]=1;for(let c=0;c<3;c++)ch[c][i]/=cnt[i];}else for(let c=0;c<3;c++)ch[c][i]=0;}
+  for(let it=0;it<80;it++){let miss=0;const add=[];
+    for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++){const i=gy*gw+gx;if(ok[i])continue;let n=0,a=0,b2=0,c2=0;
+      const nb=[gx>0?i-1:-1,gx<gw-1?i+1:-1,gy>0?i-gw:-1,gy<gh-1?i+gw:-1];
+      for(const j of nb)if(j>=0&&ok[j]){n++;a+=ch[0][j];b2+=ch[1][j];c2+=ch[2][j];}
+      if(n)add.push([i,a/n,b2/n,c2/n]);else miss++;}
+    for(const q of add){ch[0][q[0]]=q[1];ch[1][q[0]]=q[2];ch[2][q[0]]=q[3];ok[q[0]]=1;}if(!miss)break;}
+  for(let i=0;i<G;i++)if(!ok[i]){ch[0][i]=ch[1][i]=ch[2][i]=200;}
+  for(let c=0;c<3;c++)ch[c]=boxBlur(maxFilter(ch[c],gw,gh,2),gw,gh,2);
+  /* 4) read the page: median paper colour of the brighter half -> white paper or a vivid/coloured background? */
+  const lumB=new Float32Array(G);for(let i=0;i<G;i++)lumB[i]=.299*ch[0][i]+.587*ch[1][i]+.114*ch[2][i];
+  const ord=Array.from({length:G},(_,i)=>i).sort((a,b2)=>lumB[b2]-lumB[a]).slice(0,Math.max(1,G>>1));
+  const med=c=>{const v=ord.map(i=>ch[c][i]).sort((a,b2)=>a-b2);return v[v.length>>1];};
+  const mr=med(0),mg=med(1),mb=med(2),mL=.299*mr+.587*mg+.114*mb,mxc=Math.max(mr,mg,mb),mnc=Math.min(mr,mg,mb),sat=mxc>0?(mxc-mnc)/mxc:0;
+  const vivid=sat>.27&&mL>60,Tl=Math.min(mL*1.08,mL*250/Math.max(1,mxc)),mc=[mr,mg,mb];
   const norm=new Uint8ClampedArray(s8.length),hist=new Float64Array(256);
   const x0=new Int32Array(w),x1=new Int32Array(w),wx=new Float32Array(w);
   for(let x=0;x<w;x++){const fx=clamp((x+.5)/s-.5,0,gw-1);x0[x]=fx|0;x1[x]=Math.min(gw-1,x0[x]+1);wx[x]=fx-x0[x];}
-  for(let y=0;y<h;y++){const fy=clamp((y+.5)/s-.5,0,gh-1),y0=fy|0,y1=Math.min(gh-1,y0+1),wy=fy-y0,r0=y0*gw,r1=y1*gw;
-    for(let x=0;x<w;x++){const i=(y*w+x)*4,a=x0[x],b=x1[x],fx=wx[x];
-      for(let c=0;c<3;c++){const A=ch[c];const top=A[r0+a]*(1-fx)+A[r0+b]*fx,bot=A[r1+a]*(1-fx)+A[r1+b]*fx;
-        const bg=Math.max(100,top*(1-wy)+bot*wy);norm[i+c]=Math.min(255,s8[i+c]*250/bg);}
+  const fill=vivid?[mr/mL*Tl,mg/mL*Tl,mb/mL*Tl]:[250,250,250];
+  for(let y=0;y<h;y++){const fy=clamp((y+.5)/s-.5,0,gh-1),y0=fy|0,y1=Math.min(gh-1,y0+1),wy=fy-y0,r0=y0*gw,r1=y1*gw,bgc=[0,0,0];
+    for(let x=0;x<w;x++){const i=(y*w+x)*4,a=x0[x],b2=x1[x],fx=wx[x];
+      for(let c=0;c<3;c++){const A=ch[c];const top=A[r0+a]*(1-fx)+A[r0+b2]*fx,bot=A[r1+a]*(1-fx)+A[r1+b2]*fx;bgc[c]=top*(1-wy)+bot*wy;}
+      if(vivid){/* coloured page: flatten brightness only, keep the hue (per-channel division would bleach it) */
+        const bL=.299*bgc[0]+.587*bgc[1]+.114*bgc[2],k=clamp(Tl/Math.max(bL,mL*.3),.7,3.2);
+        for(let c=0;c<3;c++)norm[i+c]=Math.min(255,s8[i+c]*k);
+      }else{for(let c=0;c<3;c++){const bg=Math.max(55,.3*mc[c],bgc[c]);norm[i+c]=Math.min(255,s8[i+c]*250/bg);}}
+      if(ga){const al=ga[y*w+x];if(al>.01)for(let c=0;c<3;c++)norm[i+c]+=(fill[c]-norm[i+c])*al;}
       norm[i+3]=255;hist[(norm[i]*77+norm[i+1]*150+norm[i+2]*29)>>8]++;}}
   const total=w*h;let acc=0,lo=0,hi=255,gotLo=false;
   for(let i=0;i<256;i++){acc+=hist[i];if(!gotLo&&acc>=total*.006){lo=i;gotLo=true;}if(acc>=total*.7){hi=i;break;}}
   lo=Math.min(lo,90);hi=clamp(hi,190,255);
-  return{w,h,src:s8,norm,lo:lo/255,hi:hi/255};
+  if(vivid){lo=Math.min(lo,12);hi=255;}
+  return{w,h,src:s8,norm,lo:lo/255,hi:hi/255,vivid,glare:gc/N,sat};
 }
-function buildLUT(f,br,ct,lo,hi){
+function buildLUT(f,br,ct,lo,hi,vv){
   const L=new Uint8ClampedArray(256),bAdd=br/100*.3,cf=ct>=0?1+ct/60:1+ct/150;
   for(let i=0;i<256;i++){let v=i/255;
     if(f!=='original'){v=clamp((v-lo)/(hi-lo),0,1);}
-    if(f==='magic'){v=clamp((v-.5)*1.22+.5,0,1);}
+    if(f==='magic'){v=clamp((v-.5)*(vv?1.08:1.22)+.5,0,1);}
     else if(f==='gray'){v=clamp((v-.5)*1.1+.5,0,1);}
     else if(f==='bw'){v=clamp((v-.6)*8+.5,0,1);}
     v+=bAdd;v=(v-.5)*cf+.5;L[i]=clamp(v,0,1)*255;}
   return L;
 }
 function toneCanvas(base,f,br,ct,sat){
-  const{w,h}=base,sd=f==='original'?base.src:base.norm,lut=buildLUT(f,br,ct,base.lo,base.hi);
+  const{w,h}=base,sd=f==='original'?base.src:base.norm,lut=buildLUT(f,br,ct,base.lo,base.hi,base.vivid);
   const out=new ImageData(w,h),o=out.data,gray=f==='gray'||f==='bw';
-  const sf=gray?1:(f==='magic'?1.3:f==='auto'?1.06:1)*(1+sat/100),doSat=!gray&&Math.abs(sf-1)>.01;
+  const sf=gray?1:Math.min((f==='magic'?1.3:f==='auto'?1.06:1),base.vivid&&f!=='original'?1.05:9)*(1+sat/100),doSat=!gray&&Math.abs(sf-1)>.01;
   for(let i=0;i<sd.length;i+=4){let r=sd[i],g=sd[i+1],b=sd[i+2];
     if(gray){const l=lut[(r*77+g*150+b*29)>>8];r=g=b=l;}
     else{r=lut[r];g=lut[g];b=lut[b];if(doSat){const l=.299*r+.587*g+.114*b;r=l+(r-l)*sf;g=l+(g-l)*sf;b=l+(b-l)*sf;}}
@@ -1641,18 +1673,45 @@ function sigPad(){const m=document.createElement('div');m.style.cssText='positio
    const W=Math.max(1,X2-X),H=Math.max(1,Y2-Y);localStorage.setItem('tx_sig',JSON.stringify({r:H/W,st:st.map(s=>s.map(q=>[+((q[0]-X)/W).toFixed(4),+((q[1]-Y)/W).toFixed(4)]))}));toast(AR()?'اتحفظ التوقيع، المس الصفحة لإضافته':'Saved. Tap the page to place it');}
   m.remove();};}
 $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');if(b&&b.dataset.k==='sign'){localStorage.removeItem('tx_sig');sigPad();}});
-(function(){const L=localStorage,K='tx_pin',h=async v=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('tx|'+v)))].map(b=>b.toString(16).padStart(2,'0')).join('');
- const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#0b1020;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:600 16px system-ui';
- ov.innerHTML='<div></div><input type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:28px;text-align:center;width:190px;padding:10px;border-radius:12px;border:0;letter-spacing:8px"><div style="color:#ff8a80;min-height:20px"></div>';
- document.body.appendChild(ov);const[ti,inp,er]=ov.children;
- const show=()=>{ov.style.display='flex';ti.textContent=AR()?'أدخل الرقم السري':'Enter PIN';inp.value='';er.textContent='';setTimeout(()=>inp.focus(),60);};
- const chk=async()=>{if(inp.value.length>=4&&await h(inp.value)===L.getItem(K)){ov.style.display='none';return true;}return false;};
- inp.oninput=chk;inp.onkeydown=async e=>{if(e.key==='Enter'&&!await chk()){er.textContent=AR()?'رقم خاطئ':'Wrong PIN';inp.value='';}};
- const b=document.createElement('button');b.textContent='🔒';b.setAttribute('aria-label','PIN');b.style.cssText='position:fixed;bottom:10px;inset-inline-start:10px;z-index:60;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:16px;opacity:.6';
- b.onclick=async()=>{if(L.getItem(K)){const v=prompt(AR()?'أدخل الرقم الحالي لإلغاء القفل':'Enter current PIN to remove lock');if(v&&await h(v)===L.getItem(K)){L.removeItem(K);toast(AR()?'اتلغى القفل':'Lock removed');}}
-  else{const v=prompt(AR()?'اختر رقم سري (4 إلى 8 أرقام)':'Choose a PIN (4-8 digits)');if(v&&/^\d{4,8}$/.test(v)){L.setItem(K,await h(v));toast(AR()?'القفل اتفعّل':'Lock enabled');}}};
- document.body.appendChild(b);if(L.getItem(K))show();
- let hid=0;document.addEventListener('visibilitychange',()=>{if(document.hidden)hid=Date.now();else if(L.getItem(K)&&hid&&Date.now()-hid>60000)show();});})();
+(function(){const L=localStorage,K='tx_pin',KB='tx_bio',tt=(a,c)=>AR()?a:c,
+ h=async v=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('tx|'+v)))].map(b=>b.toString(16).padStart(2,'0')).join(''),
+ b64=u=>btoa(String.fromCharCode(...u)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+ unb=t=>Uint8Array.from(atob(t.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-t.length%4)%4)),c=>c.charCodeAt(0)),
+ rnd=n=>crypto.getRandomValues(new Uint8Array(n)),
+ hasPin=()=>!!L.getItem(K),hasBio=()=>!!L.getItem(KB),locked=()=>hasPin()||hasBio();
+ /* biometrics = WebAuthn platform authenticator (fingerprint / face / device screen-lock), nothing leaves the phone */
+ const bioOK=async()=>{try{return !!(window.PublicKeyCredential&&navigator.credentials&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){return false;}};
+ const bioReg=async()=>{try{const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Timaxo Scan'},user:{id:rnd(16),name:'timaxo',displayName:'Timaxo'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000,attestation:'none'}});
+  if(!c)return false;L.setItem(KB,b64(new Uint8Array(c.rawId)));return true;}catch(e){return false;}};
+ const bioAuth=async()=>{try{const id=L.getItem(KB);if(!id)return false;const r=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb(id)}],userVerification:'required',timeout:60000}});return !!r;}catch(e){return false;}};
+ const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#0b1020;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:600 16px system-ui';
+ ov.innerHTML='<div style="font-size:42px">🔒</div><div></div><button type="button" style="display:none;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;border:0;background:#22d3f5;color:#04202b;font:700 16px system-ui"></button><input type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:28px;text-align:center;width:190px;padding:10px;border-radius:12px;border:0;letter-spacing:8px"><div style="color:#ff8a80;min-height:20px"></div>';
+ document.body.appendChild(ov);const[,ti,bb,inp,er]=ov.children;
+ const open=()=>{ov.style.display='none';};
+ const tryBio=async()=>{if(!hasBio())return;if(await bioAuth())open();else er.textContent=tt('البصمة ماتأكدتش','Fingerprint not verified');};
+ const show=()=>{ov.style.display='flex';ti.textContent=hasPin()?tt('أدخل الرقم السري','Enter PIN'):tt('افتح بالبصمة','Unlock with fingerprint');
+  inp.style.display=hasPin()?'':'none';bb.style.display=hasBio()?'flex':'none';bb.textContent='👆 '+tt('افتح بالبصمة','Use fingerprint');inp.value='';er.textContent='';
+  if(hasPin())setTimeout(()=>{if(!hasBio())inp.focus();},60);if(hasBio())setTimeout(tryBio,250);};
+ bb.onclick=tryBio;
+ const chk=async()=>{if(inp.value.length>=4&&await h(inp.value)===L.getItem(K)){open();return true;}return false;};
+ inp.oninput=chk;inp.onkeydown=async e=>{if(e.key==='Enter'&&!await chk()){er.textContent=tt('رقم خاطئ','Wrong PIN');inp.value='';}};
+ /* settings sheet: PIN / fingerprint / both / none — asks for current auth before changing anything */
+ const verify=async()=>{if(!locked())return true;if(hasPin()){const v=prompt(tt('أدخل الرقم السري الحالي','Enter current PIN'));return !!v&&await h(v)===L.getItem(K);}return await bioAuth();};
+ const sheet=()=>{const bg=document.createElement('div');bg.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center';
+  const bx=document.createElement('div');bx.style.cssText='background:var(--surface,#fff);color:var(--ink,#071a4d);width:min(440px,100%);border-radius:22px 22px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom,0px) + 18px);font:600 15px system-ui;display:flex;flex-direction:column;gap:10px';
+  bg.appendChild(bx);bg.onclick=e=>{if(e.target===bg)bg.remove();};document.body.appendChild(bg);
+  const row=(txt,on,fn)=>{const b=document.createElement('button');b.type='button';b.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;border:1.5px solid '+(on?'#22d3f5':'#8884')+';background:'+(on?'rgba(34,211,245,.14)':'transparent')+';color:inherit;font:inherit;text-align:start';b.innerHTML='<span>'+txt+'</span><span>'+(on?'✓':'')+'</span>';b.onclick=fn;bx.appendChild(b);};
+  const draw=()=>{bx.innerHTML='';const t=document.createElement('div');t.style.cssText='font:800 17px system-ui;margin-bottom:2px';t.textContent=tt('قفل التطبيق','App lock');bx.appendChild(t);
+   row('🔢 '+tt('رقم سري','PIN code'),hasPin(),async()=>{if(hasPin()){if(!hasBio()||await verify()){if(hasBio()||await verify()){L.removeItem(K);toast(tt('اتلغى الرقم السري','PIN removed'));draw();}}}
+     else{const v=prompt(tt('اختر رقم سري (4 إلى 8 أرقام)','Choose a PIN (4-8 digits)'));if(v&&/^\d{4,8}$/.test(v)){const v2=prompt(tt('أعد كتابة الرقم للتأكيد','Re-enter the PIN to confirm'));if(v2===v){L.setItem(K,await h(v));toast(tt('الرقم السري اتفعّل','PIN enabled'));draw();}else toast(tt('الرقمين مش متطابقين','PINs do not match'));}}});
+   row('👆 '+tt('بصمة / قفل الجهاز','Fingerprint / device lock'),hasBio(),async()=>{if(hasBio()){if(await verify()){L.removeItem(KB);toast(tt('اتلغت البصمة','Fingerprint removed'));draw();}}
+     else{if(!await bioOK()){toast(tt('الجهاز أو المتصفح مش بيدعم البصمة هنا','Biometrics not supported here'));return;}if(await bioReg()){toast(tt('البصمة اتفعّلت','Fingerprint enabled'));draw();}else toast(tt('ماتمش تفعيل البصمة','Fingerprint setup failed'));}});
+   const n=document.createElement('div');n.style.cssText='font:500 12px system-ui;opacity:.65;line-height:1.5';n.textContent=tt('تقدر تفعّل الاتنين مع بعض. القفل بيحمي فتح التطبيق على الجهاز ده.','You can enable both. The lock protects opening the app on this device.');bx.appendChild(n);
+   const c=document.createElement('button');c.type='button';c.textContent=tt('تم','Done');c.style.cssText='padding:12px;border-radius:14px;border:0;background:#1b63f0;color:#fff;font:700 15px system-ui';c.onclick=()=>bg.remove();bx.appendChild(c);};draw();};
+ const b=document.createElement('button');b.textContent='🔒';b.setAttribute('aria-label','Lock');b.style.cssText='position:fixed;bottom:10px;inset-inline-start:10px;z-index:60;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:16px;opacity:.6';
+ b.onclick=async()=>{if(locked()&&!await verify()){toast(tt('ماتأكدش','Not verified'));return;}sheet();};
+ document.body.appendChild(b);if(locked())show();
+ let hid=0;document.addEventListener('visibilitychange',()=>{if(document.hidden)hid=Date.now();else if(locked()&&hid&&Date.now()-hid>60000)show();});})();
 addEventListener('error',e=>{try{const a=JSON.parse(localStorage.getItem('tx_err')||'[]');a.push([Date.now(),String(e.message)]);localStorage.setItem('tx_err',JSON.stringify(a.slice(-20)));}catch(_){}});
 
 /* ===== v4: live camera with auto-detect + auto-capture ===== */
@@ -1742,9 +1801,25 @@ async function openLive(){
  }catch(e){}};
  const sfx={sel:()=>{tone(820,.05,'sine',.1);buzz(8)},on:()=>{tone(620,.07,'sine',.12,980);buzz(12)},off:()=>{tone(900,.07,'sine',.1,560);buzz(8)},lock:()=>{tone(880,.08,'sine',.12);setTimeout(()=>tone(1320,.12,'sine',.12),80);buzz([10,40,10])},shut:()=>{click();buzz(25)}};
  const setHint=(t,ok)=>{const k=t+(ok?1:0);if(k===hk)return;hk=k;hintT.textContent=t;hintEl.classList.toggle('ok',!!ok);};
+ /* focus: tap-to-focus, sharpness meter, and capture that waits for a sharp frame */
+ let shNow=0,shPk=0,fT=0,rfBusy=0,blurSince=0,bad=false;
+ const SW=192,SH=144,shc=document.createElement('canvas');shc.width=SW;shc.height=SH;const shx=shc.getContext('2d',{willReadFrequently:true});
+ const sharpMeasure=()=>{if(!v.videoWidth)return 0;const vw=v.videoWidth,vh=v.videoHeight;shx.drawImage(v,vw*.325,vh*.325,vw*.35,vh*.35,0,0,SW,SH);const d=shx.getImageData(0,0,SW,SH).data,st=SW*4;let a=0,n=0;
+  for(let y=1;y<SH-1;y++)for(let x=1;x<SW-1;x++){const i=y*st+x*4,l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,lx=d[i+4]*.3+d[i+5]*.59+d[i+6]*.11,ly=d[i+st]*.3+d[i+st+1]*.59+d[i+st+2]*.11;a+=Math.abs(l-lx)+Math.abs(l-ly);n++;}return a/n;};
+ const shLoop=()=>{if(!alive)return;try{if(!document.hidden&&!gb){shNow=sharpMeasure();shPk=Math.max(shPk*.95,shNow);bad=shPk>=6&&shNow<shPk*.72;if(bad){if(!blurSince)blurSince=Date.now();}else blurSince=0;}}catch(e){}setTimeout(shLoop,110);};
+ const fOk=()=>!bad||(blurSince&&Date.now()-blurSince>3000);
+ const refocus=async(px,py)=>{if(!trk)return false;try{const cp=(trk.getCapabilities&&trk.getCapabilities())||{},fm=cp.focusMode||[];if(!fm.length)return false;
+   if(fm.indexOf('single-shot')>=0||fm.indexOf('manual')>=0){const adv={focusMode:fm.indexOf('single-shot')>=0?'single-shot':'continuous'};if(px!=null&&'pointsOfInterest' in cp)adv.pointsOfInterest=[{x:clamp(px,0,1),y:clamp(py,0,1)}];
+     await trk.applyConstraints({advanced:[adv]});await sleep(380);}
+   if(fm.indexOf('continuous')>=0)await trk.applyConstraints({advanced:[{focusMode:'continuous'}]});shPk=shNow;return true;}catch(e){return false;}};
+ const shoot=async()=>{if(gb||rfBusy)return;if(!fOk()&&trk){rfBusy=1;setHint(T('بيظبط الفوكس...','Focusing...'),false);try{await refocus();const t0=Date.now();while(!fOk()&&Date.now()-t0<600)await sleep(60);}catch(e){}rfBusy=0;}grab();};
+ if(!document.getElementById('lvcss2')){const s2=document.createElement('style');s2.id='lvcss2';s2.textContent='#lv .fr{position:absolute;width:72px;height:72px;margin:-36px 0 0 -36px;border:2px solid #ffd60a;border-radius:50%;pointer-events:none;animation:lvfr .9s ease-out forwards}@keyframes lvfr{0%{transform:scale(1.6);opacity:0}25%{opacity:1}60%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}';document.head.appendChild(s2);}
+ const stg=document.querySelector('#lv .st');
+ if(stg)stg.addEventListener('pointerdown',e=>{if(e.target.closest('button')||!v.videoWidth)return;const r=v.getBoundingClientRect(),vw=v.videoWidth,vh=v.videoHeight,sc=Math.min(r.width/vw,r.height/vh),dw=vw*sc,dh=vh*sc,ox=r.left+(r.width-dw)/2,oy=r.top+(r.height-dh)/2,nx=(e.clientX-ox)/dw,ny=(e.clientY-oy)/dh;if(nx<0||ny<0||nx>1||ny>1)return;
+  const sr=stg.getBoundingClientRect(),ring=document.createElement('i');ring.className='fr';ring.style.left=(e.clientX-sr.left)+'px';ring.style.top=(e.clientY-sr.top)+'px';stg.appendChild(ring);setTimeout(()=>ring.remove(),900);buzz(6);refocus(nx,ny);});
  const attach=s=>{stream=s;v.srcObject=s;trk=s.getVideoTracks()[0];
   try{const cp=trk.getCapabilities&&trk.getCapabilities()||{},adv=[];if(cp.focusMode&&cp.focusMode.indexOf('continuous')>=0)adv.push({focusMode:'continuous'});if(cp.zoom&&cp.zoom.min<1)adv.push({zoom:1});if(adv.length)trk.applyConstraints({advanced:adv}).catch(()=>{});}catch(e){}
-  if(torch)setTorch(true);};
+  if(torch)setTorch(true);shPk=0;shNow=0;bad=false;blurSince=0;setTimeout(()=>{refocus();},450);};
  const setTorch=async on=>{torch=on;fb.classList.toggle('on',on);try{await trk.applyConstraints({advanced:[{torch:on}]});}catch(e){torch=false;fb.classList.remove('on');if(on)toast(T('الفلاش مش مدعوم على العدسة دي','Flash not supported on this lens'));}};
  const lab=()=>{ab.querySelector('span').textContent=T('تلقائي','Auto');ab.classList.toggle('on',auto);ab.style.opacity=mode==='doc'?1:0;ab.style.pointerEvents=mode==='doc'?'auto':'none';
   mb.classList.toggle('on',multi);snb.classList.toggle('on',snd);snb.innerHTML=S(snd?'sn':'sm');
@@ -1778,7 +1853,7 @@ async function openLive(){
   if(dA>.02&&dq){const lk=stable>=2;g.globalAlpha=dA;g.beginPath();dq.forEach((p,i)=>{i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p));});g.closePath();g.lineWidth=3;g.strokeStyle=lk?'#22e07a':'#ffd60a';g.fillStyle=lk?'rgba(34,224,122,.2)':'rgba(255,214,10,.12)';g.fill();g.stroke();
    g.fillStyle=lk?'#22e07a':'#ffd60a';dq.forEach(p=>{g.beginPath();g.arc(X(p),Y(p),5,0,7);g.fill();});g.globalAlpha=1;}
   const pc=(auto&&mode==='doc'&&lockT)?Math.min(100,(performance.now()-lockT)/800*100):0;const pk=pc.toFixed(0);if(pk!==pP){pP=pk;sh.style.setProperty('--p',pk+'%');}
-  if(pc>=100&&armed&&auto&&mode==='doc')grab();};
+  if(pc>=100&&armed&&auto&&mode==='doc'&&fOk())grab();};
  const rr=(g,x,y,w,h,r)=>{g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();};
  /* ---- detection loop (adaptive: never starves the UI) ---- */
  const sm=document.createElement('canvas'),sx=sm.getContext('2d',{willReadFrequently:true});
@@ -1796,10 +1871,10 @@ async function openLive(){
    ok=found&&best>=.5&&ar2>.12&&ar2<.9&&rt<3,dl=last?Math.max(...q.map((p,i)=>Math.hypot(p.x-last[i].x,p.y-last[i].y))):1;
   if(!ok&&dtg&&miss<2){miss++;return;}   /* tolerate a couple of dropped frames so the outline doesn't flicker */
   if(ok)miss=0;
-  last=ok?q:null;const was=stable;stable=(ok&&dl<.025)?stable+1:0;if(ok&&stable>=2)lastGood=q;if(!ok)armed=true;
+  last=ok?q:null;const was=stable;const fo=fOk();stable=(ok&&dl<.025&&fo)?stable+1:0;if(ok&&dl<.025&&!fo&&Date.now()-fT>1300){fT=Date.now();refocus(q.reduce((a,p)=>a+p.x,0)/4,q.reduce((a,p)=>a+p.y,0)/4);}if(ok&&stable>=2)lastGood=q;if(!ok)armed=true;
   dtg=ok?q:null;
   if(stable>=2&&was<2){lockT=performance.now();sfx.lock();}if(stable<2)lockT=0;
-  setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):T('جاري التحديد','Detecting'),stable>=2);};
+  setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):(!fo?T('بيظبط الفوكس...','Focusing...'):T('جاري التحديد','Detecting')),stable>=2);};
  const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);let q=detectCorners(sm,2);const f=detectCorners.found,b=detectCorners.best;if(f){try{q=refineQuad(sm,q,{R:.03,passes:2});}catch(e){}}judge(q,f,b);};
  const loop=()=>{if(!alive)return;const nx=ms=>{dtm=setTimeout(loop,ms)};
   if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
@@ -1825,13 +1900,13 @@ async function openLive(){
  m.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.m){if(mode===b.dataset.m)return;mode=b.dataset.m;localStorage.setItem('tx_mode',mode);stable=0;last=null;lastGood=null;dtg=null;lockT=0;hk='';lab();sfx.sel();return;}
   const a=b.dataset.a;
-  if(a==='x'||a==='d'){buzz(8);finish();}else if(a==='s')grab();
+  if(a==='x'||a==='d'){buzz(8);finish();}else if(a==='s')shoot();
   else if(a==='a'){auto=!auto;localStorage.setItem('tx_auto',auto?'1':'0');stable=0;lockT=0;lab();auto?sfx.on():sfx.off();}
   else if(a==='mu'){multi=!multi;localStorage.setItem('tx_multi',multi?'1':'0');lab();multi?sfx.on():sfx.off();}
   else if(a==='sn'){snd=!snd;localStorage.setItem('tx_snd',snd?'1':'0');lab();if(snd)sfx.on();buzz(8);}
   else if(a==='f'){setTorch(!torch);torch?sfx.on():sfx.off();}
   else if(a==='l'){if(backs.length<2){toast(T('مفيش عدسات تانية','No other lens'));return;}b.classList.remove('sp');void b.offsetWidth;b.classList.add('sp');sfx.sel();bi=(bi+1)%backs.length;sw(backs[bi].deviceId);toast(T('عدسة ','Lens ')+(bi+1)+'/'+backs.length);}});
- wk=mkWorker();attach(stream);lab();lenses();raf=requestAnimationFrame(frame);loop();
+ wk=mkWorker();attach(stream);shLoop();lab();lenses();raf=requestAnimationFrame(frame);loop();
 }
 
 /* ===== v6: OCR (full page + region), text replace ===== */
@@ -2032,6 +2107,9 @@ fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 document.body.appendChild(fab);
 setInterval(()=>{const hv=q('#vHome');fab.classList.toggle('on',!!(hv&&hv.classList.contains('on')&&state.pages.length&&!q('#idOv')));},700);
 const cover=(x,img,dx,dy,dw,dh)=>{const k=Math.max(dw/img.width,dh/img.height),w=img.width*k,h=img.height*k;x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();x.drawImage(img,dx+(dw-w)/2,dy+(dh-h)/2,w,h);x.restore();x.strokeStyle='#b8bec9';x.lineWidth=2;x.strokeRect(dx,dy,dw,dh);};
+const rrp=(x,X,Y,Wd,Ht,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+Wd,Y,X+Wd,Y+Ht,r);x.arcTo(X+Wd,Y+Ht,X,Y+Ht,r);x.arcTo(X,Y+Ht,X,Y,r);x.arcTo(X,Y,X+Wd,Y,r);x.closePath();};
+/* ISO/IEC 7810 ID-1 card: 85.6 x 54 mm with a 3.18 mm corner radius, clipped like the real thing with a fine edge line */
+const coverR=(x,img,dx,dy,dw,dh)=>{const r=mm(3.18),k=Math.max(dw/img.width,dh/img.height),w=img.width*k,h=img.height*k;x.save();rrp(x,dx,dy,dw,dh,r);x.clip();x.imageSmoothingQuality='high';x.drawImage(img,dx+(dw-w)/2,dy+(dh-h)/2,w,h);x.restore();x.save();x.strokeStyle='#c3c9d3';x.lineWidth=1.5;rrp(x,dx+.75,dy+.75,dw-1.5,dh-1.5,r-.75);x.stroke();x.restore();};
 fab.onclick=()=>{
  const ov=document.createElement('div');ov.id='idOv';ov.style.zIndex='9000';let sel=state.pages.length===1?[0]:[],lay='card',cnt=8;
  ov.innerHTML='<button class="x" data-a="x">✕</button><h2></h2><p class="h"></p><div class="tg"></div><span class="l" id="i1"></span><div class="chips" id="iL"></div><span class="l" id="i2"></span><div class="chips" id="iC"></div><p class="msg" id="iMsg"></p><button class="btn go" id="iGo"></button>';
@@ -2051,7 +2129,7 @@ fab.onclick=()=>{
   busy(true);await new Promise(r=>setTimeout(r,30));
   try{const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
    if(lay==='card'){const a=await renderFinal(state.pages[sel[0]],1600),b=await renderFinal(state.pages[sel[1]],1600),cw=mm(85.6),ch=mm(54),dx=Math.round((W-cw)/2);
-    cover(x,a,dx,mm(40),cw,ch);cover(x,b,dx,mm(40)+ch+mm(14),cw,ch);}
+    coverR(x,a,dx,mm(40),cw,ch);coverR(x,b,dx,mm(40)+ch+mm(14),cw,ch);}
    else{const im=await renderFinal(state.pages[sel[0]],1400),d=LAY[lay],cw=mm(d.w),ch=mm(d.h),g=mm(3),mg=mm(10);
     const cols=Math.max(1,Math.floor((W-2*mg+g)/(cw+g))),rows=Math.max(1,Math.floor((H-2*mg+g)/(ch+g))),n=Math.min(cnt,cols*rows),tw=cols*cw+(cols-1)*g,ox=Math.round((W-tw)/2);
     for(let i=0;i<n;i++)cover(x,im,ox+(i%cols)*(cw+g),mg+Math.floor(i/cols)*(ch+g),cw,ch);}
