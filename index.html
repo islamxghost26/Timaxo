@@ -641,7 +641,7 @@ async function restore(){
 }
 
 /* ---------- image helpers ---------- */
-async function decodeBlob(blob,maxEdge=2400){
+async function decodeBlob(blob,maxEdge=3000){
   let bmp;
   try{bmp=await createImageBitmap(blob,{imageOrientation:'from-image'});}
   catch(e){bmp=await new Promise((res,rej)=>{const u=URL.createObjectURL(blob);const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=u;});}
@@ -815,7 +815,7 @@ function detectCorners(src,fast){
     if(!raw.some(o=>o.every((p,i)=>Math.hypot(p.x-n[i].x,p.y-n[i].y)<.05)))raw.push(n);if(raw.length>=3)break;}
   const out=fast?raw:raw.map(n=>{try{return refineQuad(src,n,{R:.025,passes:3});}catch(e){return n;}});
   out.push(full);
-  detectCorners.alts=out;detectCorners.src=src;
+  detectCorners.alts=out;detectCorners.src=src;detectCorners.found=raw.length>0;detectCorners.best=cands.length?cands[0].s:0;
   return out[0];
 }
 
@@ -830,10 +830,37 @@ function solveH(dst,srcp){
     for(let r=0;r<n;r++){if(r===i)continue;const f=A[r][i];if(!f)continue;for(let j=i;j<=n;j++)A[r][j]-=f*A[i][j];}}
   return A.map(r=>r[n]);
 }
+
+/* true page aspect (w/h) from a perspective quad; assumes square pixels + centred principal point (Zhang&He) */
+function pageAspect(P,sw,sh){
+  const u0=sw/2,v0=sh/2,m1=[P[0].x,P[0].y,1],m2=[P[1].x,P[1].y,1],m3=[P[3].x,P[3].y,1],m4=[P[2].x,P[2].y,1];
+  const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dt=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const nw=(d(P[0],P[1])+d(P[3],P[2]))/2,nh=(d(P[0],P[3])+d(P[1],P[2]))/2,naive=nw/Math.max(1,nh);
+  let r=naive;
+  const k2=dt(cr(m1,m4),m3)/dt(cr(m2,m4),m3),k3=dt(cr(m1,m4),m2)/dt(cr(m3,m4),m2);
+  if(isFinite(k2)&&isFinite(k3)&&k2>0&&k3>0&&(Math.abs(k2-1)>.01||Math.abs(k3-1)>.01)){
+    const n2=[k2*m2[0]-m1[0],k2*m2[1]-m1[1],k2*m2[2]-m1[2]],n3=[k3*m3[0]-m1[0],k3*m3[1]-m1[1],k3*m3[2]-m1[2]];
+    const den=n2[2]*n3[2];let f=0;
+    if(Math.abs(den)>1e-3*Math.max(1,Math.abs(n2[2]),Math.abs(n3[2]))){
+      const f2=-(1/den)*((n2[0]*n3[0]-(n2[0]*n3[2]+n2[2]*n3[0])*u0+den*u0*u0)+(n2[1]*n3[1]-(n2[1]*n3[2]+n2[2]*n3[1])*v0+den*v0*v0));
+      if(f2>0&&isFinite(f2))f=Math.sqrt(f2);
+    }
+    if(!(f>0.3*Math.max(sw,sh)&&f<3*Math.max(sw,sh)))f=.8*Math.max(sw,sh); // degenerate (one pair parallel): typical phone focal length
+    const q=n=>{const a=(n[0]-u0*n[2])/f,b=(n[1]-v0*n[2])/f;return a*a+b*b+n[2]*n[2];};
+    const rr=Math.sqrt(q(n2)/q(n3));
+    if(isFinite(rr)&&rr>.3&&rr<3.3&&rr/naive>.6&&rr/naive<1.7)r=rr;
+  }
+  // snap to standard paper (A4/A5 1.414, Letter 1.294) when close
+  const lg=Math.max(r,1/r),sm=Math.min(r,1/r);void sm;
+  for(const s of[1.4142,1.2941]){if(Math.abs(lg-s)/s<.045){r=r>=1?s:1/s;break;}}
+  return r;
+}
 function warp(src,corners,maxEdge){
   const sw=src.width,sh=src.height,P=corners.map(p=>({x:p.x*sw,y:p.y*sh}));
   const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   let W=Math.max(d(P[0],P[1]),d(P[3],P[2])),H=Math.max(d(P[0],P[3]),d(P[1],P[2]));
+  try{const r=pageAspect(P,sw,sh);if(r){const a=W*H;let nw=Math.sqrt(a*r),nh=nw/r;W=nw;H=nh;}}catch(e){}
   const k=Math.min(1,maxEdge/Math.max(W,H));W=Math.max(8,Math.round(W*k));H=Math.max(8,Math.round(H*k));
   const hm=solveH([[0,0],[W,0],[W,H],[0,H]],P.map(p=>[p.x,p.y]));
   const sd=src.getContext('2d',{willReadFrequently:true}).getImageData(0,0,sw,sh).data;
@@ -1015,7 +1042,9 @@ async function ingest(file){
   busy(true);
   try{
     const canvas=await decodeBlob(file),blob=await toBlob(canvas,'image/jpeg',.9);
-    const p={id:newId(),blob,src:canvas,corners:detectCorners(canvas),rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
+    let lq=window.__liveQuad;window.__liveQuad=null;let cr0;
+    if(lq){try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}detectCorners(canvas);}else cr0=detectCorners(canvas);
+    const p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
     state.draft=p;busy(false);await openCrop(p,'new');
   }catch(e){busy(false);toast(t('openFail'));console.error(e);}
 }
@@ -1588,28 +1617,35 @@ addEventListener('error',e=>{try{const a=JSON.parse(localStorage.getItem('tx_err
 let nat=0;
 $('#camIn').addEventListener('click',e=>{if(nat||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))return;e.preventDefault();e.stopImmediatePropagation();openLive();},true);
 async function openLive(){
- let stream;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});}
+ let stream;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3200},height:{ideal:3200},frameRate:{ideal:30,max:30}},audio:false});}
  catch(e){toast(AR()?'الكاميرا غير متاحة، هنفتح كاميرا الجهاز':'Camera unavailable, using device camera');nat=1;$('#camIn').click();nat=0;return;}
  const m=document.createElement('div');m.style.cssText='position:fixed;inset:0;z-index:9500;background:#000;display:flex;flex-direction:column';
  m.innerHTML='<div style="position:relative;flex:1;min-height:0"><video playsinline muted autoplay style="width:100%;height:100%;object-fit:contain"></video><canvas style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas><div id="lvH" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:0;right:0;text-align:center;color:#fff;font:600 14px system-ui;text-shadow:0 1px 4px #000"></div></div><div style="display:flex;align-items:center;justify-content:space-around;padding:14px 10px calc(env(safe-area-inset-bottom,0px) + 14px);background:#000"><button data-a="x" style="color:#fff;background:none;border:0;font:600 15px system-ui">'+(AR()?'إغلاق':'Close')+'</button><button data-a="s" aria-label="capture" style="width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:#fff3"></button><button data-a="a" style="color:#fff;background:none;border:0;font:600 15px system-ui"></button></div>';
  document.body.appendChild(m);
  const v=m.querySelector('video'),cv=m.querySelector('canvas'),hint=m.querySelector('#lvH'),ab=m.querySelector('[data-a=a]');
  let auto=localStorage.getItem('tx_auto')!=='0',stable=0,last=null,alive=true,done=0;v.srcObject=stream;
+ const trk=stream.getVideoTracks()[0];let ic=null,lastGood=null;
+ try{const cp=trk.getCapabilities&&trk.getCapabilities();if(cp&&cp.focusMode&&cp.focusMode.indexOf('continuous')>=0)trk.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});}catch(e){}
+ try{if('ImageCapture' in window)ic=new ImageCapture(trk);}catch(e){}
  const lab=()=>{ab.textContent=auto?(AR()?'تلقائي: يعمل':'Auto: on'):(AR()?'تلقائي: متوقف':'Auto: off');};lab();
  const close=()=>{alive=false;clearInterval(tm);stream.getTracks().forEach(t=>t.stop());m.remove();};
- const grab=()=>{if(done||!v.videoWidth)return;done=1;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
-  c.toBlob(b=>{close();ingest(new File([b],'scan.jpg',{type:'image/jpeg'}));},'image/jpeg',.92);};
+ const grab=async()=>{if(done||!v.videoWidth)return;done=1;hint.textContent=AR()?'جاري التصوير...':'Capturing...';
+  const vw=v.videoWidth,vh=v.videoHeight,lq=lastGood;let blob=null,useQ=false;
+  try{if(ic){const pb=await ic.takePhoto();const bm=await createImageBitmap(pb,{imageOrientation:'from-image'});const ra=(bm.width/bm.height)/(vw/vh);
+    if(bm.width>=Math.min(vw,1600)||bm.height>=Math.min(vh,1600)){blob=pb;useQ=Math.abs(ra-1)<.03;}if(bm.close)bm.close();}}catch(e){blob=null;}
+  if(!blob){const c=document.createElement('canvas');c.width=vw;c.height=vh;c.getContext('2d').drawImage(v,0,0);blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.95));useQ=true;}
+  close();window.__liveQuad=(useQ&&lq)?lq:null;ingest(new File([blob],'scan.jpg',{type:'image/jpeg'}));};
  m.addEventListener('click',e=>{const b=e.target.closest('button'),a=b&&b.dataset.a;if(a==='x')close();else if(a==='s')grab();else if(a==='a'){auto=!auto;localStorage.setItem('tx_auto',auto?'1':'0');stable=0;lab();}});
  const sm=document.createElement('canvas'),sx=sm.getContext('2d',{willReadFrequently:true});let bz=0;
  const area=q=>{let a=0;for(let i=0;i<4;i++){const p=q[i],n=q[(i+1)%4];a+=p.x*n.y-n.x*p.y;}return Math.abs(a)/2;};
  const tm=setInterval(()=>{if(!alive||bz||!v.videoWidth)return;bz=1;try{
   const W=640,H=Math.round(640*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);
-  const q=detectCorners(sm,true),ar=area(q),ok=ar>.12&&ar<.9,dl=last?Math.max(...q.map((p,i)=>Math.hypot(p.x-last[i].x,p.y-last[i].y))):1;
-  last=q;stable=(ok&&dl<.025)?stable+1:0;
+  const q=detectCorners(sm,true),ar=area(q),rt=(()=>{const d=(a,b)=>Math.hypot(a.x*v.videoWidth-b.x*v.videoWidth,a.y*v.videoHeight-b.y*v.videoHeight),W=(d(q[0],q[1])+d(q[3],q[2]))/2,H=(d(q[0],q[3])+d(q[1],q[2]))/2;return Math.max(W,H)/Math.max(1,Math.min(W,H));})(),ok=detectCorners.found&&detectCorners.best>=.42&&ar>.15&&ar<.88&&rt<2.4,dl=last?Math.max(...q.map((p,i)=>Math.hypot(p.x-last[i].x,p.y-last[i].y))):1;
+  last=q;stable=(ok&&dl<.02)?stable+1:0;if(ok&&stable>=2)lastGood=q;
   const cw=cv.clientWidth,ch=cv.clientHeight;cv.width=cw;cv.height=ch;const g=cv.getContext('2d'),sc=Math.min(cw/v.videoWidth,ch/v.videoHeight),ox=(cw-v.videoWidth*sc)/2,oy=(ch-v.videoHeight*sc)/2;
   if(ok){g.beginPath();q.forEach((p,i)=>{const X=ox+p.x*v.videoWidth*sc,Y=oy+p.y*v.videoHeight*sc;i?g.lineTo(X,Y):g.moveTo(X,Y);});g.closePath();g.lineWidth=3;g.strokeStyle=stable>=2?'#22e07a':'#ffd60a';g.fillStyle=stable>=2?'rgba(34,224,122,.18)':'rgba(255,214,10,.1)';g.fill();g.stroke();}
   hint.textContent=!ok?(AR()?'وجّه الكاميرا على الورقة':'Point at the document'):stable>=2?(auto?(AR()?'ثبّت الجهاز...':'Hold steady...'):(AR()?'جاهز للتصوير':'Ready')):(AR()?'جاري التحديد':'Detecting');
-  if(auto&&stable>=4)grab();}catch(e){}bz=0;},300);
+  if(auto&&stable>=5)grab();}catch(e){}bz=0;},300);
 }
 
 /* ===== v6: OCR (full page + region), text replace ===== */
