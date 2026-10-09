@@ -1,10 +1,12 @@
-const CACHE='timaxo-v5';
+const CACHE='timaxo-v8';
 self.addEventListener('install',()=>{});            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(
   caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
-  const r=e.request; if(r.method!=='GET')return;
+  const r=e.request;
+  if(r.method==='POST'&&new URL(r.url).searchParams.has('shared')){e.respondWith((async()=>{try{const fd=await r.formData(),c=await caches.open('timaxo-share');let n=0;for(const f of fd.getAll('files'))if(f&&f.size)await c.put(new Request('./shared/'+(n++)+'-'+encodeURIComponent(f.name||'img')),new Response(f,{headers:{'Content-Type':f.type}}));}catch(_){}return Response.redirect('./?shared=1',303)})());return}
+  if(r.method!=='GET')return;
   const same=new URL(r.url).origin===location.origin;
   if(same){ // ملفات التطبيق: النت الأول، والكاش للأوفلاين
     e.respondWith(fetch(r,{cache:'no-cache'}).then(res=>{const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));return res})

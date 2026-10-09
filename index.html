@@ -1105,7 +1105,7 @@ async function deletePage(p){
   $('span',bar).textContent=lang==='ar'?'اتحذفت الصفحة':'Page deleted';
   const bt=$('button',bar);bt.textContent=lang==='ar'?'تراجع':'Undo';
   bt.onclick=async()=>{clearTimeout(undoT);bar.classList.remove('on');state.pages.splice(Math.min(i,state.pages.length),0,p);await persist(p);await persistMeta();renderHome(p.id);};
-  bar.classList.add('on');clearTimeout(undoT);undoT=setTimeout(()=>bar.classList.remove('on'),6000);
+  bar.classList.add('on');clearTimeout(undoT);undoT=setTimeout(()=>bar.classList.remove('on'),10000);
 }
 function releaseSrc(){for(const p of state.pages){if(p!==E.page&&p!==C.page)p.src=null;}}
 async function getSrc(p){if(!p.src)p.src=await decodeBlob(p.blob);return p.src;}
@@ -1226,7 +1226,7 @@ $$('#nudge .nb').forEach(b=>{const dir={l:[-1,0],r:[1,0],u:[0,-1],d:[0,1]}[b.dat
 addEventListener('keydown',e=>{if(V.cur!=='vCrop'||!C.page||/INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||''))return;
   const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!m)return;e.preventDefault();const k=e.shiftKey?5:1;nudge(m[0]*k,m[1]*k);});
 new ResizeObserver(()=>{if(V.cur==='vCrop')layoutCrop();}).observe($('#cropStage'));
-let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){detectCorners(C.src);autoI=0;}else autoI++;const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);};
+let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){detectCorners(C.src);autoI=0;}else autoI++;const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);if(al.length>1)toast((lang==='ar'?'اقتراح ':'Suggestion ')+((autoI%al.length)+1)+'/'+al.length+(lang==='ar'?' — اضغط تاني لاقتراح مختلف':' — tap again for another'));};
 $('#fullBtn').onclick=()=>tween(C.page.corners,[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],320);
 $('#cropBack').onclick=()=>{
   if(C.from==='new'){state.draft=null;C.page=null;state.queue=[];goHome();}
@@ -1708,9 +1708,18 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
      else{if(!await bioOK()){toast(tt('الجهاز أو المتصفح مش بيدعم البصمة هنا','Biometrics not supported here'));return;}if(await bioReg()){toast(tt('البصمة اتفعّلت','Fingerprint enabled'));draw();}else toast(tt('ماتمش تفعيل البصمة','Fingerprint setup failed'));}});
    const n=document.createElement('div');n.style.cssText='font:500 12px system-ui;opacity:.65;line-height:1.5';n.textContent=tt('تقدر تفعّل الاتنين مع بعض. القفل بيحمي فتح التطبيق على الجهاز ده.','You can enable both. The lock protects opening the app on this device.');bx.appendChild(n);
    const c=document.createElement('button');c.type='button';c.textContent=tt('تم','Done');c.style.cssText='padding:12px;border-radius:14px;border:0;background:#1b63f0;color:#fff;font:700 15px system-ui';c.onclick=()=>bg.remove();bx.appendChild(c);};draw();};
- const b=document.createElement('button');b.textContent='🔒';b.setAttribute('aria-label','Lock');b.style.cssText='position:fixed;bottom:10px;inset-inline-start:10px;z-index:60;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:16px;opacity:.6';
- b.onclick=async()=>{if(locked()&&!await verify()){toast(tt('ماتأكدش','Not verified'));return;}sheet();};
- document.body.appendChild(b);if(locked())show();
+ const b=document.createElement('button');b.type='button';b.className='ib';b.textContent='⋯';b.setAttribute('aria-label',tt('المزيد','More'));b.style.cssText='font-size:22px;font-weight:800;line-height:1;opacity:.85';
+ const openLock=async()=>{if(locked()&&!await verify()){toast(tt('ماتأكدش','Not verified'));return;}sheet();};
+ b.addEventListener('click',()=>{const bg=document.createElement('div');bg.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center';
+  const bx=document.createElement('div');bx.style.cssText='background:var(--surface,#fff);color:var(--ink,#071a4d);width:min(440px,100%);border-radius:22px 22px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom,0px) + 18px);font:600 15px system-ui;display:flex;flex-direction:column;gap:10px';
+  bg.appendChild(bx);bg.onclick=e=>{if(e.target===bg)bg.remove();};
+  const t=document.createElement('div');t.style.cssText='font:800 17px system-ui';t.textContent=tt('المزيد','More');bx.appendChild(t);
+  const item=(txt,fn)=>{const x=document.createElement('button');x.type='button';x.textContent=txt;x.style.cssText='text-align:start;padding:14px 16px;border-radius:14px;border:1.5px solid #8884;background:transparent;color:inherit;font:600 15px system-ui';x.onclick=()=>{bg.remove();fn();};bx.appendChild(x);};
+  item('🔒 '+tt('قفل التطبيق','App lock'),openLock);
+  item('🗂 '+tt('مستنداتي والنسخ الاحتياطي','My documents & backup'),()=>{const l=document.getElementById('libBtn');if(l)l.click();});
+  item('🌐 '+tt('اللغة','Language'),()=>{const l=document.getElementById('langBtn');if(l)l.click();});
+  document.body.appendChild(bg);});
+ const lb=document.getElementById('langBtn');if(lb&&lb.parentNode)lb.parentNode.insertBefore(b,lb);if(locked())show();
  let hid=0;document.addEventListener('visibilitychange',()=>{if(document.hidden)hid=Date.now();else if(locked()&&hid&&Date.now()-hid>60000)show();});})();
 addEventListener('error',e=>{try{const a=JSON.parse(localStorage.getItem('tx_err')||'[]');a.push([Date.now(),String(e.message)]);localStorage.setItem('tx_err',JSON.stringify(a.slice(-20)));}catch(_){}});
 
@@ -2398,4 +2407,44 @@ async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder
 function show(hh){if(document.querySelector('.upd'))return;var b=document.createElement('button');b.className='upd';b.textContent=AR2()?'\u2728 \u0641\u064a\u0647 \u062a\u062d\u062f\u064a\u062b \u062c\u062f\u064a\u062f \u2014 \u0627\u0636\u063a\u0637 \u0644\u0644\u062a\u062d\u062f\u064a\u062b':'\u2728 New update \u2014 tap to refresh';
 b.onclick=async function(){b.textContent='\u2026';try{localStorage.setItem(K,hh)}catch(e){}try{var k=await caches.keys();await Promise.all(k.map(function(x){return caches.delete(x)}))}catch(e){}try{var r=await navigator.serviceWorker.getRegistration();r&&await r.update()}catch(e){}location.reload()};document.body.appendChild(b)}
 async function check(){if(!navigator.onLine)return;try{var r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;var hh=await sha(await r.text()),o=localStorage.getItem(K);if(!o){localStorage.setItem(K,hh);return}if(o!==hh)show(hh)}catch(e){}}
-addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script><style id="splashfix">#splash .c{display:none!important}#splash .st{width:min(84vw,380px)}</style></body></html>
+addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script><style id="splashfix">#splash .c{display:none!important}#splash .st{width:min(84vw,380px)}</style><script>/* batch2: encrypted backup (10), share-target intake (11), smart docs: type + expiry (2,4) */
+(function(){try{
+const A2E=s=>String(s||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c));
+const enc=new TextEncoder(),B=b=>btoa(String.fromCharCode(...new Uint8Array(b))),U=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function key(pw,salt){const m=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:200000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+// ---- 10: encrypted backup
+const bk=$('#libBk').onclick,rs=$('#rsIn').onchange;
+$('#libBk').onclick=async()=>{const pw=prompt(Lg('كلمة سر للنسخة (سيبها فاضية لنسخة عادية). لو ضاعت مفيش استعادة','Backup password (empty = plain). If lost, no recovery'));if(!pw)return bk();
+ busy(true);try{const all=[...(await allSaved())];const c=curRec();if(c)all.unshift(c);if(!all.length){busy(false);return toast(Lg('مفيش حاجة تتحفظ','Nothing to back up'));}
+ const docs=[];for(const r of all)docs.push({...r,rows:await Promise.all(r.rows.map(async x=>({...x,blob:await b64(x.blob)})))});
+ const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(pw,salt),enc.encode(JSON.stringify({app:'timaxo-scan',v:1,docs})));
+ const r=await saveFile(new Blob([JSON.stringify({enc:'timaxo-enc',v:1,salt:B(salt),iv:B(iv),data:B(ct)})],{type:'application/json'}),'Timaxo-backup-enc-'+new Date().toISOString().slice(0,10)+'.json');
+ busy(false);toast(r==='saved'?Lg('تم حفظ النسخة المشفرة','Encrypted backup saved'):Lg('تم الإلغاء','Cancelled'));}catch(e){busy(false);toast(Lg('فشل النسخ الاحتياطي','Backup failed'));}};
+$('#rsIn').onchange=async e=>{const f=e.target.files[0];if(!f)return rs(e);let j=null;try{j=JSON.parse(await f.text());}catch(_){}
+ if(!j||j.enc!=='timaxo-enc')return rs({target:{files:[f],value:''}});e.target.value='';const pw=prompt(Lg('كلمة سر النسخة','Backup password'));if(!pw)return;busy(true);
+ try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:U(j.iv)},await key(pw,U(j.salt)),U(j.data));busy(false);rs({target:{files:[new File([pt],'b.json')],value:''}});}catch(_){busy(false);toast(Lg('كلمة السر غلط','Wrong password'));}};
+// ---- 11: files shared from Android
+if(location.search.includes('shared=1'))idbReady.then(async()=>{try{const c=await caches.open('timaxo-share'),ks=await c.keys(),fs=[];for(const k of ks){const r=await c.match(k);const b=await r.blob();fs.push(new File([b],decodeURIComponent(k.url.split('/').pop()),{type:b.type}));await c.delete(k);}
+ history.replaceState(null,'',location.pathname);const im=fs.filter(f=>/^image\//.test(f.type));if(im.length){state.queue=im.slice(1);ingest(im[0]);}}catch(e){}});
+// ---- 2 + 4: smart panel (type guess + expiry reminders) from OCR index
+const TY=[['هوية/ID',/بطاق[ةه]|رقم قومي|national id|passport|جواز|identity|هوي[ةه]/i],['فاتورة/Invoice',/فاتور[ةه]|invoice|total due|vat/i],['إيصال/Receipt',/ايصال|إيصال|receipt/i],['عقد/Contract',/عقد|contract|agreement/i],['شهادة/Certificate',/شهاد[ةه]|certificate/i],['رخصة/License',/رخص[ةه]|licen[sc]e/i]];
+const DR=/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](20\d\d)|(20\d\d)[\/\-.](\d{1,2})[\/\-.](\d{1,2})/g,KW=/انتهاء|ينتهي|صالح|expir|valid|until/i;
+function scan(txt){const T=A2E(txt),ty=(TY.find(x=>x[1].test(T))||[''])[0];let best=null;const now=Date.now();
+ for(const m of T.matchAll(DR)){const d=m[3]?new Date(+m[3],+m[2]-1,+m[1]):new Date(+m[4],+m[5]-1,+m[6]);if(isNaN(d))continue;const near=KW.test(T.slice(Math.max(0,m.index-40),m.index+50));if(d.getTime()>now-30*864e5&&(near||ty)&&(!best||near&&!best.near||near===best.near&&d<best.d))best={d,near};}
+ return{ty,d:best&&best.d};}
+function ics(name,d){const z=x=>String(x).padStart(2,'0'),f=d.getFullYear()+z(d.getMonth()+1)+z(d.getDate());return new Blob(['BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Timaxo//EN\r\nBEGIN:VEVENT\r\nUID:'+newId()+'@timaxo\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:]|\.\d+/g,'')+'\r\nDTSTART;VALUE=DATE:'+f+'\r\nSUMMARY:'+Lg('انتهاء: ','Expires: ')+name.replace(/[\r\n,;]/g,' ')+'\r\nBEGIN:VALARM\r\nTRIGGER:-P14D\r\nACTION:DISPLAY\r\nDESCRIPTION:Timaxo\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR'],{type:'text/calendar'});}
+async function smart(){const o=OI(),docs=await allSaved(),rows=[];for(const r of docs){const txt=(r.order||[]).map(i=>o[i]||'').join('\n');if(!txt.trim())continue;const s=scan(txt);if(s.ty||s.d)rows.push({r,...s});}
+ rows.sort((a,b)=>(a.d?a.d.getTime():9e15)-(b.d?b.d.getTime():9e15));
+ const m=document.createElement('div');m.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end';
+ const bx=document.createElement('div');bx.style.cssText='background:var(--surface,#fff);color:var(--text,#111);width:100%;max-height:75vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px;box-sizing:border-box';
+ bx.innerHTML='<b style="font-size:16px">'+Lg('مستندات ذكية: النوع وتواريخ الانتهاء','Smart docs: type & expiry')+'</b><p style="opacity:.7;font-size:12px;margin:6px 0 12px">'+Lg('بتتحسب من نص الـOCR المحفوظ. ممكن تقرأ تاريخ غلط، راجعه. التذكير بيتضاف لتقويم الجهاز.','From saved OCR text. Dates may be misread — verify. Reminder goes to your device calendar.')+'</p>';
+ if(!rows.length)bx.innerHTML+='<p>'+Lg('مفيش نتايج. شغّل OCR على المستندات الأول.','Nothing found. Run OCR on documents first.')+'</p>';
+ for(const x of rows){const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;align-items:center;padding:10px 0;border-top:1px solid rgba(128,128,128,.25)';const dl=x.d?Math.ceil((x.d-Date.now())/864e5):null;
+  row.innerHTML='<div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div><div style="font-size:12px;opacity:.75">'+(x.ty||'—')+(x.d?' · '+x.d.toISOString().slice(0,10)+' · '+(dl<0?Lg('منتهي','expired'):Lg('باقي ','in ')+dl+Lg(' يوم',' d')):'')+'</div></div>';row.firstChild.firstChild.textContent=x.r.name;
+  if(x.d){const b=document.createElement('button');b.textContent='🔔';b.style.cssText='border:0;border-radius:12px;padding:8px 12px;font-size:16px';b.onclick=async()=>{const r=await saveFile(ics(x.r.name,x.d),'Timaxo-reminder.ics');toast(r==='saved'?Lg('افتح الملف عشان يتضاف للتقويم','Open the file to add to calendar'):Lg('تم الإلغاء','Cancelled'));};row.appendChild(b);}bx.appendChild(row);}
+ m.appendChild(bx);m.onclick=e=>{if(e.target===m)m.remove();};document.body.appendChild(m);}
+const sb=document.createElement('button');sb.id='libSm';sb.className=$('#libBk').className;sb.innerHTML='<span>'+Lg('ذكي: نوع وانتهاء','Smart: type/expiry')+'</span>';sb.onclick=smart;$('#libRs').after(sb);
+}catch(e){console.error('batch2',e);}})();
+</script>
+</body></html>
