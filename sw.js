@@ -1,4 +1,4 @@
-const CACHE='timaxo-v3';
+const CACHE='timaxo-v4';
 self.addEventListener('install',()=>{});            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(

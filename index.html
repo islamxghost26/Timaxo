@@ -832,6 +832,22 @@ function detectCorners(src,fast){
      if(x>0&&ok(i-1)){m[i-1]=1;st[sp++]=i-1;}if(x<w-1&&ok(i+1)){m[i+1]=1;st[sp++]=i+1;}
      if(y>0&&ok(i-w)){m[i-w]=1;st[sp++]=i-w;}if(y<h-1&&ok(i+w)){m[i+w]=1;st[sp++]=i+w;}}
     const r=comp(m);if(r.bn/N>.1)add(quadOf(r.lab,r.bl));}}
+  // E) shadow-proof paper mask: signed distance (brighter than the surface, or bluish-white tint) so a darker cast shadow is never counted as paper
+  {const bw=Math.max(3,Math.round(Math.min(w,h)*.04)),smp=[];
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(x<bw||y<bw||x>=w-bw||y>=h-bw)smp.push(y*w+x);}
+   const all=[];for(let i=0;i<N;i+=3)all.push(i);
+   const medOf=(S,c)=>{const v=S.map(i=>d[i*4+c]).sort((a,b)=>a-b);return v[v.length>>1];};
+   const refs=[smp,all].map(S=>[medOf(S,0),medOf(S,1),medOf(S,2)]);
+   for(const R0 of refs){const Lb=.299*R0[0]+.587*R0[1]+.114*R0[2],tb=R0[2]-R0[0],fs=new Float32Array(N);
+    for(let i=0;i<N;i++){const r=d[i*4],g2=d[i*4+1],b=d[i*4+2],L=.299*r+.587*g2+.114*b;fs[i]=Math.max(0,L-Lb)+1.5*Math.max(0,(b-r)-tb);}
+    const fb=boxBlur(boxBlur(fs,w,h,1),w,h,1),hh=new Float64Array(256);for(let i=0;i<N;i++)hh[clamp(fb[i]|0,0,255)]++;
+    let s2=0;for(let i=0;i<256;i++)s2+=i*hh[i];let w1=0,s1=0,bv2=-1,t2=20;
+    for(let i=0;i<256;i++){w1+=hh[i];if(!w1)continue;const w3=N-w1;if(!w3)break;s1+=i*hh[i];const m1=s1/w1,m2=(s2-s1)/w3,v=w1*w3*(m1-m2)*(m1-m2);if(v>bv2){bv2=v;t2=i;}}
+    t2=clamp(t2,8,90);
+    for(const k of[1,.6]){const m0=new Float32Array(N);for(let i=0;i<N;i++)m0[i]=fb[i]>t2*k?1:0;
+     const dl=boxBlur(m0,w,h,2),m=new Uint8Array(N);for(let i=0;i<N;i++)m[i]=dl[i]>.02?1:0;
+     const m3=new Float32Array(N);for(let i=0;i<N;i++)m3[i]=m[i];const er=boxBlur(m3,w,h,2);for(let i=0;i<N;i++)m[i]=er[i]>.98?1:0;
+     const r=comp(m);if(r.bn/N>.08){const n0=cands.length;add(quadOf(r.lab,r.bl));for(let j=n0;j<cands.length;j++)cands[j].s*=1.2;}}}}
   cands.sort((a,b)=>b.s-a.s);
   const norm=q=>{const cxm=q.reduce((s,p)=>s+p.x,0)/4,cym=q.reduce((s,p)=>s+p.y,0)/4;
     return q.map(p=>({x:clamp((p.x+.5)/w-((p.x+.5)/w-(cxm+.5)/w)*.002,0,1),y:clamp((p.y+.5)/h-((p.y+.5)/h-(cym+.5)/h)*.002,0,1)}));};
@@ -1069,7 +1085,7 @@ async function ingest(file){
   try{
     const canvas=(file&&file.__cv)||await decodeBlob((file&&file.__blob)||file),bp=(file&&file.__blob)?Promise.resolve(file.__blob):toBlob(canvas,'image/jpeg',.9);
     let lq=(file&&file.__q)||null,cr0;
-    if(lq){if(file.__x)cr0=lq.map(x=>({x:x.x,y:x.y}));else{try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}}}else cr0=detectCorners(canvas);
+    if(lq&&file.__x)cr0=lq.map(x=>({x:x.x,y:x.y}));else{cr0=detectCorners(canvas);if(!detectCorners.found&&lq){try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}}}
     const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
     state.draft=p;busy(false);await openCrop(p,'new');
   }catch(e){busy(false);toast(t('openFail'));console.error(e);}
@@ -1707,7 +1723,23 @@ async function openLive(){
  const buzz=n=>{try{if(localStorage.getItem('tx_hap')!=='0'&&navigator.vibrate)navigator.vibrate(n)}catch(e){}};
  let ac=null;try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
  const tone=(f,d,t,vol,f2)=>{if(!snd||!ac)return;try{if(ac.state==='suspended')ac.resume();const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime;o.type=t||'sine';o.frequency.setValueAtTime(f,n);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+d);g.gain.setValueAtTime(vol||.12,n);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+d+.02);}catch(e){}};
- const click=()=>{if(!snd||!ac)return;try{const n=ac.currentTime,len=Math.floor(ac.sampleRate*.09),b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=b;f.type='highpass';f.frequency.value=1500;g.gain.value=.5;s.connect(f);f.connect(g);g.connect(ac.destination);s.start(n);tone(190,.09,'square',.08,70);}catch(e){}};
+ const click=()=>{if(!snd||!ac)return;try{if(ac.state==='suspended')ac.resume();const A=ac,n0=A.currentTime+.005,sr=A.sampleRate;
+  const mkN=sec=>{const b=A.createBuffer(1,Math.max(1,Math.floor(sr*sec)),sr),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b;};
+  const mst=A.createGain();mst.gain.value=.9;const cmp=A.createDynamicsCompressor();cmp.threshold.value=-14;cmp.ratio.value=4;mst.connect(cmp);cmp.connect(A.destination);
+  const burst=(at,dur,f,q,vol)=>{const s=A.createBufferSource(),bp=A.createBiquadFilter(),g=A.createGain();s.buffer=mkN(dur+.02);bp.type='bandpass';bp.frequency.value=f;bp.Q.value=q;
+   g.gain.setValueAtTime(0.0001,at);g.gain.exponentialRampToValueAtTime(vol,at+.002);g.gain.exponentialRampToValueAtTime(.0001,at+dur);s.connect(bp);bp.connect(g);g.connect(mst);s.start(at);s.stop(at+dur+.02);};
+  const body=(at,f0,f1,dur,vol)=>{const o=A.createOscillator(),lp=A.createBiquadFilter(),g=A.createGain();o.type='sine';o.frequency.setValueAtTime(f0,at);o.frequency.exponentialRampToValueAtTime(f1,at+dur);lp.type='lowpass';lp.frequency.value=700;
+   g.gain.setValueAtTime(0.0001,at);g.gain.exponentialRampToValueAtTime(vol,at+.003);g.gain.exponentialRampToValueAtTime(.0001,at+dur);o.connect(lp);lp.connect(g);g.connect(mst);o.start(at);o.stop(at+dur+.02);};
+  /* 1) shutter opens: soft mechanical clack */
+  burst(n0,.022,3100,1.4,.34);body(n0,210,95,.05,.3);
+  /* 2) shutter closes: second, slightly lower clack */
+  burst(n0+.052,.028,1900,1.1,.26);body(n0+.052,160,80,.06,.22);
+  /* 3) fine glass tick for polish */
+  const o=A.createOscillator(),tg=A.createGain();o.type='sine';o.frequency.value=4200;tg.gain.setValueAtTime(0.0001,n0+.052);tg.gain.exponentialRampToValueAtTime(.035,n0+.054);tg.gain.exponentialRampToValueAtTime(.0001,n0+.085);o.connect(tg);tg.connect(mst);o.start(n0+.052);o.stop(n0+.09);
+  /* 4) scanner sweep: gentle copier-style pass of light, filtered noise rising in pitch */
+  {const at=n0+.085,dur=.24,s=A.createBufferSource(),bp=A.createBiquadFilter(),g=A.createGain();s.buffer=mkN(dur+.05);bp.type='bandpass';bp.Q.value=4;bp.frequency.setValueAtTime(700,at);bp.frequency.exponentialRampToValueAtTime(3000,at+dur);
+   g.gain.setValueAtTime(0.0001,at);g.gain.exponentialRampToValueAtTime(.09,at+.06);g.gain.exponentialRampToValueAtTime(.0001,at+dur);s.connect(bp);bp.connect(g);g.connect(mst);s.start(at);s.stop(at+dur+.05);}
+ }catch(e){}};
  const sfx={sel:()=>{tone(820,.05,'sine',.1);buzz(8)},on:()=>{tone(620,.07,'sine',.12,980);buzz(12)},off:()=>{tone(900,.07,'sine',.1,560);buzz(8)},lock:()=>{tone(880,.08,'sine',.12);setTimeout(()=>tone(1320,.12,'sine',.12),80);buzz([10,40,10])},shut:()=>{click();buzz(25)}};
  const setHint=(t,ok)=>{const k=t+(ok?1:0);if(k===hk)return;hk=k;hintT.textContent=t;hintEl.classList.toggle('ok',!!ok);};
  const attach=s=>{stream=s;v.srcObject=s;trk=s.getVideoTracks()[0];
@@ -1754,8 +1786,8 @@ async function openLive(){
  /* worker keeps detection off the UI thread; falls back to the main thread when OffscreenCanvas/Worker aren't available */
  let wk=null,wkBusy=0,wkT=0,miss=0;
  const mkWorker=()=>{try{if(!(window.Worker&&window.OffscreenCanvas&&window.createImageBitmap))return null;
-  const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+asp.toString()+';const refineQuad=()=>{throw 0};'+detectCorners.toString()
-   +';onmessage=e=>{const b=e.data;let q=null,f=false,s=0;try{q=detectCorners(b,2);f=detectCorners.found;s=detectCorners.best}catch(x){}try{b.close()}catch(x){}postMessage({q:q,f:f,s:s})};';
+  const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+asp.toString()+';const GRAYC=new WeakMap();'+grayOf.toString()+';'+bilG.toString()+';'+lineInter2.toString()+';'+refineQuad.toString()+';'+detectCorners.toString()
+   +';onmessage=e=>{const b=e.data;let q=null,f=false,s=0;try{q=detectCorners(b,1);f=detectCorners.found;s=detectCorners.best;if(f&&q){try{q=refineQuad(b,q,{R:.03,passes:2})}catch(x){}}}catch(x){}try{b.close()}catch(x){}postMessage({q:q,f:f,s:s})};';
   const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'})),w=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
   w.onmessage=e=>{wkBusy=0;try{if(alive&&e.data&&e.data.q&&mode==='doc'&&!gb)judge(e.data.q,e.data.f,e.data.s);}catch(x){}};
   w.onerror=()=>{wkBusy=0;try{w.terminate()}catch(x){}if(wk===w)wk=null;};return w;}catch(e){return null;}};
@@ -1768,11 +1800,11 @@ async function openLive(){
   dtg=ok?q:null;
   if(stable>=2&&was<2){lockT=performance.now();sfx.lock();}if(stable<2)lockT=0;
   setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):T('جاري التحديد','Detecting'),stable>=2);};
- const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);judge(detectCorners(sm,2),detectCorners.found,detectCorners.best);};
+ const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);let q=detectCorners(sm,2);const f=detectCorners.found,b=detectCorners.best;if(f){try{q=refineQuad(sm,q,{R:.03,passes:2});}catch(e){}}judge(q,f,b);};
  const loop=()=>{if(!alive)return;const nx=ms=>{dtm=setTimeout(loop,ms)};
   if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
   if(wk){if(wkBusy){if(performance.now()-wkT>4000){try{wk.terminate()}catch(e){}wk=null;wkBusy=0;}nx(60);return;}
-   wkBusy=1;wkT=performance.now();const W=360,H=Math.round(W*v.videoHeight/v.videoWidth);
+   wkBusy=1;wkT=performance.now();const W=480,H=Math.round(W*v.videoHeight/v.videoWidth);
    createImageBitmap(v,{resizeWidth:W,resizeHeight:H,resizeQuality:'low'}).then(bm=>wk.postMessage(bm,[bm])).catch(()=>{wkBusy=0;try{wk&&wk.terminate()}catch(e){}wk=null;});
    nx(80);return;}
   const t0=performance.now();try{detect();}catch(e){}
