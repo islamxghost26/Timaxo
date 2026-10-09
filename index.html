@@ -207,7 +207,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 7V5h14v2M12 5v14M9 19h6"/></symbol>
 <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v10l-5 6H5z" fill="currentColor" fill-opacity=".14"/><path d="M14 20v-6h5"/></symbol>
 <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19L19 5M10 5h9v9"/></symbol>
-<symbol id="i-box" viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5" fill="currentColor" fill-opacity=".14"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5" fill="currentColor" fill-opacity=".14"/></symbol><symbol id="i-redact" viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="10" rx="1.6" fill="currentColor"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
 <symbol id="i-cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
 <symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 19h10M5.3 14.7l7.5-8.2a2 2 0 013 0l2.4 2.6a2 2 0 010 2.7L13 19H9.2l-3.9-3.6a1.4 1.4 0 010-.7z"/></symbol>
@@ -592,7 +592,7 @@ en:{docName:'Document name',newDoc:'New',newDoc2:'Tap to clear all',gallery:'Gal
  cropHint:'Drag corners or edge handles · arrows for fine tuning',snapT:'Snap to edge',fineT:'Fine',finding:'Finding edges…',holdOrig:'Hold for original',nextPage:'Page',done:'Done',
  tFilters:'Filters',tAdjust:'Adjust',tMarkup:'Edit',tPage:'Page',original:'Original',f_auto:'Auto',f_magic:'Color',f_gray:'Gray',f_bw:'B&W',
  bright:'Brightness',contrast:'Contrast',satur:'Color',reset:'Reset',
- pen:'Pen',cbrush:'Clean brush',sign:'Signature',hand:'Move',ocrbox:'Replace text',classo:'Lasso erase',cbox:'Clean area',hl:'Highlight',text:'Text',note:'Note',arrow:'Arrow',box:'Box',check:'Tick',cross:'Cross',erase:'Erase',undo:'Undo',redo:'Redo',clearAll:'Clear all marks',
+ pen:'Pen',cbrush:'Clean brush',sign:'Signature',hand:'Move',ocrbox:'Replace text',classo:'Lasso erase',cbox:'Clean area',hl:'Highlight',text:'Text',note:'Note',arrow:'Arrow',box:'Box',redact:'Hide info',check:'Tick',cross:'Cross',erase:'Erase',undo:'Undo',redo:'Redo',clearAll:'Clear all marks',
  textPh:'Type your note',add:'Add',cancel:'Cancel',rotL:'Left',rotR:'Right',edges:'Edges',earlier:'Earlier',later:'Later',del:'Delete',delSure:'Tap again',
  pageN:n=>'Page '+n,newPage:'New page',saveTitle:'Save document',fileName:'File name',format:'Format',quality:'Quality',qSmall:'Small',qMed:'Medium',qHigh:'High',
  pageSize:'PDF page size',psFit:'Fit image',pagesSel:'Pages',zipNote:'Several images are saved together in one ZIP file.',pdfNote:'All selected pages go into one PDF, in order.',
@@ -604,7 +604,7 @@ ar:{docName:'اسم المستند',newDoc:'جديد',newDoc2:'اضغط لمسح
  cropHint:'اسحب الأركان أو مقابض الحواف · الأسهم للضبط الدقيق',snapT:'التصاق بالحافة',fineT:'دقيق',finding:'جاري تحديد الحواف…',holdOrig:'اضغط لرؤية الأصل',nextPage:'صفحة',done:'تم',
  tFilters:'فلاتر',tAdjust:'ضبط',tMarkup:'تعديل',tPage:'الصفحة',original:'الأصل',f_auto:'تلقائي',f_magic:'ألوان',f_gray:'رمادي',f_bw:'أبيض وأسود',
  bright:'السطوع',contrast:'التباين',satur:'الألوان',reset:'إعادة ضبط',
- pen:'قلم',cbrush:'فرشاة مسح',sign:'توقيع',hand:'تحريك',ocrbox:'استبدال النص',classo:'لاسو مسح',cbox:'مسح مربع',hl:'تظليل',text:'نص',note:'ملاحظة',arrow:'سهم',box:'مربع',check:'صح',cross:'خطأ',erase:'ممحاة',undo:'تراجع',redo:'إعادة',clearAll:'مسح كل العلامات',
+ pen:'قلم',cbrush:'فرشاة مسح',sign:'توقيع',hand:'تحريك',ocrbox:'استبدال النص',classo:'لاسو مسح',cbox:'مسح مربع',hl:'تظليل',text:'نص',note:'ملاحظة',arrow:'سهم',box:'مربع',redact:'إخفاء بيانات',check:'صح',cross:'خطأ',erase:'ممحاة',undo:'تراجع',redo:'إعادة',clearAll:'مسح كل العلامات',
  textPh:'اكتب ملاحظتك',add:'إضافة',cancel:'إلغاء',rotL:'يسار',rotR:'يمين',edges:'الحواف',earlier:'قدّم',later:'أخّر',del:'حذف',delSure:'اضغط مرة أخرى',
  pageN:n=>'صفحة '+n,newPage:'صفحة جديدة',saveTitle:'حفظ المستند',fileName:'اسم الملف',format:'الصيغة',quality:'الجودة',qSmall:'صغير',qMed:'متوسط',qHigh:'عالي',
  pageSize:'مقاس صفحة PDF',psFit:'حسب الصورة',pagesSel:'الصفحات',zipNote:'الصور المتعددة بتتحفظ مع بعض في ملف ZIP واحد.',pdfNote:'كل الصفحات المختارة بتتحفظ في ملف PDF واحد بالترتيب.',
@@ -620,7 +620,7 @@ const E={page:null,isDraft:false,base:null,tiny:null,tool:'pen',color:'#E5322D',
 const C={page:null,src:null,w:0,h:0,drag:-1,from:'new'};
 const FILTERS=['original','auto','magic','gray','bw'];
 const COLORS=['#E5322D','#1F5BFF','#12A150','#FFD60A','#FF8A00','#111111'];
-const TOOLS=[['pen','i-pen'],['hl','i-hl'],['text','i-text'],['note','i-note'],['arrow','i-arrow'],['box','i-box'],['check','i-check'],['cross','i-cross'],['erase','i-erase'],['cbrush','i-pen'],['classo','i-hl'],['cbox','i-box'],['sign','i-pen'],['ocrbox','i-box'],['hand','i-full']];
+const TOOLS=[['pen','i-pen'],['hl','i-hl'],['text','i-text'],['note','i-note'],['arrow','i-arrow'],['box','i-box'],['redact','i-redact'],['check','i-check'],['cross','i-cross'],['erase','i-erase'],['cbrush','i-pen'],['classo','i-hl'],['cbox','i-box'],['sign','i-pen'],['ocrbox','i-box'],['hand','i-full']];
 const defName=()=>{const d=new Date();return (lang==='ar'?'مستند ':'Scan ')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0');};
 
 /* ---------- persistence (best effort) ---------- */
@@ -1026,6 +1026,8 @@ function drawOne(ctx,w,h,a){if(a.t==='sig'){sigDraw(ctx,w,h,a);return;}if(a.t===
   }else if(a.t==='box'){
     ctx.lineWidth=lw;const x=Math.min(a.a[0],a.b[0])*w,y=Math.min(a.a[1],a.b[1])*h,bw=Math.abs(a.a[0]-a.b[0])*w,bh=Math.abs(a.a[1]-a.b[1])*h;
     ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bw,bh,Math.min(bw,bh)*.08);else ctx.rect(x,y,bw,bh);ctx.stroke();
+  }else if(a.t==='redact'){
+    const x=Math.min(a.a[0],a.b[0])*w,y=Math.min(a.a[1],a.b[1])*h,bw=Math.abs(a.a[0]-a.b[0])*w,bh=Math.abs(a.a[1]-a.b[1])*h;ctx.save();ctx.globalAlpha=1;ctx.fillStyle='#000';ctx.fillRect(x,y,bw,bh);ctx.restore();
   }else if(a.t==='check'||a.t==='cross'){
     const s=a.s*w,x=a.x*w,y=a.y*h;ctx.lineWidth=Math.max(2,s*.16);ctx.beginPath();
     if(a.t==='check'){ctx.moveTo(x-s*.5,y+s*.02);ctx.lineTo(x-s*.12,y+s*.4);ctx.lineTo(x+s*.52,y-s*.4);}
@@ -1050,6 +1052,7 @@ function hitTest(a,px,py,w,h,tol){if(a.t==='fill'||a.t==='sig'||a.t==='txtr')ret
   if(a.t==='arrow')return segDist(px,py,a.a[0]*w,a.a[1]*h,a.b[0]*w,a.b[1]*h)<=tol+a.w*w;
   if(a.t==='box'){const x1=Math.min(a.a[0],a.b[0])*w,x2=Math.max(a.a[0],a.b[0])*w,y1=Math.min(a.a[1],a.b[1])*h,y2=Math.max(a.a[1],a.b[1])*h,e=tol+a.w*w;
     const inX=px>=x1-e&&px<=x2+e,inY=py>=y1-e&&py<=y2+e;return inX&&inY&&(Math.abs(px-x1)<=e||Math.abs(px-x2)<=e||Math.abs(py-y1)<=e||Math.abs(py-y2)<=e);}
+  if(a.t==='redact'){const x1=Math.min(a.a[0],a.b[0])*w-tol,x2=Math.max(a.a[0],a.b[0])*w+tol,y1=Math.min(a.a[1],a.b[1])*h-tol,y2=Math.max(a.a[1],a.b[1])*h+tol;return px>=x1&&px<=x2&&py>=y1&&py<=y2;}
   if(a.t==='check'||a.t==='cross'){const s=a.s*w/2+tol;return Math.abs(px-a.x*w)<=s&&Math.abs(py-a.y*h)<=s;}
   const L=layoutText(mctx,w,a),x=a.x*w,y=a.y*h;return px>=x-tol&&px<=x+L.bw+tol&&py>=y-tol&&py<=y+L.bh+tol;
 }
@@ -1313,7 +1316,7 @@ cmp.addEventListener('pointerdown',e=>{E.orig=true;renderEdit();cmp.setPointerCa
 /* markup interaction */
 const SIZES={cl:[.014,.028,.05],pen:[.003,.0055,.0095],hl:[.014,.024,.04],txt:[.026,.038,.056],stamp:[.04,.06,.09]};
 function ptOf(e){const r=$('#ov').getBoundingClientRect();return[clamp((e.clientX-r.left)/r.width,0,1),clamp((e.clientY-r.top)/r.height,0,1)];}
-function addAnn(a){const p=E.page;p.ann.push(a);p.hist.push({k:'add',a});p.fut.length=0;redrawOv();syncControls();}
+function addAnn(a){const p=E.page;if(a.t==='redact'){try{const o=JSON.parse(localStorage.getItem('tx_oidx')||'{}');delete o[p.id];localStorage.setItem('tx_oidx',JSON.stringify(o));}catch(e){}}p.ann.push(a);p.hist.push({k:'add',a});p.fut.length=0;redrawOv();syncControls();}
 function eraseAt(pt){
   const ov=$('#ov'),r=ov.getBoundingClientRect(),w=ov.width,h=ov.height,tol=16*(w/r.width),px=pt[0]*w,py=pt[1]*h,p=E.page;
   for(let i=p.ann.length-1;i>=0;i--){if(hitTest(p.ann[i],px,py,w,h,tol)){const a=p.ann.splice(i,1)[0];p.hist.push({k:'del',a,i});p.fut.length=0;redrawOv();syncControls();return;}}
@@ -1322,7 +1325,7 @@ const ov=$('#ov');
 ov.addEventListener('pointerdown',e=>{
   if(!E.page||E.tab!=='pMarkup')return;const pt=ptOf(e),k=E.tool;ov.setPointerCapture(e.pointerId);e.preventDefault();
   if(k==='pen'||k==='hl')E.cur={t:k,c:E.color,w:SIZES[k][E.size],p:[pt]};
-  else if(k==='arrow'||k==='box')E.cur={t:k,c:E.color,w:SIZES.pen[E.size],a:pt,b:pt};
+  else if(k==='arrow'||k==='box'||k==='redact')E.cur={t:k,c:E.color,w:SIZES.pen[E.size],a:pt,b:pt};
   else if(k==='check'||k==='cross'){addAnn({t:k,c:k==='check'&&E.color==='#111111'?'#12A150':E.color,x:pt[0],y:pt[1],s:SIZES.stamp[E.size]});}
   else if(k==='text'||k==='note'){openTextBar(pt);}
   else if(k==='erase'){E.cur={erase:true};eraseAt(pt);}
@@ -1508,9 +1511,9 @@ const Lg=(a,e)=>lang==='ar'?a:e;
 const allSaved=()=>new Promise(res=>{if(!db)return res([]);try{const r=db.transaction('docs').objectStore('docs').getAll();r.onsuccess=()=>res((r.result||[]).filter(x=>!x.trashed));r.onerror=()=>res([]);}catch(e){res([]);}});
 function curRec(){if(!state.pages.length)return null;if(!state.id)state.id=newId();
   const rows=state.pages.map(p=>({id:p.id,blob:p.blob,corners:p.corners,rot:p.rot,filter:p.filter,br:p.br,ct:p.ct,sat:p.sat,ann:p.ann,thumb:p.thumb}));
-  return{id:state.id,name:state.name||defName(),rows,order:rows.map(r=>r.id),count:rows.length,thumb:rows[0].thumb,ts:Date.now()};}
+  return{id:state.id,name:state.name||defName(),rows,order:rows.map(r=>r.id),count:rows.length,thumb:rows[0].thumb,ts:Date.now(),pinned:state.pinnedId===state.id};}
 async function snapDoc(){const r=curRec();if(r)await tx('docs','readwrite',s=>s.put(r));}
-async function loadRec(rec){state.pages=rec.order.map(id=>rec.rows.find(r=>r.id===id)).filter(Boolean).map(r=>({...r,src:null,hist:[],fut:[]}));
+async function loadRec(rec){state.pinnedId=rec.pinned?rec.id:null;state.pages=rec.order.map(id=>rec.rows.find(r=>r.id===id)).filter(Boolean).map(r=>({...r,src:null,hist:[],fut:[]}));
   state.name=rec.name;state.id=rec.id;$('#docName').value=state.name;
   await tx('docs','readwrite',s=>s.delete(rec.id));await clearStore();for(const p of state.pages)await persist(p);await persistMeta();}
 async function startNew(){await snapDoc();state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();stagNext=true;renderHome();}
@@ -1523,10 +1526,10 @@ function libLabels(){$('#libT').textContent=Lg('مستنداتي','My documents'
 function closeLib(){libMode='docs';libSheet.classList.remove('on');if(!$('#sheet').classList.contains('on'))$('#scrim').classList.remove('on');}
 $('#scrim').addEventListener('click',closeLib);
 async function openLib(){libLabels();await renderLib();$('#scrim').classList.add('on');libSheet.classList.add('on');}
-async function renderLib0(){const box=$('#libList');box.innerHTML='';const saved=(await allSaved()).filter(matchQ).sort((a,b)=>b.ts-a.ts);const cur0=curRec();const cur=cur0&&matchQ(cur0)?cur0:null;let i=0;
+async function renderLib0(){const box=$('#libList');box.innerHTML='';const saved=(await allSaved()).filter(matchQ).sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||b.ts-a.ts);const cur0=curRec();const cur=cur0&&matchQ(cur0)?cur0:null;let i=0;
   const item=(r,isCur)=>{const b=document.createElement('div');b.className='lib-it'+(isCur?' cur':'');b.style.setProperty('--i',i++);b.tabIndex=0;b.setAttribute('role','button');
     b.innerHTML=`<img alt="" src="${r.thumb}"><div class="tx"><b></b><small>${Lg(r.count+' صفحة',r.count+(r.count===1?' page':' pages'))}</small></div>${isCur?`<span class="go"><svg class="i" style="width:18px;height:18px"><use href="#i-cur"/></svg>${Lg('مفتوح','Open')}</span>`:''}<button class="libdel" aria-label="delete"><svg class="i"><use href="#i-trash"/></svg></button>`;
-    $('b',b).textContent=r.name;let arm=0;const del=$('.libdel',b);
+    $('b',b).textContent=(r.pinned?'📌 ':'')+r.name;if(!isCur){const pn=document.createElement('button');pn.type='button';pn.textContent=r.pinned?Lg('إلغاء التثبيت','Unpin'):Lg('📌 تثبيت','📌 Pin');pn.style.cssText='margin-top:4px;padding:2px 10px;border-radius:10px;border:1px solid #8886;background:transparent;color:inherit;font-size:12px';pn.onclick=async e=>{e.stopPropagation();await tx('docs','readwrite',st=>st.put({...r,pinned:!r.pinned}));await renderLib();};$('.tx',b).appendChild(pn);}let arm=0;const del=$('.libdel',b);
     del.onclick=async e=>{e.stopPropagation();if(!arm){arm=1;del.classList.add('arm');del.textContent=Lg('تأكيد الحذف','Confirm');setTimeout(()=>{arm=0;del.classList.remove('arm');del.innerHTML='<svg class="i"><use href="#i-trash"/></svg>';},2600);return;}
       if(isCur){{const rr=curRec();if(rr)await tx('docs','readwrite',s=>s.put({...rr,trashed:Date.now()}));}state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}else{await tx('docs','readwrite',s=>s.put({...r,trashed:Date.now()}));toast(Lg('اتنقل لسلة المحذوفات (٣٠ يوم)','Moved to Trash (30 days)'));}
       renderHome();await renderLib();};
@@ -1717,6 +1720,7 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
   const item=(txt,fn)=>{const x=document.createElement('button');x.type='button';x.textContent=txt;x.style.cssText='text-align:start;padding:14px 16px;border-radius:14px;border:1.5px solid #8884;background:transparent;color:inherit;font:600 15px system-ui';x.onclick=()=>{bg.remove();fn();};bx.appendChild(x);};
   item('🔒 '+tt('قفل التطبيق','App lock'),openLock);
   item('🗂 '+tt('مستنداتي والنسخ الاحتياطي','My documents & backup'),()=>{const l=document.getElementById('libBtn');if(l)l.click();});
+  item((bgOn()?'✅ ':'⬜ ')+tt('فهرسة النص تلقائيًا للبحث (تحتاج إنترنت)','Auto-index text for search (needs internet)'),()=>{try{localStorage.setItem('tx_bgocr',bgOn()?'0':'1');}catch(e){}toast(bgOn()?tt('الفهرسة التلقائية شغالة','Auto-index on'):tt('الفهرسة التلقائية موقوفة','Auto-index off'));if(bgOn())setTimeout(bgOcr,300);});
   item('🌐 '+tt('اللغة','Language'),()=>{const l=document.getElementById('langBtn');if(l)l.click();});
   document.body.appendChild(bg);});
  const lb=document.getElementById('langBtn');if(lb&&lb.parentNode)lb.parentNode.insertBefore(b,lb);if(locked())show();
@@ -1811,10 +1815,15 @@ async function openLive(){
  const sfx={sel:()=>{tone(820,.05,'sine',.1);buzz(8)},on:()=>{tone(620,.07,'sine',.12,980);buzz(12)},off:()=>{tone(900,.07,'sine',.1,560);buzz(8)},lock:()=>{tone(880,.08,'sine',.12);setTimeout(()=>tone(1320,.12,'sine',.12),80);buzz([10,40,10])},shut:()=>{click();buzz(25)}};
  const setHint=(t,ok)=>{const k=t+(ok?1:0);if(k===hk)return;hk=k;hintT.textContent=t;hintEl.classList.toggle('ok',!!ok);};
  /* focus: tap-to-focus, sharpness meter, and capture that waits for a sharp frame */
- let shNow=0,shPk=0,fT=0,rfBusy=0,blurSince=0,bad=false;
+ let shNow=0,shPk=0,fT=0,rfBusy=0,blurSince=0,bad=false,lumNow=128,clipNow=0;
  const SW=192,SH=144,shc=document.createElement('canvas');shc.width=SW;shc.height=SH;const shx=shc.getContext('2d',{willReadFrequently:true});
- const sharpMeasure=()=>{if(!v.videoWidth)return 0;const vw=v.videoWidth,vh=v.videoHeight;shx.drawImage(v,vw*.325,vh*.325,vw*.35,vh*.35,0,0,SW,SH);const d=shx.getImageData(0,0,SW,SH).data,st=SW*4;let a=0,n=0;
-  for(let y=1;y<SH-1;y++)for(let x=1;x<SW-1;x++){const i=y*st+x*4,l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,lx=d[i+4]*.3+d[i+5]*.59+d[i+6]*.11,ly=d[i+st]*.3+d[i+st+1]*.59+d[i+st+2]*.11;a+=Math.abs(l-lx)+Math.abs(l-ly);n++;}return a/n;};
+ const sharpMeasure=()=>{if(!v.videoWidth)return 0;const vw=v.videoWidth,vh=v.videoHeight;shx.drawImage(v,vw*.325,vh*.325,vw*.35,vh*.35,0,0,SW,SH);const d=shx.getImageData(0,0,SW,SH).data,st=SW*4;let a=0,n=0,lm=0,cl=0;
+  for(let y=1;y<SH-1;y++)for(let x=1;x<SW-1;x++){const i=y*st+x*4,l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,lx=d[i+4]*.3+d[i+5]*.59+d[i+6]*.11,ly=d[i+st]*.3+d[i+st+1]*.59+d[i+st+2]*.11;a+=Math.abs(l-lx)+Math.abs(l-ly);n++;lm+=l;if(d[i]>=250&&d[i+1]>=250&&d[i+2]>=250)cl++;}lumNow=lumNow*.6+(lm/n)*.4;clipNow=clipNow*.6+(cl/n)*.4;return a/n;};
+ const qualMsg=q=>{const dd=(a,b)=>Math.hypot((a.x-b.x)*v.videoWidth,(a.y-b.y)*v.videoHeight),wt=dd(q[0],q[1]),wb=dd(q[3],q[2]),hl=dd(q[0],q[3]),hr=dd(q[1],q[2]),pr=Math.max(wt,wb)/Math.max(1,Math.min(wt,wb)),pv=Math.max(hl,hr)/Math.max(1,Math.min(hl,hr));
+  if(lumNow<52)return T('الإضاءة ضعيفة — فعّل الفلاش أو قرّب من نور','Low light — turn on the flash or move to a brighter spot');
+  if(clipNow>.08)return T('في انعكاس نور — غيّر الزاوية شوية','Glare detected — tilt the page slightly');
+  if(Math.max(pr,pv)>1.28)return T('الكاميرا مايلة — خليها فوق الورقة مباشرة','Camera is tilted — hold it straight above the page');
+  return '';};
  const shLoop=()=>{if(!alive)return;try{if(!document.hidden&&!gb){shNow=sharpMeasure();shPk=Math.max(shPk*.95,shNow);bad=shPk>=6&&shNow<shPk*.72;if(bad){if(!blurSince)blurSince=Date.now();}else blurSince=0;}}catch(e){}setTimeout(shLoop,110);};
  const fOk=()=>!bad||(blurSince&&Date.now()-blurSince>3000);
  const refocus=async(px,py)=>{if(!trk)return false;try{const cp=(trk.getCapabilities&&trk.getCapabilities())||{},fm=cp.focusMode||[];if(!fm.length)return false;
@@ -1881,9 +1890,9 @@ async function openLive(){
   if(!ok&&dtg&&miss<2){miss++;return;}   /* tolerate a couple of dropped frames so the outline doesn't flicker */
   if(ok)miss=0;
   last=ok?q:null;const was=stable;const fo=fOk();stable=(ok&&dl<.025&&fo)?stable+1:0;if(ok&&dl<.025&&!fo&&Date.now()-fT>1300){fT=Date.now();refocus(q.reduce((a,p)=>a+p.x,0)/4,q.reduce((a,p)=>a+p.y,0)/4);}if(ok&&stable>=2)lastGood=q;if(!ok)armed=true;
-  dtg=ok?q:null;
+  dtg=ok?q:null;const qm=ok?qualMsg(q):'';
   if(stable>=2&&was<2){lockT=performance.now();sfx.lock();}if(stable<2)lockT=0;
-  setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):(!fo?T('بيظبط الفوكس...','Focusing...'):T('جاري التحديد','Detecting')),stable>=2);};
+  setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):qm?qm:stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):(!fo?T('بيظبط الفوكس...','Focusing...'):T('جاري التحديد','Detecting')),stable>=2&&!qm);};
  const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);let q=detectCorners(sm,2);const f=detectCorners.found,b=detectCorners.best;if(f){try{q=refineQuad(sm,q,{R:.03,passes:2});}catch(e){}}judge(q,f,b);};
  const loop=()=>{if(!alive)return;const nx=ms=>{dtm=setTimeout(loop,ms)};
   if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
@@ -1962,11 +1971,35 @@ async function ocrModal(p,box){let lang=localStorage.getItem('tx_ol')||(AR()?'ar
   else if(a==='d'){const u=URL.createObjectURL(new Blob(['\ufeff'+ta.value],{type:'text/plain;charset=utf-8'})),q=document.createElement('a');q.href=u;q.download='scan.txt';q.click();setTimeout(()=>URL.revokeObjectURL(u),3000);}
   else if(a==='r'&&ta.value.trim()){dead=1;m.remove();const na={t:'txtr',id:newId(),x0:box.x0,y0:box.y0,x1:box.x1,y1:box.y1,txt:ta.value,c:ink,ff:0,sz:1,bl:3};addAnn(na);txtSheet(na);}};
  go();}
+/* ===== v21: background OCR indexing (phase 1.1) ===== */
+const BGK='tx_bgocr';const bgOn=()=>{try{return localStorage.getItem(BGK)!=='0'}catch(e){return true}};
+const bgTried=new Set();let bgBusy=0,bgAgain=0;
+async function bgOcr(){
+ if(bgBusy){bgAgain=1;return;}
+ if(!bgOn()||!navigator.onLine||document.hidden&&0)return;
+ bgBusy=1;
+ try{do{bgAgain=0;
+  for(const p of (state.pages||[]).slice()){
+   if(!p||!p.id||bgTried.has(p.id)||OI()[p.id]!==undefined)continue;
+   bgTried.add(p.id);
+   try{
+    const cv=await renderFinal(p,1600);if(!cv)continue;
+    const wk=await getW('ara+eng');await wk.setParameters({tessedit_pageseg_mode:'3'});
+    const r=await wk.recognize(cv);const Ls=r.data.lines;let T=(r.data.text||'').trim();
+    if(Ls&&Ls.length)T=Ls.map(l=>(l.words||[]).filter(w=>w.confidence>=50).map(w=>w.text).join(' ').trim()).filter(Boolean).join('\n');
+    if(T)ocrIdx(p,T,null);
+   }catch(e){console.warn('bgOcr',e);}
+   await new Promise(r=>setTimeout(r,400));
+  }
+ }while(bgAgain);}finally{bgBusy=0;}
+}
+{const _snap=snapDoc;snapDoc=async function(){const r=await _snap.apply(this,arguments);setTimeout(bgOcr,1500);return r;};}
+setTimeout(bgOcr,6000);
 /* ===== v8: grouped tools, theme toggle ===== */
 function buildTools(){buildTools0();try{regroup();}catch(e){console.error(e);}}
 let tcat=-1;
 function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).forEach(b=>M[b.dataset.k]=b);
- const GR=[[ar?'نص':'Text',['ocrbox','text','note','sign']],[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']],[ar?'رسم':'Draw',['hand','pen','hl','arrow']],[ar?'أشكال':'Shapes',['box','check','cross']]];
+ const GR=[[ar?'نص':'Text',['ocrbox','text','note','sign']],[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']],[ar?'رسم':'Draw',['hand','pen','hl','arrow']],[ar?'أشكال':'Shapes',['redact','box','check','cross']]];
  if(tcat<0){tcat=Math.max(0,GR.findIndex(g=>g[1].includes(E.tool)));if(E.tool==='pen'||tcat<0)tcat=0;}
  row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';row.append(bar,rw);
  GR.forEach((g,gi)=>{const c=document.createElement('button');c.className='tcat';c.textContent=g[0];c.onclick=()=>show(gi);bar.append(c);g[1].forEach(k=>{const b=M[k];if(!b)return;if(!b.querySelector('span')){const sp=document.createElement('span');sp.textContent=t(k);b.appendChild(sp);}if(k==='ocrbox'||k==='classo')b.classList.add('key');rw.append(b);});});
@@ -2407,44 +2440,4 @@ async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder
 function show(hh){if(document.querySelector('.upd'))return;var b=document.createElement('button');b.className='upd';b.textContent=AR2()?'\u2728 \u0641\u064a\u0647 \u062a\u062d\u062f\u064a\u062b \u062c\u062f\u064a\u062f \u2014 \u0627\u0636\u063a\u0637 \u0644\u0644\u062a\u062d\u062f\u064a\u062b':'\u2728 New update \u2014 tap to refresh';
 b.onclick=async function(){b.textContent='\u2026';try{localStorage.setItem(K,hh)}catch(e){}try{var k=await caches.keys();await Promise.all(k.map(function(x){return caches.delete(x)}))}catch(e){}try{var r=await navigator.serviceWorker.getRegistration();r&&await r.update()}catch(e){}location.reload()};document.body.appendChild(b)}
 async function check(){if(!navigator.onLine)return;try{var r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;var hh=await sha(await r.text()),o=localStorage.getItem(K);if(!o){localStorage.setItem(K,hh);return}if(o!==hh)show(hh)}catch(e){}}
-addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script><style id="splashfix">#splash .c{display:none!important}#splash .st{width:min(84vw,380px)}</style><script>/* batch2: encrypted backup (10), share-target intake (11), smart docs: type + expiry (2,4) */
-(function(){try{
-const A2E=s=>String(s||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c));
-const enc=new TextEncoder(),B=b=>btoa(String.fromCharCode(...new Uint8Array(b))),U=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-async function key(pw,salt){const m=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:200000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
-// ---- 10: encrypted backup
-const bk=$('#libBk').onclick,rs=$('#rsIn').onchange;
-$('#libBk').onclick=async()=>{const pw=prompt(Lg('كلمة سر للنسخة (سيبها فاضية لنسخة عادية). لو ضاعت مفيش استعادة','Backup password (empty = plain). If lost, no recovery'));if(!pw)return bk();
- busy(true);try{const all=[...(await allSaved())];const c=curRec();if(c)all.unshift(c);if(!all.length){busy(false);return toast(Lg('مفيش حاجة تتحفظ','Nothing to back up'));}
- const docs=[];for(const r of all)docs.push({...r,rows:await Promise.all(r.rows.map(async x=>({...x,blob:await b64(x.blob)})))});
- const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
- const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(pw,salt),enc.encode(JSON.stringify({app:'timaxo-scan',v:1,docs})));
- const r=await saveFile(new Blob([JSON.stringify({enc:'timaxo-enc',v:1,salt:B(salt),iv:B(iv),data:B(ct)})],{type:'application/json'}),'Timaxo-backup-enc-'+new Date().toISOString().slice(0,10)+'.json');
- busy(false);toast(r==='saved'?Lg('تم حفظ النسخة المشفرة','Encrypted backup saved'):Lg('تم الإلغاء','Cancelled'));}catch(e){busy(false);toast(Lg('فشل النسخ الاحتياطي','Backup failed'));}};
-$('#rsIn').onchange=async e=>{const f=e.target.files[0];if(!f)return rs(e);let j=null;try{j=JSON.parse(await f.text());}catch(_){}
- if(!j||j.enc!=='timaxo-enc')return rs({target:{files:[f],value:''}});e.target.value='';const pw=prompt(Lg('كلمة سر النسخة','Backup password'));if(!pw)return;busy(true);
- try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:U(j.iv)},await key(pw,U(j.salt)),U(j.data));busy(false);rs({target:{files:[new File([pt],'b.json')],value:''}});}catch(_){busy(false);toast(Lg('كلمة السر غلط','Wrong password'));}};
-// ---- 11: files shared from Android
-if(location.search.includes('shared=1'))idbReady.then(async()=>{try{const c=await caches.open('timaxo-share'),ks=await c.keys(),fs=[];for(const k of ks){const r=await c.match(k);const b=await r.blob();fs.push(new File([b],decodeURIComponent(k.url.split('/').pop()),{type:b.type}));await c.delete(k);}
- history.replaceState(null,'',location.pathname);const im=fs.filter(f=>/^image\//.test(f.type));if(im.length){state.queue=im.slice(1);ingest(im[0]);}}catch(e){}});
-// ---- 2 + 4: smart panel (type guess + expiry reminders) from OCR index
-const TY=[['هوية/ID',/بطاق[ةه]|رقم قومي|national id|passport|جواز|identity|هوي[ةه]/i],['فاتورة/Invoice',/فاتور[ةه]|invoice|total due|vat/i],['إيصال/Receipt',/ايصال|إيصال|receipt/i],['عقد/Contract',/عقد|contract|agreement/i],['شهادة/Certificate',/شهاد[ةه]|certificate/i],['رخصة/License',/رخص[ةه]|licen[sc]e/i]];
-const DR=/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](20\d\d)|(20\d\d)[\/\-.](\d{1,2})[\/\-.](\d{1,2})/g,KW=/انتهاء|ينتهي|صالح|expir|valid|until/i;
-function scan(txt){const T=A2E(txt),ty=(TY.find(x=>x[1].test(T))||[''])[0];let best=null;const now=Date.now();
- for(const m of T.matchAll(DR)){const d=m[3]?new Date(+m[3],+m[2]-1,+m[1]):new Date(+m[4],+m[5]-1,+m[6]);if(isNaN(d))continue;const near=KW.test(T.slice(Math.max(0,m.index-40),m.index+50));if(d.getTime()>now-30*864e5&&(near||ty)&&(!best||near&&!best.near||near===best.near&&d<best.d))best={d,near};}
- return{ty,d:best&&best.d};}
-function ics(name,d){const z=x=>String(x).padStart(2,'0'),f=d.getFullYear()+z(d.getMonth()+1)+z(d.getDate());return new Blob(['BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Timaxo//EN\r\nBEGIN:VEVENT\r\nUID:'+newId()+'@timaxo\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:]|\.\d+/g,'')+'\r\nDTSTART;VALUE=DATE:'+f+'\r\nSUMMARY:'+Lg('انتهاء: ','Expires: ')+name.replace(/[\r\n,;]/g,' ')+'\r\nBEGIN:VALARM\r\nTRIGGER:-P14D\r\nACTION:DISPLAY\r\nDESCRIPTION:Timaxo\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR'],{type:'text/calendar'});}
-async function smart(){const o=OI(),docs=await allSaved(),rows=[];for(const r of docs){const txt=(r.order||[]).map(i=>o[i]||'').join('\n');if(!txt.trim())continue;const s=scan(txt);if(s.ty||s.d)rows.push({r,...s});}
- rows.sort((a,b)=>(a.d?a.d.getTime():9e15)-(b.d?b.d.getTime():9e15));
- const m=document.createElement('div');m.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end';
- const bx=document.createElement('div');bx.style.cssText='background:var(--surface,#fff);color:var(--text,#111);width:100%;max-height:75vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px;box-sizing:border-box';
- bx.innerHTML='<b style="font-size:16px">'+Lg('مستندات ذكية: النوع وتواريخ الانتهاء','Smart docs: type & expiry')+'</b><p style="opacity:.7;font-size:12px;margin:6px 0 12px">'+Lg('بتتحسب من نص الـOCR المحفوظ. ممكن تقرأ تاريخ غلط، راجعه. التذكير بيتضاف لتقويم الجهاز.','From saved OCR text. Dates may be misread — verify. Reminder goes to your device calendar.')+'</p>';
- if(!rows.length)bx.innerHTML+='<p>'+Lg('مفيش نتايج. شغّل OCR على المستندات الأول.','Nothing found. Run OCR on documents first.')+'</p>';
- for(const x of rows){const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;align-items:center;padding:10px 0;border-top:1px solid rgba(128,128,128,.25)';const dl=x.d?Math.ceil((x.d-Date.now())/864e5):null;
-  row.innerHTML='<div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div><div style="font-size:12px;opacity:.75">'+(x.ty||'—')+(x.d?' · '+x.d.toISOString().slice(0,10)+' · '+(dl<0?Lg('منتهي','expired'):Lg('باقي ','in ')+dl+Lg(' يوم',' d')):'')+'</div></div>';row.firstChild.firstChild.textContent=x.r.name;
-  if(x.d){const b=document.createElement('button');b.textContent='🔔';b.style.cssText='border:0;border-radius:12px;padding:8px 12px;font-size:16px';b.onclick=async()=>{const r=await saveFile(ics(x.r.name,x.d),'Timaxo-reminder.ics');toast(r==='saved'?Lg('افتح الملف عشان يتضاف للتقويم','Open the file to add to calendar'):Lg('تم الإلغاء','Cancelled'));};row.appendChild(b);}bx.appendChild(row);}
- m.appendChild(bx);m.onclick=e=>{if(e.target===m)m.remove();};document.body.appendChild(m);}
-const sb=document.createElement('button');sb.id='libSm';sb.className=$('#libBk').className;sb.innerHTML='<span>'+Lg('ذكي: نوع وانتهاء','Smart: type/expiry')+'</span>';sb.onclick=smart;$('#libRs').after(sb);
-}catch(e){console.error('batch2',e);}})();
-</script>
-</body></html>
+addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script><style id="splashfix">#splash .c{display:none!important}#splash .st{width:min(84vw,380px)}</style></body></html>
