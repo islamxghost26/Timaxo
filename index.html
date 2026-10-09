@@ -78,7 +78,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .corner.c{bottom:0;left:0;border-right:0;border-top:0}.corner.d{bottom:0;right:0;border-left:0;border-top:0}
 .beam{position:absolute;inset-inline:0;top:0;height:3px;background:var(--accent);opacity:0;pointer-events:none;box-shadow:0 0 22px 6px color-mix(in srgb,var(--accent) 60%,transparent)}
 .beam::before{content:"";position:absolute;inset-inline:0;bottom:3px;height:70px;background:linear-gradient(to top,color-mix(in srgb,var(--accent) 30%,transparent),transparent)}
-.beam.run{animation:sweep 1.15s cubic-bezier(.5,0,.3,1) forwards}
+.beam.run{animation:sweep .5s cubic-bezier(.5,0,.3,1) forwards}
 @keyframes sweep{0%{top:0;opacity:0}8%{opacity:1}90%{opacity:1}100%{top:calc(100% - 3px);opacity:0}}
 .dock{display:flex;align-items:center;justify-content:space-around;gap:8px;padding:10px 16px 14px;background:var(--bg);border-top:1px solid var(--line)}
 .dk{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:72px;padding:6px 8px;border-radius:14px;font-size:12px;font-weight:700;color:var(--ink2)}
@@ -783,7 +783,22 @@ function detectCorners(src,fast){
     const r=[];for(let i=0;i<4;i++){const p=inter(Ls[(i+3)%4],Ls[i]);r.push(p&&isFinite(p.x)&&isFinite(p.y)?p:q[i]);}
     return r;};
   const cands=[];
-  const add=q=>{if(!q)return;const s0=score(q);let b=q,s=s0;const q2=snap(q,8),s2=score(q2);if(s2>=s0*.95&&Math.abs(area(q2)-area(q))<.25*area(q)){b=q2;s=s2;}if(s>0)cands.push({q:b,s});};
+  /* real-boundary gate: each side must separate two clearly different colours (paper vs background) and the inside must look like one sheet */
+  const px3=(x,y)=>{x=clamp(Math.round(x),1,w-2);y=clamp(Math.round(y),1,h-2);let r=0,g2=0,b2=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const k=((y+j)*w+x+i)*4;r+=d[k];g2+=d[k+1];b2+=d[k+2];}return[r/9,g2/9,b2/9];};
+  const gate=q=>{const cxq=(q[0].x+q[1].x+q[2].x+q[3].x)/4,cyq=(q[0].y+q[1].y+q[2].y+q[3].y)/4,off=Math.max(3,Math.round(Math.max(w,h)/90)),T=9;let sum=0,mn=1;
+    for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;let nx=-dy/len,ny=dx/len;
+      if(nx*(cxq-(a.x+b.x)/2)+ny*(cyq-(a.y+b.y)/2)<0){nx=-nx;ny=-ny;}
+      const n=Math.max(10,(len/4)|0);let ok=0,tot=0;
+      for(let k=0;k<n;k++){const f=(k+.5)/n,x=a.x+dx*f,y=a.y+dy*f,ox=x-nx*off,oy=y-ny*off,ix=x+nx*off,iy=y+ny*off;
+        tot++;if(ox<2||oy<2||ox>w-3||oy>h-3||ix<2||iy<2||ix>w-3||iy>h-3){ok+=.6;continue;}
+        const A=px3(ix,iy),B=px3(ox,oy);if((Math.abs(A[0]-B[0])+Math.abs(A[1]-B[1])+Math.abs(A[2]-B[2]))/3>=T)ok++;}
+      const sd=ok/tot;sum+=sd;if(sd<mn)mn=sd;}
+    return{mean:sum/4,min:mn};};
+  const geo=q=>{const A=area(q)/N;if(A<.08||A>1.15)return 0;let ang=1;
+    for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],e=q[(i+2)%4],ux=a.x-b.x,uy=a.y-b.y,vx=e.x-b.x,vy=e.y-b.y,co=(ux*vx+uy*vy)/((Math.hypot(ux,uy)*Math.hypot(vx,vy))||1);if(Math.abs(co)>.6)ang*=.5;}
+    return Math.min(1,A/.3)*ang*(A>.9?.5:1)*asp(q);};
+  const add=q=>{if(!q)return;const s0=score(q);let b=q,s=s0;const q2=snap(q,8),s2=score(q2);if(s2>=s0*.95&&Math.abs(area(q2)-area(q))<.25*area(q)){b=q2;s=s2;}
+    const gm=geo(b);if(gm<=0)return;const gg=gate(b);if(gg.min<.5||gg.mean<.7)return;cands.push({q:b,s:(.6*gg.mean+.4*gg.min)*gm*(.75+.25*Math.min(1,s))});};
   // A) brightness segmentation, both polarities
   const hs=new Float64Array(256);for(let i=0;i<N;i++)hs[clamp(gb[i]|0,0,255)]++;
   let sum=0;for(let i=0;i<256;i++)sum+=i*hs[i];let wB=0,sB=0,bv=-1,th=128;
@@ -806,6 +821,17 @@ function detectCorners(src,fast){
    for(let i=0;i<256;i++){w1+=hh[i];if(!w1)continue;const w2=N-w1;if(!w2)break;s1+=i*hh[i];const m1=s1/w1,m2=(s2-s1)/w2,v=w1*w2*(m1-m2)*(m1-m2);if(v>bv2){bv2=v;t2=i;}}
    t2=Math.max(12,t2);const cm=new Uint8Array(N);for(let i=0;i<N;i++)cm[i]=db[i]>t2?1:0;
    const cr=comp(cm);if(cr.bn/N>.1)add(quadOf(cr.lab,cr.bl));}
+  // D) region-grow from the centre of the frame (the sheet is usually where the user points the camera)
+  {const ch=[0,1,2].map(c=>{const a=new Float32Array(N);for(let i=0;i<N;i++)a[i]=d[i*4+c];return boxBlur(a,w,h,2);}),med=[0,0,0],
+    x0=(w*.42)|0,x1=(w*.58)|0,y0=(h*.42)|0,y1=(h*.58)|0;
+   for(let c=0;c<3;c++){const v=[];for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)v.push(ch[c][y*w+x]);v.sort((a,b)=>a-b);med[c]=v[v.length>>1];}
+   for(const tol of[18,32]){const m=new Uint8Array(N),st=new Int32Array(N);let sp=0;
+    const ok=i=>!m[i]&&(Math.abs(ch[0][i]-med[0])+Math.abs(ch[1][i]-med[1])+Math.abs(ch[2][i]-med[2]))/3<=tol;
+    const seed=(w>>1)+(h>>1)*w;m[seed]=1;st[sp++]=seed;
+    while(sp){const i=st[--sp],x=i%w,y=(i/w)|0;
+     if(x>0&&ok(i-1)){m[i-1]=1;st[sp++]=i-1;}if(x<w-1&&ok(i+1)){m[i+1]=1;st[sp++]=i+1;}
+     if(y>0&&ok(i-w)){m[i-w]=1;st[sp++]=i-w;}if(y<h-1&&ok(i+w)){m[i+w]=1;st[sp++]=i+w;}}
+    const r=comp(m);if(r.bn/N>.1)add(quadOf(r.lab,r.bl));}}
   cands.sort((a,b)=>b.s-a.s);
   const norm=q=>{const cxm=q.reduce((s,p)=>s+p.x,0)/4,cym=q.reduce((s,p)=>s+p.y,0)/4;
     return q.map(p=>({x:clamp((p.x+.5)/w-((p.x+.5)/w-(cxm+.5)/w)*.002,0,1),y:clamp((p.y+.5)/h-((p.y+.5)/h-(cym+.5)/h)*.002,0,1)}));};
@@ -814,8 +840,8 @@ function detectCorners(src,fast){
   for(const c of cands){if(c.s<Math.max(.3,cands[0].s*.55))break;const n=norm(c.q);
     if(!raw.some(o=>o.every((p,i)=>Math.hypot(p.x-n[i].x,p.y-n[i].y)<.05)))raw.push(n);if(raw.length>=3)break;}
   const out=fast?raw:raw.map(n=>{try{return refineQuad(src,n,{R:.025,passes:3});}catch(e){return n;}});
-  out.push(full);
-  detectCorners.alts=out;detectCorners.src=src;detectCorners.found=raw.length>0;detectCorners.best=cands.length?cands[0].s:0;
+  const nFound=raw.length;out.push(full);
+  detectCorners.alts=out;detectCorners.src=src;detectCorners.found=nFound>0;detectCorners.best=cands.length?cands[0].s:0;
   return out[0];
 }
 
@@ -1041,10 +1067,10 @@ async function makeThumb(p){const src=await getSrc(p),w=warpRot(src,p,360),b=mak
 async function ingest(file){
   busy(true);
   try{
-    const canvas=await decodeBlob(file),blob=await toBlob(canvas,'image/jpeg',.9);
+    const canvas=(file&&file.__cv)||await decodeBlob((file&&file.__blob)||file),bp=(file&&file.__blob)?Promise.resolve(file.__blob):toBlob(canvas,'image/jpeg',.9);
     let lq=(file&&file.__q)||null,cr0;
     if(lq){if(file.__x)cr0=lq.map(x=>({x:x.x,y:x.y}));else{try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}}}else cr0=detectCorners(canvas);
-    const p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
+    const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
     state.draft=p;busy(false);await openCrop(p,'new');
   }catch(e){busy(false);toast(t('openFail'));console.error(e);}
 }
@@ -1091,7 +1117,7 @@ async function openCrop(p,from){
   if(from==='new'){
     const target=p.corners.map(q=>({...q}));p.corners=[{x:.06,y:.06},{x:.94,y:.06},{x:.94,y:.94},{x:.06,y:.94}];drawQuad();
     const b=$('#beam');b.classList.remove('run');void b.offsetWidth;b.classList.add('run');
-    await sleep(1050);$('#cropSvg').classList.add('in');await tween(p.corners,target,520);
+    await sleep(430);$('#cropSvg').classList.add('in');await tween(p.corners,target,320);
   }else{$('#cropSvg').classList.add('in');}
   $('#cropHint').style.opacity=1;
 }
@@ -1618,7 +1644,7 @@ let nat=0;
 $('#camIn').addEventListener('click',e=>{if(nat||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))return;e.preventDefault();e.stopImmediatePropagation();openLive();},true);
 async function openLive(){
  const ar=AR(),T=(a,b)=>ar?a:b;
- const ask=id=>navigator.mediaDevices.getUserMedia({video:Object.assign(id?{deviceId:{exact:id}}:{facingMode:{ideal:'environment'}},{width:{ideal:2560},height:{ideal:2560},frameRate:{ideal:30,max:30}}),audio:false});
+ const ask=id=>navigator.mediaDevices.getUserMedia({video:Object.assign(id?{deviceId:{exact:id}}:{facingMode:{ideal:'environment'}},{width:{ideal:2560},height:{ideal:1920},frameRate:{ideal:30,max:30}}),audio:false});
  let stream;try{stream=await ask(localStorage.getItem('tx_lens')).catch(()=>ask(null));}
  catch(e){toast(T('الكاميرا غير متاحة، هنفتح كاميرا الجهاز','Camera unavailable, using device camera'));nat=1;$('#camIn').click();nat=0;return;}
  if(!document.getElementById('lvcss')){const s=document.createElement('style');s.id='lvcss';s.textContent=`
@@ -1638,7 +1664,7 @@ async function openLive(){
 #lv .ib.fl.on svg{fill:currentColor}
 #lv .ib.sp svg{animation:lvsp .35s ease}
 @keyframes lvsp{to{transform:rotate(180deg)}}
-#lv .hint{position:absolute;top:calc(env(safe-area-inset-top,0px) + 70px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(18,22,38,.66);color:#fff;font:600 13px system-ui;white-space:nowrap;direction:rtl}
+#lv .hint{position:absolute;inset-inline:auto;bottom:auto;right:auto;height:auto;width:max-content;max-width:92%;top:calc(env(safe-area-inset-top,0px) + 70px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(18,22,38,.66);color:#fff;font:600 13px system-ui;white-space:nowrap;direction:rtl}
 #lv .hint i{width:9px;height:9px;border-radius:50%;background:#ffd60a;transition:background .15s,transform .2s}
 #lv .hint.ok i{background:#22e07a;transform:scale(1.4)}
 #lv .fl2{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
@@ -1678,7 +1704,7 @@ async function openLive(){
  let mode=localStorage.getItem('tx_mode')||'doc',multi=localStorage.getItem('tx_multi')==='1',auto=localStorage.getItem('tx_auto')!=='0',snd=localStorage.getItem('tx_snd')!=='0';
  let stable=0,last=null,lastGood=null,alive=true,gb=0,armed=true,torch=false,trk=null,files=[],bz=0,lockT=0,dtm=0,raf=0,backs=[],bi=0,hk='';
  /* ---- feedback: haptics + synthesized sounds ---- */
- const buzz=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
+ const buzz=n=>{try{if(localStorage.getItem('tx_hap')!=='0'&&navigator.vibrate)navigator.vibrate(n)}catch(e){}};
  let ac=null;try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
  const tone=(f,d,t,vol,f2)=>{if(!snd||!ac)return;try{if(ac.state==='suspended')ac.resume();const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime;o.type=t||'sine';o.frequency.setValueAtTime(f,n);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+d);g.gain.setValueAtTime(vol||.12,n);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+d+.02);}catch(e){}};
  const click=()=>{if(!snd||!ac)return;try{const n=ac.currentTime,len=Math.floor(ac.sampleRate*.09),b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=b;f.type='highpass';f.frequency.value=1500;g.gain.value=.5;s.connect(f);f.connect(g);g.connect(ac.destination);s.start(n);tone(190,.09,'square',.08,70);}catch(e){}};
@@ -1692,7 +1718,7 @@ async function openLive(){
   mb.classList.toggle('on',multi);snb.classList.toggle('on',snd);snb.innerHTML=S(snd?'sn':'sm');
   const ix=mode==='doc'?0:mode==='id'?1:2;seg.style.transform='translateX('+ix*100+'%)';m.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
   db.style.display=files.length?'flex':'none';db.querySelector('span').textContent=T('تم','Done')+' · '+files.length;};
- const close=()=>{alive=false;clearTimeout(dtm);cancelAnimationFrame(raf);try{ac&&ac.close()}catch(e){}stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>m.remove(),160);};
+ const close=()=>{alive=false;clearTimeout(dtm);cancelAnimationFrame(raf);try{wk&&wk.terminate()}catch(e){}wk=null;try{ac&&ac.close()}catch(e){}stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>m.remove(),160);};
  const finish=()=>{close();if(!files.length)return;state.queue=files.slice(1);ingest(files[0]);};
  const guideQ=()=>{const vw=v.videoWidth||4,vh=v.videoHeight||3;let gw,gh;
   if(mode==='id'){gw=.88*vw;gh=gw/1.586;if(gh>.78*vh){gh=.78*vh;gw=gh*1.586;}}else{gh=.8*vh;gw=gh*.75;if(gw>.88*vw){gw=.88*vw;gh=gw/.75;}}
@@ -1719,27 +1745,44 @@ async function openLive(){
    g.globalAlpha=1;}
   if(dA>.02&&dq){const lk=stable>=2;g.globalAlpha=dA;g.beginPath();dq.forEach((p,i)=>{i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p));});g.closePath();g.lineWidth=3;g.strokeStyle=lk?'#22e07a':'#ffd60a';g.fillStyle=lk?'rgba(34,224,122,.2)':'rgba(255,214,10,.12)';g.fill();g.stroke();
    g.fillStyle=lk?'#22e07a':'#ffd60a';dq.forEach(p=>{g.beginPath();g.arc(X(p),Y(p),5,0,7);g.fill();});g.globalAlpha=1;}
-  const pc=(auto&&mode==='doc'&&lockT)?Math.min(100,(performance.now()-lockT)/1100*100):0;const pk=pc.toFixed(0);if(pk!==pP){pP=pk;sh.style.setProperty('--p',pk+'%');}
+  const pc=(auto&&mode==='doc'&&lockT)?Math.min(100,(performance.now()-lockT)/800*100):0;const pk=pc.toFixed(0);if(pk!==pP){pP=pk;sh.style.setProperty('--p',pk+'%');}
   if(pc>=100&&armed&&auto&&mode==='doc')grab();};
  const rr=(g,x,y,w,h,r)=>{g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();};
  /* ---- detection loop (adaptive: never starves the UI) ---- */
  const sm=document.createElement('canvas'),sx=sm.getContext('2d',{willReadFrequently:true});
  const area=q=>{let a=0;for(let i=0;i<4;i++){const p=q[i],n=q[(i+1)%4];a+=p.x*n.y-n.x*p.y;}return Math.abs(a)/2;};
- const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);
-  const q=detectCorners(sm,2),ar2=area(q),vw=v.videoWidth,vh=v.videoHeight,d=(a,b)=>Math.hypot((a.x-b.x)*vw,(a.y-b.y)*vh),w=(d(q[0],q[1])+d(q[3],q[2]))/2,h=(d(q[0],q[3])+d(q[1],q[2]))/2,rt=Math.max(w,h)/Math.max(1,Math.min(w,h)),
-   ok=detectCorners.found&&detectCorners.best>=.42&&ar2>.15&&ar2<.88&&rt<2.4,dl=last?Math.max(...q.map((p,i)=>Math.hypot(p.x-last[i].x,p.y-last[i].y))):1;
-  last=q;const was=stable;stable=(ok&&dl<.02)?stable+1:0;if(ok&&stable>=2)lastGood=q;if(!ok)armed=true;
+ /* worker keeps detection off the UI thread; falls back to the main thread when OffscreenCanvas/Worker aren't available */
+ let wk=null,wkBusy=0,wkT=0,miss=0;
+ const mkWorker=()=>{try{if(!(window.Worker&&window.OffscreenCanvas&&window.createImageBitmap))return null;
+  const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+asp.toString()+';const refineQuad=()=>{throw 0};'+detectCorners.toString()
+   +';onmessage=e=>{const b=e.data;let q=null,f=false,s=0;try{q=detectCorners(b,2);f=detectCorners.found;s=detectCorners.best}catch(x){}try{b.close()}catch(x){}postMessage({q:q,f:f,s:s})};';
+  const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'})),w=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
+  w.onmessage=e=>{wkBusy=0;try{if(alive&&e.data&&e.data.q&&mode==='doc'&&!gb)judge(e.data.q,e.data.f,e.data.s);}catch(x){}};
+  w.onerror=()=>{wkBusy=0;try{w.terminate()}catch(x){}if(wk===w)wk=null;};return w;}catch(e){return null;}};
+ const judge=(q,found,best)=>{
+  const ar2=area(q),vw=v.videoWidth,vh=v.videoHeight,d=(a,b)=>Math.hypot((a.x-b.x)*vw,(a.y-b.y)*vh),w=(d(q[0],q[1])+d(q[3],q[2]))/2,h=(d(q[0],q[3])+d(q[1],q[2]))/2,rt=Math.max(w,h)/Math.max(1,Math.min(w,h)),
+   ok=found&&best>=.5&&ar2>.12&&ar2<.9&&rt<3,dl=last?Math.max(...q.map((p,i)=>Math.hypot(p.x-last[i].x,p.y-last[i].y))):1;
+  if(!ok&&dtg&&miss<2){miss++;return;}   /* tolerate a couple of dropped frames so the outline doesn't flicker */
+  if(ok)miss=0;
+  last=ok?q:null;const was=stable;stable=(ok&&dl<.025)?stable+1:0;if(ok&&stable>=2)lastGood=q;if(!ok)armed=true;
   dtg=ok?q:null;
   if(stable>=2&&was<2){lockT=performance.now();sfx.lock();}if(stable<2)lockT=0;
   setHint(!ok?T('وجّه الكاميرا على الورقة','Point at the document'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):T('جاري التحديد','Detecting'),stable>=2);};
- const loop=()=>{if(!alive)return;const t0=performance.now();try{if(!document.hidden&&mode==='doc'&&v.videoWidth&&!gb)detect();else if(mode!=='doc')setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}catch(e){}
-  dtm=setTimeout(loop,Math.min(1200,Math.max(250,(performance.now()-t0)*3)));};
- const grab=async()=>{if(gb||!v.videoWidth)return;gb=1;lockT=0;sfx.shut();fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
-  const vw=v.videoWidth,vh=v.videoHeight,md=mode,q=md==='doc'?(stable>=2&&lastGood?lastGood:null):guideQ();
-  const c=document.createElement('canvas');c.width=vw;c.height=vh;c.getContext('2d').drawImage(v,0,0);
-  const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));const f=new File([blob],'scan.jpg',{type:'image/jpeg'});
-  if(q){f.__q=q;if(md!=='doc')f.__x=1;}files.push(f);
-  if(multi){armed=false;stable=0;last=null;dtg=null;setTimeout(()=>armed=true,5000);lab();db.classList.remove('pop');void db.offsetWidth;db.classList.add('pop');gb=0;}else finish();};
+ const detect=()=>{const W=360,H=Math.round(360*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);judge(detectCorners(sm,2),detectCorners.found,detectCorners.best);};
+ const loop=()=>{if(!alive)return;const nx=ms=>{dtm=setTimeout(loop,ms)};
+  if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
+  if(wk){if(wkBusy){if(performance.now()-wkT>4000){try{wk.terminate()}catch(e){}wk=null;wkBusy=0;}nx(60);return;}
+   wkBusy=1;wkT=performance.now();const W=360,H=Math.round(W*v.videoHeight/v.videoWidth);
+   createImageBitmap(v,{resizeWidth:W,resizeHeight:H,resizeQuality:'low'}).then(bm=>wk.postMessage(bm,[bm])).catch(()=>{wkBusy=0;try{wk&&wk.terminate()}catch(e){}wk=null;});
+   nx(80);return;}
+  const t0=performance.now();try{detect();}catch(e){}
+  nx(Math.min(900,Math.max(150,(performance.now()-t0)*2)));};
+ /* capture: grab the frame synchronously and hand the canvas straight to ingest (no encode/decode round-trip) */
+ const grab=()=>{if(gb||!v.videoWidth)return;gb=1;lockT=0;sfx.shut();fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+  const vw=v.videoWidth,vh=v.videoHeight,md=mode,q=md==='doc'?(dtg||null):guideQ();
+  const c=document.createElement('canvas');c.width=vw;c.height=vh;c.getContext('2d',{alpha:false}).drawImage(v,0,0);
+  const F={__cv:c,__q:q,__x:(md!=='doc'&&q)?1:0};files.push(F);
+  if(multi){c.toBlob(bl=>{if(bl){F.__blob=bl;F.__cv=null;}},'image/jpeg',.9);armed=false;stable=0;last=null;dtg=null;setTimeout(()=>armed=true,5000);lab();db.classList.remove('pop');void db.offsetWidth;db.classList.add('pop');gb=0;}else finish();};
  const sw=async id=>{const prev=trk&&trk.getSettings().deviceId;stream.getTracks().forEach(t=>t.stop());
   try{attach(await ask(id));localStorage.setItem('tx_lens',id);}catch(e){try{attach(await ask(prev||null));}catch(e2){}toast(T('العدسة دي مش متاحة','Lens unavailable'));}};
  const score=d=>(/ultra|wide|tele|macro|depth|zoom/i.test(d.label)?10:0);
@@ -1756,7 +1799,7 @@ async function openLive(){
   else if(a==='sn'){snd=!snd;localStorage.setItem('tx_snd',snd?'1':'0');lab();if(snd)sfx.on();buzz(8);}
   else if(a==='f'){setTorch(!torch);torch?sfx.on():sfx.off();}
   else if(a==='l'){if(backs.length<2){toast(T('مفيش عدسات تانية','No other lens'));return;}b.classList.remove('sp');void b.offsetWidth;b.classList.add('sp');sfx.sel();bi=(bi+1)%backs.length;sw(backs[bi].deviceId);toast(T('عدسة ','Lens ')+(bi+1)+'/'+backs.length);}});
- attach(stream);lab();lenses();raf=requestAnimationFrame(frame);loop();
+ wk=mkWorker();attach(stream);lab();lenses();raf=requestAnimationFrame(frame);loop();
 }
 
 /* ===== v6: OCR (full page + region), text replace ===== */
@@ -2034,8 +2077,57 @@ if(top&&!standalone){top.insertBefore(ib,document.getElementById('langBtn'));
  addEventListener('appinstalled',()=>{ib.hidden=true;});
  document.getElementById('langBtn')?.addEventListener('click',()=>setTimeout(setIb,50));}
 // Haptics
-const buzz=n=>navigator.vibrate&&navigator.vibrate(n);
-['scanBtn','galBtn','cropGo','doneBtn','xGo'].forEach(id=>document.getElementById(id)?.addEventListener('click',()=>buzz(12)));
+/* ===== App-wide feedback: synthesized sounds + vibration (shares tx_snd with the camera; tx_hap = vibration) ===== */
+const FX=(()=>{
+ const rd=k=>{try{return localStorage.getItem(k)}catch(e){return null}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+ const snd=()=>rd('tx_snd')!=='0',hap=()=>rd('tx_hap')!=='0';
+ let ac=null,lastT=0;
+ const ctx=()=>{if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(ac&&ac.state==='suspended')ac.resume().catch(()=>{});return ac;};
+ const tone=(f,d,t,vol,f2,at)=>{if(!snd())return;const a=ctx();if(!a)return;try{const o=a.createOscillator(),g=a.createGain(),n=a.currentTime+(at||0);o.type=t||'sine';o.frequency.setValueAtTime(f,n);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+d);g.gain.setValueAtTime(0.0001,n);g.gain.exponentialRampToValueAtTime(vol||.06,n+.006);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(a.destination);o.start(n);o.stop(n+d+.03);}catch(e){}};
+ const vib=p=>{if(!hap())return;try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+ const K={
+  tap:()=>{tone(1150,.03,'sine',.045);vib(7)},
+  sel:()=>{tone(780,.05,'sine',.06,980);vib(9)},
+  tick:()=>{tone(1500,.015,'sine',.025);vib(4)},
+  ok:()=>{tone(660,.09,'sine',.08);tone(990,.14,'sine',.08,null,.08);vib([12,50,18])},
+  err:()=>{tone(240,.16,'triangle',.09,150);vib([35,45,35])},
+  del:()=>{tone(520,.12,'triangle',.07,260);vib(22)},
+  note:()=>{tone(880,.07,'sine',.05);vib(8)}
+ };
+ const play=k=>{const n=performance.now();if(n-lastT<35&&k!=='ok'&&k!=='err')return;lastT=n;try{(K[k]||K.tap)()}catch(e){}};
+ const mode=()=>snd()&&hap()?'all':hap()?'hap':'off';
+ return{play,mode,tone,vib,snd,hap,set:m=>{wr('tx_snd',m==='all'?'1':'0');wr('tx_hap',m==='off'?'0':'1');}};
+})();
+window.TXFX=FX;
+const buzz=n=>FX.vib(n);
+(()=>{ /* wiring */
+ const OKB=new Set(['cropGo','doneBtn','xGo','iGo','nextBtn']),DELB=/^(delPg|clrBtn)$/;
+ const clsOf=el=>{const id=el.id||'',c=el.className&&el.className.baseVal===undefined?String(el.className):'';
+  if(DELB.test(id)||/\b(pgdel|del|trash)\b/.test(c))return'del';
+  if(OKB.has(id))return'ok';
+  if(/\b(tool|tab|chip|seg|flt|tgl|sw)\b/.test(c)||el.getAttribute('role')==='tab'||el.getAttribute('aria-pressed')!==null)return'sel';
+  return'tap';};
+ addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('button,[role=button],[role=tab],.chip,.tool,.pg,.idt,label.sw,a.btn,summary');
+  if(!t||t.disabled||t.closest('#lv,#qrOv'))return;if(t.dataset&&t.dataset.nofx!==undefined)return;
+  const k=clsOf(t);if(k==='ok')return;FX.play(k);paintFx();},true);          /* 'ok' buttons play on click so a cancelled press stays silent */
+ addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button');if(!t||t.closest('#lv,#qrOv'))return;if(clsOf(t)==='ok')FX.play('ok');},true);
+ let sl=0;addEventListener('input',e=>{const t=e.target;if(t&&t.type==='range'){const n=performance.now();if(n-sl>70){sl=n;FX.play('tick');}}},true);
+ const tt=document.getElementById('toast');
+ if(tt){let was=false;new MutationObserver(()=>{const on=tt.classList.contains('on');if(on&&!was){const m=tt.textContent||'';
+   FX.play(/تعذّر|تعذر|فشل|مش |غير متاح|مفيش|خاطئ|failed|unavailable|not |can.?t|error|wrong|cannot/i.test(m)?'err':/اتصدّر|اتحفظ|حفظ|تمت|اتفعّل|اتلغى|جاهز|بدأت|saved|exported|done|ready|restored|started|enabled|removed/i.test(m)?'ok':'note');}was=on;}).observe(tt,{attributes:true,attributeFilter:['class']});}
+ /* sound / vibration switch in the header */
+ const lang=document.getElementById('langBtn');
+ if(lang){const b=document.createElement('button');b.className='lang';b.id='fxBtn';b.dataset.nofx='';b.style.cssText='min-width:42px;display:grid;place-items:center;padding:0 10px';
+  const IC={all:'<path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10"/>',hap:'<rect x="8" y="3" width="8" height="18" rx="2"/><path d="M3 8v8M21 8v8M5.5 10.5v3M18.5 10.5v3"/>',off:'<path d="M11 5L6 9H3v6h3l5 4zM17 9l5 6M22 9l-5 6"/>'};
+  const L={all:['صوت واهتزاز','Sound + vibration'],hap:['اهتزاز بس','Vibration only'],off:['صامت','Silent']};
+  const isAr=()=>document.documentElement.lang==='ar'||document.documentElement.dir==='rtl';
+  const paint=()=>{const m=FX.mode();b.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+IC[m]+'</svg>';b.setAttribute('aria-label',L[m][isAr()?0:1]);};
+  window.paintFx=paint;paint();
+  b.onclick=()=>{const o=['all','hap','off'],n=o[(o.indexOf(FX.mode())+1)%3];FX.set(n);paint();FX.play(n==='off'?'tap':'sel');
+   const tm=document.getElementById('toast');if(tm){tm.textContent=L[n][isAr()?0:1];tm.classList.add('on');clearTimeout(window.__fxT);window.__fxT=setTimeout(()=>tm.classList.remove('on'),1400);}};
+  lang.parentNode.insertBefore(b,lang);document.addEventListener('visibilitychange',paint);}
+})();
+function paintFx(){window.paintFx&&window.paintFx();}
 // Drag & drop + paste (desktop PWA)
 const gal=document.getElementById('galIn'),dz=document.getElementById('dropzone');
 const feed=files=>{const imgs=[...files].filter(f=>f.type.startsWith('image/'));if(!imgs.length||!gal)return;
