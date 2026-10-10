@@ -249,6 +249,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <button type="button" data-a="blank"></button>
     </div>
     <button class="scanbtn" id="scanBtn" data-ta="scan" type="button"><svg class="i"><use href="#i-cam"/></svg></button>
+    <button id="galFab" type="button" aria-label="استيراد من الجهاز"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg></button>
     <button class="dk" id="galBtn" hidden type="button"></button>
   </section>
 
@@ -2900,4 +2901,5 @@ function edit(){var p=get(),e=en(),m=document.createElement('div');m.id='pfMod';
  document.body.appendChild(m);}
 new MutationObserver(function(){if(!tb.hidden)draw();}).observe(tb,{attributes:true,attributeFilter:['hidden']});draw();
 })();
-</script></body></html>
+</script><style id="galFabCss">#galFab{display:none}#vHome #galFab{display:grid;place-items:center;position:absolute;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 6px);right:104px;width:56px;height:56px;border-radius:50%;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 10px 22px -10px var(--shadow);z-index:6;touch-action:manipulation}#vHome #galFab:active{transform:scale(.92)}</style><script>(function(){var g=document.getElementById('galFab');if(!g)return;g.onclick=function(){window.__txNew=window.__txMode&&window.__txMode()==='docs';document.getElementById('galIn').click();};
+function lb(){try{g.setAttribute('aria-label',lang==='ar'?'استيراد من الجهاز':'Import from device')}catch(e){}}lb();var l=document.getElementById('langBtn');if(l)l.addEventListener('click',function(){setTimeout(lb,60)});})();</script></body></html>
