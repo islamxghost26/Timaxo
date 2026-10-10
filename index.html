@@ -1714,13 +1714,13 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
  const bioReg=async()=>{try{const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Timaxo Scan'},user:{id:rnd(16),name:'timaxo',displayName:'Timaxo'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000,attestation:'none'}});
   if(!c)return false;L.setItem(KB,b64(new Uint8Array(c.rawId)));return true;}catch(e){return false;}};
  const bioAuth=async()=>{try{const id=L.getItem(KB);if(!id)return false;const r=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb(id)}],userVerification:'required',timeout:60000}});return !!r;}catch(e){return false;}};
- const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#0b1020;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:600 16px system-ui';
- ov.innerHTML='<div style="font-size:42px">🔒</div><div></div><button type="button" style="display:none;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;border:0;background:#22d3f5;color:#04202b;font:700 16px system-ui"></button><input type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:28px;text-align:center;width:190px;padding:10px;border-radius:12px;border:0;letter-spacing:8px"><div style="color:#ff8a80;min-height:20px"></div>';
+ const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:radial-gradient(circle at 50% 18%,#1a3a7a 0%,#0a1230 55%,#060a18 100%);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;font:700 18px system-ui;padding:24px;box-sizing:border-box;text-align:center';
+ ov.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:6px"><span style="width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#4a86ff,#22d3f5);box-shadow:0 14px 40px -10px rgba(34,211,245,.7),0 0 0 8px rgba(255,255,255,.07)"><svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="#031033" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.3" fill="#031033"/></svg></span><span style="font:800 13px system-ui;letter-spacing:2px;opacity:.7">TIMAXO SCAN</span></div><div style="font:800 22px system-ui"></div><button type="button" style="display:none;align-items:center;justify-content:center;gap:10px;min-width:230px;padding:15px 28px;border-radius:18px;border:0;background:linear-gradient(135deg,#4a86ff,#22d3f5);color:#031033;font:800 16px system-ui;box-shadow:0 12px 28px -10px rgba(34,211,245,.8)"></button><input type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font:700 30px system-ui;text-align:center;width:min(240px,80vw);padding:12px;border-radius:18px;border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.09);color:#fff;letter-spacing:12px;outline:none"><div style="color:#ff9a90;min-height:22px;font:600 14px system-ui"></div>';
  document.body.appendChild(ov);const[,ti,bb,inp,er]=ov.children;
  const open=()=>{ov.style.display='none';};
  const tryBio=async()=>{if(!hasBio())return;if(await bioAuth())open();else er.textContent=tt('البصمة ماتأكدتش','Fingerprint not verified');};
  const show=()=>{ov.style.display='flex';ti.textContent=hasPin()?tt('أدخل الرقم السري','Enter PIN'):tt('افتح بالبصمة','Unlock with fingerprint');
-  inp.style.display=hasPin()?'':'none';bb.style.display=hasBio()?'flex':'none';bb.textContent='👆 '+tt('افتح بالبصمة','Use fingerprint');inp.value='';er.textContent='';
+  inp.style.display=hasPin()?'':'none';bb.style.display=hasBio()?'flex':'none';bb.textContent=tt('افتح بالبصمة','Use fingerprint');inp.value='';er.textContent='';
   if(hasPin())setTimeout(()=>{if(!hasBio())inp.focus();},60);if(hasBio())setTimeout(tryBio,250);};
  bb.onclick=tryBio;
  const chk=async()=>{if(inp.value.length>=4&&await h(inp.value)===L.getItem(K)){open();return true;}return false;};
@@ -1728,16 +1728,18 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
  /* settings sheet: PIN / fingerprint / both / none — asks for current auth before changing anything */
  const verify=async()=>{if(!locked())return true;if(hasPin()){const v=prompt(tt('أدخل الرقم السري الحالي','Enter current PIN'));return !!v&&await h(v)===L.getItem(K);}return await bioAuth();};
  const sheet=()=>{const bg=document.createElement('div');bg.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center';
-  const bx=document.createElement('div');bx.style.cssText='background:var(--surface,#fff);color:var(--ink,#071a4d);width:min(440px,100%);border-radius:22px 22px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom,0px) + 18px);font:600 15px system-ui;display:flex;flex-direction:column;gap:10px';
+  const bx=document.createElement('div');bx.style.cssText='background:var(--surface,#fff);color:var(--ink,#071a4d);width:min(460px,100%);border-radius:26px 26px 0 0;padding:20px 16px calc(env(safe-area-inset-bottom,0px) + 18px);font:600 15px system-ui;display:flex;flex-direction:column;gap:10px;box-shadow:0 -10px 40px rgba(0,0,0,.3)';
   bg.appendChild(bx);bg.onclick=e=>{if(e.target===bg)bg.remove();};document.body.appendChild(bg);
-  const row=(txt,on,fn)=>{const b=document.createElement('button');b.type='button';b.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;border:1.5px solid '+(on?'#22d3f5':'#8884')+';background:'+(on?'rgba(34,211,245,.14)':'transparent')+';color:inherit;font:inherit;text-align:start';b.innerHTML='<span>'+txt+'</span><span>'+(on?'✓':'')+'</span>';b.onclick=fn;bx.appendChild(b);};
-  const draw=()=>{bx.innerHTML='';const t=document.createElement('div');t.style.cssText='font:800 17px system-ui;margin-bottom:2px';t.textContent=tt('قفل التطبيق','App lock');bx.appendChild(t);
+  const row=(txt,on,fn)=>{const b=document.createElement('button');b.type='button';const i=txt.indexOf(' '),ic=txt.slice(0,i),lb=txt.slice(i+1),sub=ic==='🔢'?tt('4 إلى 8 أرقام بتكتبها عند الفتح','4-8 digits typed on open'):tt('بصمة أو وجه أو قفل شاشة الجهاز','Fingerprint, face or device screen lock'),col=ic==='🔢'?'#e0527a':'#1b9fd0';
+   b.style.cssText='display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:1.5px solid '+(on?col:'var(--line,#8883)')+';background:'+(on?'color-mix(in srgb,'+col+' 12%,transparent)':'var(--surface2,#f1f3f7)')+';color:inherit;font:inherit;text-align:start;width:100%';
+   b.innerHTML='<span style="width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;font-size:22px;background:color-mix(in srgb,'+col+' 18%,transparent)">'+ic+'</span><span style="flex:1;min-width:0"><b style="display:block;font:800 15px system-ui">'+lb+'</b><small style="display:block;font:500 12px/1.4 system-ui;opacity:.65;margin-top:2px">'+sub+'</small></span><span style="flex:none;width:48px;height:28px;border-radius:999px;position:relative;background:'+(on?col:'#8886')+';transition:background .2s"><i style="position:absolute;top:3px;'+(on?'inset-inline-end:3px':'inset-inline-start:3px')+';width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3)"></i></span>';b.onclick=fn;bx.appendChild(b);};
+  const draw=()=>{bx.innerHTML='';const t=document.createElement('div');t.style.cssText='font:800 19px system-ui;margin:4px 2px 6px';t.textContent=tt('قفل التطبيق','App lock');bx.appendChild(t);
    row('🔢 '+tt('رقم سري','PIN code'),hasPin(),async()=>{if(hasPin()){if(!hasBio()||await verify()){if(hasBio()||await verify()){L.removeItem(K);toast(tt('اتلغى الرقم السري','PIN removed'));draw();}}}
      else{const v=prompt(tt('اختر رقم سري (4 إلى 8 أرقام)','Choose a PIN (4-8 digits)'));if(v&&/^\d{4,8}$/.test(v)){const v2=prompt(tt('أعد كتابة الرقم للتأكيد','Re-enter the PIN to confirm'));if(v2===v){L.setItem(K,await h(v));toast(tt('الرقم السري اتفعّل','PIN enabled'));draw();}else toast(tt('الرقمين مش متطابقين','PINs do not match'));}}});
    row('👆 '+tt('بصمة / قفل الجهاز','Fingerprint / device lock'),hasBio(),async()=>{if(hasBio()){if(await verify()){L.removeItem(KB);toast(tt('اتلغت البصمة','Fingerprint removed'));draw();}}
      else{if(!await bioOK()){toast(tt('الجهاز أو المتصفح مش بيدعم البصمة هنا','Biometrics not supported here'));return;}if(await bioReg()){toast(tt('البصمة اتفعّلت','Fingerprint enabled'));draw();}else toast(tt('ماتمش تفعيل البصمة','Fingerprint setup failed'));}});
    const n=document.createElement('div');n.style.cssText='font:500 12px system-ui;opacity:.65;line-height:1.5';n.textContent=tt('تقدر تفعّل الاتنين مع بعض. القفل بيحمي فتح التطبيق على الجهاز ده.','You can enable both. The lock protects opening the app on this device.');bx.appendChild(n);
-   const c=document.createElement('button');c.type='button';c.textContent=tt('تم','Done');c.style.cssText='padding:12px;border-radius:14px;border:0;background:#1b63f0;color:#fff;font:700 15px system-ui';c.onclick=()=>bg.remove();bx.appendChild(c);};draw();};
+   const c=document.createElement('button');c.type='button';c.textContent=tt('تم','Done');c.style.cssText='padding:14px;border-radius:16px;border:0;background:linear-gradient(135deg,#4a86ff,#22d3f5);color:#031033;font:800 15px system-ui;margin-top:4px';c.onclick=()=>bg.remove();bx.appendChild(c);};draw();};
  const b=document.createElement('button');b.type='button';b.className='ib';b.textContent='⋯';b.setAttribute('aria-label',tt('المزيد','More'));b.style.cssText='font-size:22px;font-weight:800;line-height:1;opacity:.85';
  const openLock=async()=>{if(locked()&&!await verify()){toast(tt('ماتأكدش','Not verified'));return;}sheet();};
  b.addEventListener('click',()=>{
@@ -2503,7 +2505,7 @@ async function renderDocs(){
   shelf.innerHTML='';
   var top=document.createElement('div');top.className='dtop';
   top.innerHTML='<input id="dQ" type="search" autocomplete="off"><button class="btn sm" id="dNew" type="button"></button><button class="ib" id="dMore" type="button"><svg class="i"><use href="#i-docs"/></svg></button>';
-  var dn=top.querySelector('#dNew');dn.textContent=Lg('+ مستند جديد','+ New doc');dn.style.cssText='flex:none;white-space:nowrap;padding:0 12px';dn.onclick=function(){window.__txNew=true;document.getElementById('camIn').click()};
+  var dn=top.querySelector('#dNew');dn.textContent=Lg('+ مستند جديد','+ New doc');dn.style.cssText='flex:none;white-space:nowrap;padding:0 12px';dn.onclick=function(){window.__txNewChooser()};
   shelf.appendChild(top);var qi=top.querySelector('#dQ');qi.value=pendQ;qi.placeholder=Lg('ابحث بالاسم أو بنص الـOCR…','Search by name or OCR text…');
   var tm=0;qi.oninput=function(){pendQ=qi.value;clearTimeout(tm);tm=setTimeout(renderDocs,220)};
   top.querySelector('#dMore').setAttribute('aria-label',Lg('نسخ احتياطي والمحذوفات','Backup & trash'));top.querySelector('#dMore').onclick=openLib;
@@ -2903,4 +2905,32 @@ function edit(){var p=get(),e=en(),m=document.createElement('div');m.id='pfMod';
 new MutationObserver(function(){if(!tb.hidden)draw();}).observe(tb,{attributes:true,attributeFilter:['hidden']});draw();
 })();
 </script><style id="galFabCss">#galFab{display:none}#vHome #galFab{display:grid;place-items:center;position:absolute;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 6px);right:104px;width:56px;height:56px;border-radius:50%;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 10px 22px -10px var(--shadow);z-index:6;touch-action:manipulation}#vHome #galFab:active{transform:scale(.92)}</style><script>(function(){var g=document.getElementById('galFab');if(!g)return;g.onclick=function(){window.__txNew=window.__txMode&&window.__txMode()==='docs';document.getElementById('galIn').click();};
-function lb(){try{g.setAttribute('aria-label',lang==='ar'?'استيراد من الجهاز':'Import from device')}catch(e){}}lb();var l=document.getElementById('langBtn');if(l)l.addEventListener('click',function(){setTimeout(lb,60)});})();</script></body></html>
+function lb(){try{g.setAttribute('aria-label',lang==='ar'?'استيراد من الجهاز':'Import from device')}catch(e){}}lb();var l=document.getElementById('langBtn');if(l)l.addEventListener('click',function(){setTimeout(lb,60)});})();</script><style id="mr2">
+#mrBg #mrBx .gr{display:flex;flex-direction:column;gap:0;background:var(--surface2,#f1f3f7);border:1px solid var(--line,#8883);border-radius:18px;overflow:hidden}
+#mrBg #mrBx .cd{flex-direction:row;align-items:center;gap:12px;padding:11px 14px;border:0;border-bottom:1px solid var(--line,#8883);border-radius:0;background:transparent;box-shadow:none;text-align:start;font:700 14.5px/1.3 system-ui;width:100%}
+#mrBg #mrBx .gr .cd:last-child{border-bottom:0}
+#mrBg #mrBx .cd:active{transform:none;background:color-mix(in srgb,var(--c) 10%,transparent)}
+#mrBg #mrBx .cd>span:nth-child(2){flex:1;min-width:0}
+#mrBg #mrBx .ic{width:40px;height:40px;border-radius:12px;flex:none}
+#mrBg #mrBx .st{flex:none;font-size:11px;padding:3px 10px}
+#mrBg #mrBx .cd:not(:has(.st))::after{content:"›";font:700 22px/1 system-ui;opacity:.35;flex:none}
+html[dir=rtl] #mrBg #mrBx .cd:not(:has(.st))::after{content:"‹"}
+#mrBg #mrBx .sec{margin:16px 6px 7px}
+#mrBg #mrBx{max-height:84vh}
+#nwBg{position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+#nwBx{background:var(--surface,#fff);color:var(--ink,#071a4d);width:min(460px,100%);border-radius:26px 26px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px);box-shadow:0 -10px 40px rgba(0,0,0,.3);font:600 14px system-ui}
+#nwBx h3{margin:6px 4px 12px;font:800 18px system-ui}
+#nwBx button.o{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin-bottom:8px;border-radius:18px;border:1px solid var(--line,#8883);background:var(--surface2,#f1f3f7);color:inherit;font:inherit;text-align:start}
+#nwBx .o i{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;font-style:normal;font-size:22px;background:color-mix(in srgb,var(--c) 18%,transparent)}
+#nwBx .o b{display:block;font:800 15px system-ui}#nwBx .o small{display:block;font:500 12px system-ui;opacity:.65;margin-top:2px}
+#nwBx .x{width:100%;padding:13px;border-radius:16px;border:0;background:transparent;color:inherit;font:700 14px system-ui;opacity:.7}
+</style><script>(function(){
+window.__txNewChooser=function(){var ar=(typeof lang!=='undefined'?lang:'ar')==='ar',T=function(a,e){return ar?a:e};
+ var bg=document.createElement('div');bg.id='nwBg';var bx=document.createElement('div');bx.id='nwBx';
+ var O=[['cam','📷','#1b63f0',T('تصوير بالكاميرا','Scan with camera'),T('صوّر الورقة وهتتقص وتتحسن تلقائي','Capture a page, auto-crop and enhance')],['gal','🖼','#8a5cf0',T('من المعرض','From gallery'),T('اختار صورة أو أكتر من الفون','Pick one or more photos from your phone')],['blank','📄','#e08a1b',T('صفحة A4 فاضية','Blank A4 page'),T('ابدأ بورقة بيضا واكتب عليها','Start with a white page and annotate')]];
+ bx.innerHTML='<div style="width:42px;height:5px;border-radius:3px;background:var(--line,#8886);margin:6px auto 10px"></div><h3>'+T('مستند جديد من…','New document from…')+'</h3>';
+ O.forEach(function(o){var b=document.createElement('button');b.type='button';b.className='o';b.style.setProperty('--c',o[2]);b.innerHTML='<i>'+o[1]+'</i><span><b>'+o[3]+'</b><small>'+o[4]+'</small></span>';
+  b.onclick=function(){bg.remove();var m=document.querySelector('#fabMenu [data-a="'+o[0]+'"]');if(m)m.click();};bx.appendChild(b)});
+ var x=document.createElement('button');x.type='button';x.className='x';x.textContent=T('إلغاء','Cancel');x.onclick=function(){bg.remove()};bx.appendChild(x);
+ bg.onclick=function(e){if(e.target===bg)bg.remove()};bg.appendChild(bx);document.body.appendChild(bg);};
+})();</script></body></html>
