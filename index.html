@@ -1,4 +1,21 @@
-<!doctype html><html><head><script>window.__TIMAXO_FILES__=1</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="theme-color" content="#000515"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest?v=2"><link rel="icon" type="image/png" href="favicon.png?v=2"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=2"><style id="pre">html,body{background:#000515!important}html::before{content:"";position:fixed;inset:0;z-index:2147483647;background:#000515}</style><script>(function(){function r(){var p=document.getElementById("pre");if(p)p.remove()}document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(function(){requestAnimationFrame(r)})});setTimeout(r,3500)})()</script></head><body>
+<!doctype html><html><head><script>window.__TIMAXO_FILES__=1</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="theme-color" content="#000515"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest?v=2"><link rel="icon" type="image/png" href="favicon.png?v=2"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=2"><style id="pre">html,body{background:#000515!important}html::before{content:"";position:fixed;inset:0;z-index:2147483647;background:#000515}</style><script>(function(){function r(){var p=document.getElementById("pre");if(p)p.remove()}document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(function(){requestAnimationFrame(r)})});setTimeout(r,3500)})()</script><style id="v29css">
+#scanBtn .ic-plus{display:none}
+#vHome.docsmode #scanBtn .ic-cam{display:none}
+#vHome.docsmode #scanBtn .ic-plus{display:block}
+#vHome.docsmode #galFab,#vHome.docsmode #dNew{display:none!important}
+#vHome:has(.empty) #galFab{display:none!important}
+.empty{padding-bottom:140px!important}
+.emact{display:flex;flex-direction:column;gap:10px;width:min(320px,100%)}
+.emact .btn{width:100%;min-height:48px;justify-content:center}
+.emtips{list-style:none;margin:6px 0 0;padding:0;max-width:34ch;text-align:start;color:var(--ink2);font-size:13px;line-height:1.55}
+.emtips li{position:relative;padding-inline-start:18px;margin:6px 0}
+.emtips li::before{content:"•";position:absolute;inset-inline-start:4px;color:var(--accent)}
+.txhint{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface2,var(--surface));color:var(--ink2);font-size:13px;line-height:1.5}
+.txhint span{flex:1}
+.txhint button{flex:none;width:36px;height:36px;margin:-6px -6px 0 0;border:0;border-radius:50%;background:transparent;color:var(--ink2);font-size:16px}
+html[dir=rtl] .txhint button{margin:-6px 0 0 -6px}
+</style>
+</head><body>
 <title>Timaxo Scan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -248,7 +265,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <button type="button" data-a="gal"></button>
       <button type="button" data-a="blank"></button>
     </div>
-    <button class="scanbtn" id="scanBtn" data-ta="scan" type="button"><svg class="i"><use href="#i-cam"/></svg></button>
+    <button class="scanbtn" id="scanBtn" data-ta="scan" type="button"><svg class="i ic-cam"><use href="#i-cam"/></svg><svg class="i ic-plus"><use href="#i-plus"/></svg></button>
     <button id="galFab" type="button" aria-label="استيراد من الجهاز"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg></button>
     <button class="dk" id="galBtn" hidden type="button"></button>
   </section>
@@ -1080,14 +1097,15 @@ function applyLang(){
   if(!$('#docName').value) $('#docName').value=state.name||'';
 }
 function renderHome(fresh){
-  const sh=$('#shelf'),n=state.pages.length;
+  const sh=$('#shelf'),n=state.pages.length,AR0=(typeof lang==='undefined'||lang==='ar');
   $('#count').textContent=n?t('pages',n):'';updLib();
   $('#exportBtn').disabled=!n;$('#newBtn').style.visibility=n?'visible':'hidden';
   if(!n){
-    sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><button class="btn" id="sampleBtn">${t('sample')}</button></div>`;
-    $('#sampleBtn').onclick=startSample;return;
+    sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><div class="emact"><button class="btn pri" id="emCam" type="button">${AR0?'📷 صوّر أول مستند':'📷 Scan your first document'}</button><button class="btn" id="emGal" type="button">${AR0?'🖼 من المعرض':'🖼 From gallery'}</button></div><ul class="emtips"><li>${AR0?'صوّر الورقة على سطح غامق وإضاءة كويسة عشان القص التلقائي يظبط.':'Shoot the page on a dark surface in good light for cleaner auto-crop.'}</li><li>${AR0?'تقدر تضيف صفحات تانية لنفس المستند وتصدّره PDF واحد.':'Add more pages to the same document and export one PDF.'}</li><li>${AR0?'كل حاجة بتتحفظ على جهازك بس، فاعمل نسخة احتياطية من «مستنداتي» من وقت للتاني.':'Everything stays on your device only, so back up from My documents once in a while.'}</li></ul><button class="btn" id="sampleBtn">${t('sample')}</button></div>`;
+    $('#sampleBtn').onclick=startSample;$('#emCam').onclick=()=>$('#camIn').click();$('#emGal').onclick=()=>$('#galIn').click();return;
   }
   sh.innerHTML='<div class="grid"></div>';const g=$('.grid',sh);
+  try{if(n>1&&!localStorage.getItem('tx_hint_drag')){const h=document.createElement('div');h.className='txhint';h.innerHTML='<span>'+(AR0?'💡 اضغط مطوّلًا على أي صفحة واسحبها لتغيير ترتيبها. وبالضغط المطوّل على زرار الكاميرا تلاقي صفحة A4 فاضية.':'💡 Long-press a page and drag to reorder. Long-press the camera button for a blank A4 page.')+'</span><button type="button" aria-label="OK">✕</button>';h.querySelector('button').onclick=()=>{try{localStorage.setItem('tx_hint_drag','1')}catch(_){}h.remove()};sh.insertBefore(h,g)}}catch(_){}
   state.pages.forEach((p,i)=>{const b=document.createElement('div');b.className='pg'+(p.id===fresh?' fresh':'');b.tabIndex=0;b.setAttribute('role','button');
     b.innerHTML=`<img alt="" src="${p.thumb}"><span class="num">${i+1}</span><button class="pgdel" type="button" aria-label="${t('del')}"><svg class="i"><use href="#i-trash"/></svg></button>`;
     b.onclick=()=>openEdit(p,false);b.onkeydown=e=>{if(e.target===b&&e.key==='Enter')openEdit(p,false);};
@@ -2459,10 +2477,10 @@ function labels(){var b=menu.querySelectorAll('button'),IM=['<svg viewBox="0 0 2
  var sv=document.querySelector('#exportBtn span');if(sv)sv.textContent=LGf('حفظ','Save');fab.setAttribute('aria-label',LGf('مسح','Scan'))}
 labels();var lb=document.getElementById('langBtn');if(lb)lb.addEventListener('click',function(){setTimeout(labels,60)});
 var tm=0,long=false;function hide(){menu.hidden=true}
-fab.addEventListener('pointerdown',function(){long=false;clearTimeout(tm);tm=setTimeout(function(){long=true;menu.hidden=false;try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}},450)});
+fab.addEventListener('pointerdown',function(){long=false;clearTimeout(tm);if(window.__txMode&&window.__txMode()==='docs')return;tm=setTimeout(function(){long=true;menu.hidden=false;try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}},450)});
 ['pointerup','pointercancel','pointerleave'].forEach(function(ev){fab.addEventListener(ev,function(){clearTimeout(tm)})});
 fab.addEventListener('contextmenu',function(e){e.preventDefault()});
-fab.addEventListener('click',function(e){e.stopImmediatePropagation();e.preventDefault();if(long){long=false;return}if(!menu.hidden){hide();return}window.__txNew=window.__txMode&&window.__txMode()==='docs';document.getElementById('camIn').click()},true);
+fab.addEventListener('click',function(e){e.stopImmediatePropagation();e.preventDefault();if(long){long=false;return}if(!menu.hidden){hide();return}if(window.__txMode&&window.__txMode()==='docs'){window.__txNewChooser();return}window.__txNew=window.__txMode&&window.__txMode()==='docs';document.getElementById('camIn').click()},true);
 document.addEventListener('pointerdown',function(e){if(!menu.hidden&&!e.target.closest('#fabMenu')&&!e.target.closest('#scanBtn'))hide()},true);
 menu.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;hide();var a=b.dataset.a;window.__txNew=window.__txMode&&window.__txMode()==='docs';
  if(a==='cam')document.getElementById('camIn').click();
