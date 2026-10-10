@@ -2502,7 +2502,8 @@ async function renderDocs(){
   var hadFocus=document.activeElement&&document.activeElement.id==='dQ';
   shelf.innerHTML='';
   var top=document.createElement('div');top.className='dtop';
-  top.innerHTML='<input id="dQ" type="search" autocomplete="off"><button class="ib" id="dMore" type="button"><svg class="i"><use href="#i-docs"/></svg></button>';
+  top.innerHTML='<input id="dQ" type="search" autocomplete="off"><button class="btn sm" id="dNew" type="button"></button><button class="ib" id="dMore" type="button"><svg class="i"><use href="#i-docs"/></svg></button>';
+  var dn=top.querySelector('#dNew');dn.textContent=Lg('+ مستند جديد','+ New doc');dn.style.cssText='flex:none;white-space:nowrap;padding:0 12px';dn.onclick=function(){window.__txNew=true;document.getElementById('camIn').click()};
   shelf.appendChild(top);var qi=top.querySelector('#dQ');qi.value=pendQ;qi.placeholder=Lg('ابحث بالاسم أو بنص الـOCR…','Search by name or OCR text…');
   var tm=0;qi.oninput=function(){pendQ=qi.value;clearTimeout(tm);tm=setTimeout(renderDocs,220)};
   top.querySelector('#dMore').setAttribute('aria-label',Lg('نسخ احتياطي والمحذوفات','Backup & trash'));top.querySelector('#dMore').onclick=openLib;
