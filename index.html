@@ -1991,11 +1991,11 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
     try{localStorage.setItem('tx_snd',sndOn()?'0':'1');}catch(e){}
     const s=x.querySelector('.st');s.className='st'+(sndOn()?' on':'');s.textContent=sndOn()?T('مفعّل','On'):T('غير مفعّل','Off');},1);
   const landOn=()=>{try{return window.__txLandOn()}catch(e){return false}};
-  card(g4,'rot','#5b6ee1',T('قفل الوضع الأفقي','Lock landscape'),onOff(landOn()),async(x)=>{
+  card(g4,'rot','#5b6ee1',T('قفل التدوير','Lock rotation'),onOff(landOn()),async(x)=>{
     const want=!landOn(),ok=window.__txLand?await window.__txLand(want):false,s=x.querySelector('.st');
     if(!ok){s.className='st';s.textContent=T('مش متاح هنا','Not available');setTimeout(()=>{s.textContent=landOn()?T('مفعّل','On'):T('غير مفعّل','Off')},2500);toast(T('القفل مش متاح هنا. ثبّت التطبيق (إضافة للشاشة الرئيسية) وجرّبه من هناك، وعلى iPhone استخدم قفل الدوران من الجهاز','Not available here. Install the app to your home screen and try from there; on iPhone use the device rotation lock'));return;}
     s.className='st'+(landOn()?' on':'');s.textContent=landOn()?T('مفعّل','On'):T('غير مفعّل','Off');
-    toast(landOn()?T('الشاشة اتقفلت على الوضع الأفقي','Locked to landscape'):T('القفل اتفك','Rotation unlocked'));},1);
+    toast(landOn()?T('التدوير اتقفل على الوضع الحالي','Rotation locked in current orientation'):T('القفل اتفك','Rotation unlocked'));},1);
   card(g4,'lng','#1b9fd0',T('اللغة','Language'),[ar?'العربية':'English',1],()=>{const l=document.getElementById('langBtn');if(l)l.click();});
   document.body.appendChild(bg);requestAnimationFrame(()=>requestAnimationFrame(()=>bg.classList.add('in')));});
  const lb=document.getElementById('langBtn');if(lb&&lb.parentNode)lb.parentNode.insertBefore(b,lb);if(locked())show();
@@ -3358,13 +3358,15 @@ body:has(#mrBg) #toast{position:fixed!important;z-index:100000!important}
 .dselbar .ddl.arm{outline:3px solid color-mix(in srgb,var(--danger,#e5322d) 40%,transparent)}
 </style>
 <script>
-/* v41: lock to landscape (works in installed PWA on Android; not on iOS) */
+/* v43: lock rotation at the CURRENT orientation (installed PWA on Android; not iOS) */
 (function(){var K='tx_land';function on(){try{return localStorage.getItem(K)==='1'}catch(e){return false}}
 async function apply(v,gesture){var o=screen.orientation;if(!o||!o.lock)throw new Error('no');
   if(!v){if(o.unlock)o.unlock();try{if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}return}
-  try{await o.lock('landscape')}catch(e){
+  var ty=o.type||'portrait-primary',fam=ty.indexOf('landscape')===0?'landscape':'portrait';
+  async function lk(){try{await o.lock(ty)}catch(e){await o.lock(fam)}}
+  try{await lk()}catch(e){
     if(!gesture)throw e;var el=document.documentElement;if(!el.requestFullscreen)throw e;
-    await el.requestFullscreen();await o.lock('landscape')}}
+    await el.requestFullscreen();await lk()}}
 window.__txLandOn=on;
 window.__txLand=async function(v){try{await apply(v,true);try{localStorage.setItem(K,v?'1':'0')}catch(e){}return true}catch(e){return false}};
 if(on())apply(true).catch(function(){});
