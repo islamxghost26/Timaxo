@@ -3378,7 +3378,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden&&on(
 <script>
 /* ===== v45: "What can Timaxo do?" guide — small button in the home header + searchable bottom sheet ===== */
 (function(){
-const A=()=>{try{return AR()}catch(e){return true}},L=(a,b)=>A()?a:b,SEEN='tx_guide_seen';
+const A=()=>document.documentElement.lang!=='en',L=(a,b)=>A()?a:b,SEEN='tx_guide_seen'; /* the app's own AR() lives in another scope, so read the language the app stamps on <html> */
 const ic=p=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
 const D=[
 {c:['#E8501A','#ff8a4c'],i:ic('<path d="M4 8a2 2 0 0 1 2-2h1.5l1.2-2h6.6l1.2 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>'),
@@ -3512,6 +3512,8 @@ function mount(){
  b.innerHTML=ic('<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.8 1.9 1.9.8-1.9.8L19 20.4l-.8-1.9-1.9-.8 1.9-.8z"/>')+(seen?'':'<i></i>');
  b.onclick=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));open();};
  lb.parentNode.insertBefore(b,lb);
+ const fix=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));const g=document.getElementById('galFab');if(g)g.setAttribute('aria-label',L('استيراد من الجهاز','Import from device'));};
+ fix();new MutationObserver(fix).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();
