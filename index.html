@@ -1949,6 +1949,7 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
    idx:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2M9 11h4M11 9v4"/>',
    snd:'<path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10"/>',
    lng:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+   rot:'<rect x="2.5" y="7" width="19" height="10" rx="2.5"/><path d="M18.5 12h.01M7 3.6A9 9 0 0 1 12 2.2M17 20.4a9 9 0 0 1-5 1.4"/>',
    off:'<path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5 4 4 0 0 1 17 18"/><path d="M12 11v7M9 15l3 3 3-3"/>'};
   const bg=document.createElement('div');bg.id='mrBg';
   const bx=document.createElement('div');bx.id='mrBx';bg.appendChild(bx);
@@ -1989,6 +1990,12 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
   card(g4,'snd','#e08a1b',T('صوت الكاميرا','Camera sound'),onOff(sndOn()),(x)=>{
     try{localStorage.setItem('tx_snd',sndOn()?'0':'1');}catch(e){}
     const s=x.querySelector('.st');s.className='st'+(sndOn()?' on':'');s.textContent=sndOn()?T('مفعّل','On'):T('غير مفعّل','Off');},1);
+  const landOn=()=>{try{return window.__txLandOn()}catch(e){return false}};
+  card(g4,'rot','#5b6ee1',T('قفل الوضع الأفقي','Lock landscape'),onOff(landOn()),async(x)=>{
+    const want=!landOn(),ok=window.__txLand?await window.__txLand(want):false,s=x.querySelector('.st');
+    if(!ok){toast(T('القفل مش متاح هنا. ثبّت التطبيق (إضافة للشاشة الرئيسية) وجرّبه من هناك، وعلى iPhone استخدم قفل الدوران من الجهاز','Not available here. Install the app to your home screen and try from there; on iPhone use the device rotation lock'));return;}
+    s.className='st'+(landOn()?' on':'');s.textContent=landOn()?T('مفعّل','On'):T('غير مفعّل','Off');
+    toast(landOn()?T('الشاشة اتقفلت على الوضع الأفقي','Locked to landscape'):T('القفل اتفك','Rotation unlocked'));},1);
   card(g4,'lng','#1b9fd0',T('اللغة','Language'),[ar?'العربية':'English',1],()=>{const l=document.getElementById('langBtn');if(l)l.click();});
   document.body.appendChild(bg);requestAnimationFrame(()=>requestAnimationFrame(()=>bg.classList.add('in')));});
  const lb=document.getElementById('langBtn');if(lb&&lb.parentNode)lb.parentNode.insertBefore(b,lb);if(locked())show();
@@ -2713,6 +2720,13 @@ renderHome=function(f){
 };
 function matchD(r,q){if(!q)return true;if(norm(r.name).includes(q)||(r.tags||[]).some(function(x){return norm(x).includes(q)}))return true;var o=OI();return(r.order||[]).some(function(id){return norm(o[id]).includes(q)})}
 var rdT=0;
+var DS=window.__txDS||(window.__txDS={on:false,ids:{}});
+var DELI='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+async function trashRecs(list){
+  for(var i=0;i<list.length;i++){var r=list[i];
+    if(r.isCur){var rr=curRec();if(rr)await tx('docs','readwrite',function(s){s.put(Object.assign({},rr,{trashed:Date.now()}))});state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}
+    else await tx('docs','readwrite',function(s){s.put(Object.assign({},r,{trashed:Date.now()}))});}
+  toast(Lg(list.length===1?'اتنقل لسلة المحذوفات (٣٠ يوم)':'اتنقل '+list.length+' مستند لسلة المحذوفات (٣٠ يوم)',list.length===1?'Moved to Trash (30 days)':list.length+' documents moved to Trash (30 days)'));}
 async function renderDocs(){
   var my=++rdT,saved=await allSaved(),cur=null;
   if(state.pages.length)cur={id:state.id,name:state.name||defName(),count:state.pages.length,thumb:state.pages[0].thumb,tags:getTags(),pinned:state.pinnedId===state.id,order:state.pages.map(function(p){return p.id}),isCur:true};
@@ -2726,30 +2740,51 @@ async function renderDocs(){
   var hadFocus=document.activeElement&&document.activeElement.id==='dQ';
   shelf.innerHTML='';
   var top=document.createElement('div');top.className='dtop';
-  top.innerHTML='<input id="dQ" type="search" autocomplete="off"><button class="btn sm" id="dNew" type="button"></button><button class="ib" id="dMore" type="button" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('المستندات','Documents')+'"><svg class="i"><use href="#i-docs"/></svg></button>';
+  top.innerHTML='<input id="dQ" type="search" autocomplete="off"><button class="btn sm" id="dNew" type="button"></button><button class="ib" id="dSel" type="button"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></button><button class="ib" id="dMore" type="button" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('المستندات','Documents')+'"><svg class="i"><use href="#i-docs"/></svg></button>';
   var dn=top.querySelector('#dNew');dn.textContent=Lg('+ مستند جديد','+ New doc');dn.style.cssText='flex:none;white-space:nowrap;padding:0 12px';dn.onclick=function(){window.__txNewChooser()};
   shelf.appendChild(top);var qi=top.querySelector('#dQ');qi.value=pendQ;qi.placeholder=Lg('ابحث بالاسم أو بنص الـOCR…','Search by name or OCR text…');
   var tm=0;qi.oninput=function(){pendQ=qi.value;clearTimeout(tm);tm=setTimeout(renderDocs,220)};
   top.querySelector('#dMore').setAttribute('aria-label',Lg('نسخ احتياطي والمحذوفات','Backup & trash'));top.querySelector('#dMore').onclick=openLib;
+  var dsb=top.querySelector('#dSel');dsb.setAttribute('aria-label',Lg('تحديد عدة مستندات','Select documents'));dsb.onclick=function(){DS.on=!DS.on;DS.ids={};updSel()};
   var chips=document.createElement('div');chips.className='dchips';
   function chip(label,val){var b=document.createElement('button');b.type='button';b.textContent=label;if(pendTag===val)b.className='on';b.onclick=function(){pendTag=val;renderDocs()};chips.appendChild(b)}
   chip(Lg('الكل','All'),'');if(all.some(function(r){return r.pinned}))chip(Lg('📌 المثبّت','📌 Pinned'),'__pin');[].concat(Array.from(tags)).sort().forEach(function(x){chip('#'+x,x)});
   if(chips.children.length>1||pendTag)shelf.appendChild(chips);
-  var g=document.createElement('div');g.className='dgrid';
+  var g=document.createElement('div');g.className='dgrid';var cards=[];
   if(!list.length){g.innerHTML='<p class="dnone">'+Lg('مفيش نتايج.','No results.')+'</p>'}
   list.forEach(function(r,i){
     var c=document.createElement('div');c.className='dcard'+(r.isCur?' cur':'');c.tabIndex=0;c.setAttribute('role','button');c.style.setProperty('--i',Math.min(i,10));
-    c.innerHTML='<div class="dcov"><img alt="" src="'+r.thumb+'">'+(r.isCur?'<span class="dbadge">'+Lg('مفتوح','Open')+'</span>':'')+'</div><div class="dinf"><b></b><small>'+Lg(r.count+' صفحة',r.count+(r.count===1?' page':' pages'))+'</small><div class="dtg"></div></div>';
+    c.innerHTML='<div class="dcov"><img alt="" src="'+r.thumb+'"><span class="dck"></span>'+(r.isCur?'<span class="dbadge">'+Lg('مفتوح','Open')+'</span>':'')+'</div><div class="dinf"><b></b><small>'+Lg(r.count+' صفحة',r.count+(r.count===1?' page':' pages'))+'</small><div class="dtg"></div></div>';
     c.querySelector('b').textContent=(r.pinned?'📌 ':'')+r.name;
     c.querySelector('.dtg').textContent=(r.tags||[]).map(function(x){return '#'+x}).join(' ');
     if(!r.isCur){var pb=document.createElement('button');pb.type='button';pb.className='dpin'+(r.pinned?' on':'');pb.textContent='📌';pb.setAttribute('aria-label',Lg('تثبيت','Pin'));
       pb.onclick=async function(e){e.stopPropagation();await tx('docs','readwrite',function(st){st.put(Object.assign({},r,{pinned:!r.pinned}))});renderDocs()};c.querySelector('.dcov').appendChild(pb)}
     {var sb=document.createElement('button');sb.type='button';sb.className='dshare';sb.setAttribute('aria-label',Lg('مشاركة كـPDF','Share as PDF'));sb.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
      sb.onclick=function(e){e.stopPropagation();window.__txQuickPdf(r)};c.querySelector('.dcov').appendChild(sb)}
-    c.onclick=async function(){if(!r.isCur){await snapDoc();await loadRec(r)}setMode('pages');stagNext=true;renderHome()};
+    {var dl=document.createElement('button'),darm=0;dl.type='button';dl.className='ddel';dl.setAttribute('aria-label',Lg('حذف المستند','Delete document'));dl.innerHTML=DELI;
+     dl.onclick=async function(e){e.stopPropagation();if(!darm){darm=1;dl.classList.add('arm');dl.textContent=Lg('تأكيد الحذف','Confirm');setTimeout(function(){darm=0;dl.classList.remove('arm');dl.innerHTML=DELI},2600);return}await trashRecs([r]);renderDocs()};c.querySelector('.dcov').appendChild(dl)}
+    var lp=0,lpf=0,px=0,py=0;
+    c.addEventListener('pointerdown',function(e){if(DS.on)return;lpf=0;px=e.clientX;py=e.clientY;clearTimeout(lp);lp=setTimeout(function(){lpf=1;DS.on=true;DS.ids={};DS.ids[r.id]=1;updSel();try{navigator.vibrate&&navigator.vibrate(15)}catch(x){}},520)});
+    c.addEventListener('pointermove',function(e){if(Math.abs(e.clientX-px)+Math.abs(e.clientY-py)>12)clearTimeout(lp)});
+    ['pointerup','pointercancel','pointerleave'].forEach(function(ev){c.addEventListener(ev,function(){clearTimeout(lp)})});
+    c.addEventListener('contextmenu',function(e){e.preventDefault()});
+    c.onclick=async function(){if(lpf){lpf=0;return}if(DS.on){if(DS.ids[r.id])delete DS.ids[r.id];else DS.ids[r.id]=1;updSel();return}if(!r.isCur){await snapDoc();await loadRec(r)}setMode('pages');stagNext=true;renderHome()};
     c.onkeydown=function(e){if(e.key==='Enter')c.onclick()};
-    g.appendChild(c)});
+    cards.push([c,r]);g.appendChild(c)});
   shelf.appendChild(g);
+  var bar2=document.createElement('div');bar2.className='dselbar';
+  bar2.innerHTML='<b class="dn"></b><button type="button" class="dall"></button><button type="button" class="ddl"></button><button type="button" class="dx"></button>';
+  var bN=bar2.querySelector('.dn'),bA=bar2.querySelector('.dall'),bD=bar2.querySelector('.ddl'),bX=bar2.querySelector('.dx'),barm=0;
+  bX.textContent='✕';bX.setAttribute('aria-label',Lg('إلغاء التحديد','Cancel selection'));bA.textContent=Lg('الكل','All');
+  function updSel(){var n=0;cards.forEach(function(x){var on=!!DS.ids[x[1].id];if(on)n++;x[0].classList.toggle('sel',on)});
+    home.classList.toggle('dsel',DS.on);g.classList.toggle('sel',DS.on);barm=0;bD.classList.remove('arm');bD.textContent=Lg('حذف','Delete');bD.disabled=!n;
+    bN.textContent=Lg(n+' محدد',n+' selected');bA.textContent=(n&&n===cards.length)?Lg('إلغاء الكل','None'):Lg('الكل','All')}
+  bX.onclick=function(){DS.on=false;DS.ids={};updSel()};
+  bA.onclick=function(){var all2=cards.length&&cards.every(function(x){return DS.ids[x[1].id]});DS.ids={};if(!all2)cards.forEach(function(x){DS.ids[x[1].id]=1});updSel()};
+  bD.onclick=async function(){var ch=cards.filter(function(x){return DS.ids[x[1].id]}).map(function(x){return x[1]});if(!ch.length)return;
+    if(!barm){barm=1;bD.classList.add('arm');bD.textContent=Lg('تأكيد حذف '+ch.length,'Confirm '+ch.length);setTimeout(function(){if(barm){barm=0;bD.classList.remove('arm');bD.textContent=Lg('حذف','Delete')}},2600);return}
+    await trashRecs(ch);DS.on=false;DS.ids={};renderDocs()};
+  shelf.appendChild(bar2);var keep={};cards.forEach(function(x){if(DS.ids[x[1].id])keep[x[1].id]=1});DS.ids=keep;if(!cards.length)DS.on=false;updSel();
   $('#count').textContent='';bk.hidden=true;try{updLib()}catch(e){}
   if(hadFocus){var n=shelf.querySelector('#dQ');if(n){n.focus();var l=n.value.length;try{n.setSelectionRange(l,l)}catch(e){}}}
 }
@@ -3300,4 +3335,33 @@ window.__txNewChooser=function(){var ar=(typeof lang!=='undefined'?lang:'ar')===
  html #lv .row>div{width:auto}
  html #lv .row>.sh{grid-column:1/-1;grid-row:1}
 }
-</style></body></html>
+</style><style id="dsel">
+.ddel{position:absolute;bottom:6px;inset-inline-start:6px;border:0;border-radius:19px;background:rgba(0,0,0,.5);color:#fff;display:grid;place-items:center;padding:0;width:38px;height:38px;font:700 12px system-ui}
+.ddel:active{transform:scale(.92)}
+.ddel.arm{width:auto;padding:0 12px;background:var(--danger,#e5322d)}
+.dck{display:none;position:absolute;top:8px;inset-inline-end:8px;width:28px;height:28px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);place-items:center;z-index:2}
+.dgrid.sel .dck{display:grid}
+.dgrid.sel .dpin,.dgrid.sel .dshare,.dgrid.sel .ddel{display:none}
+.dcard.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 45%,transparent)}
+.dcard.sel .dck{background:var(--accent);border-color:var(--accent)}
+.dcard.sel .dck::after{content:"\2713";color:var(--accent-ink,#fff);font:800 16px/1 system-ui}
+#vHome.docsmode.dsel #dNew,#vHome.docsmode.dsel .dock,#vHome.docsmode.dsel #scanBtn,#vHome.docsmode.dsel .fab2{display:none!important}
+#vHome.docsmode.dsel #dSel{background:var(--accent);color:var(--accent-ink,#fff)}
+.dselbar{display:none}
+#vHome.dsel .dselbar{display:flex;position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:5;margin-top:14px;gap:8px;align-items:center;padding:8px 10px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px -10px var(--shadow)}
+.dselbar .dn{flex:1;min-width:0;font:800 13px var(--fd,system-ui);white-space:nowrap}
+.dselbar button{height:44px;min-width:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:700 13px var(--fd,system-ui)}
+.dselbar .ddl{background:var(--danger,#e5322d);color:#fff;border-color:transparent}
+.dselbar .ddl:disabled{opacity:.4}
+.dselbar .ddl.arm{outline:3px solid color-mix(in srgb,var(--danger,#e5322d) 40%,transparent)}
+</style>
+<script>
+/* v41: lock to landscape (works in installed PWA on Android; not on iOS) */
+(function(){var K='tx_land';function on(){try{return localStorage.getItem(K)==='1'}catch(e){return false}}
+async function apply(v){var o=screen.orientation;if(!o||!o.lock)throw new Error('no');if(v)await o.lock('landscape');else if(o.unlock)o.unlock()}
+window.__txLandOn=on;
+window.__txLand=async function(v){try{await apply(v);try{localStorage.setItem(K,v?'1':'0')}catch(e){}return true}catch(e){return false}};
+if(on())apply(true).catch(function(){});
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&on())apply(true).catch(function(){})});})();
+</script>
+</body></html>
