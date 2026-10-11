@@ -324,7 +324,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <div id="wrap"><canvas id="cvBase"></canvas><canvas id="ov"></canvas></div>
       <button class="cmp" id="cmpBtn"><svg class="i" style="width:16px;height:16px"><use href="#i-eye"/></svg><span data-t="holdOrig"></span></button>
     </div>
-    <div class="tbar" id="textBar" hidden>
+    <div class="tbar txdock" id="textBar" hidden>
       <textarea id="textIn" rows="1" data-tp="textPh"></textarea>
       <button class="btn pri" id="textAdd" data-t="add"></button>
       <button class="ib" id="textCancel" data-ta="cancel"><svg class="i"><use href="#i-cross"/></svg></button>
@@ -1414,10 +1414,10 @@ ov.addEventListener('pointerdown',e=>{
   else if(k==='arrow'||k==='box'||k==='redact')E.cur={t:k,c:E.color,w:SIZES.pen[E.size],a:pt,b:pt};
   else if(k==='check'||k==='cross'){addAnn({t:k,c:k==='check'&&E.color==='#111111'?'#12A150':E.color,x:pt[0],y:pt[1],s:SIZES.stamp[E.size]});}
   else if(k==='text'||k==='note'){
-    if(!$('#textBar').hidden)$('#textAdd').click();
+    if(!$('#textBar').hidden){$('#textAdd').click();E.cur=null;return;}
     const o=$('#ov'),rc=o.getBoundingClientRect(),w=o.width,h=o.height,tol=14*(w/rc.width),px=pt[0]*w,py=pt[1]*h;let hit=null;
     for(let i=E.page.ann.length-1;i>=0;i--){const a=E.page.ann[i];if((a.t==='text'||a.t==='note')&&hitTest(a,px,py,w,h,tol)){hit=a;break;}}
-    if(hit){const L=layoutText(mctx,w,hit),q=tpos(L,w,h,hit);E.cur={mv:hit,ox:pt[0]-q[0]/w,oy:pt[1]-q[1]/h,sx:pt[0],sy:pt[1],before:{x:hit.x,y:hit.y},moved:false};E.sel=hit;redrawOv();}
+    if(hit){const L=layoutText(mctx,w,hit),q=tpos(L,w,h,hit);E.cur={mv:hit,ox:pt[0]-q[0]/w,oy:pt[1]-q[1]/h,sx:pt[0],sy:pt[1],cx:e.clientX,cy:e.clientY,before:{x:hit.x,y:hit.y},moved:false};E.sel=hit;redrawOv();}
     else{E.sel=null;openTextBar(pt);}
   }
   else if(k==='erase'){E.cur={erase:true};eraseAt(pt);}
@@ -1429,8 +1429,8 @@ ov.addEventListener('pointerdown',e=>{
 ov.addEventListener('pointermove',e=>{
   const c=E.cur;if(!c)return;const pt=ptOf(e);
   if(c.erase){eraseAt(pt);return;}
-  if(c.mv){if(!c.moved&&Math.hypot(pt[0]-c.sx,pt[1]-c.sy)<=.008)return;c.moved=true;const o=$('#ov'),w=o.width,h=o.height,L=layoutText(mctx,w,c.mv);
-    c.mv.x=clamp(pt[0]-c.ox,0,Math.max(0,1-L.bw/w));c.mv.y=clamp(pt[1]-c.oy,0,Math.max(0,1-L.bh/h));redrawOv();return;}
+  if(c.mv){if(!c.moved&&Math.hypot(e.clientX-c.cx,e.clientY-c.cy)<=8)return;c.moved=true;const o=$('#ov'),w=o.width,h=o.height,L=layoutText(mctx,w,c.mv);
+    c.mv.x=clamp(pt[0]-c.ox,0,Math.max(0,1-L.bw/w));c.mv.y=clamp(pt[1]-c.oy,0,Math.max(0,1-L.bh/h));if(!E._mf){E._mf=requestAnimationFrame(()=>{E._mf=0;redrawOv();});}return;}
   if(c.p){const l=c.p[c.p.length-1];if(Math.hypot(pt[0]-l[0],pt[1]-l[1])>.0015)c.p.push(pt);}else c.b=pt;
   redrawOv();
 });
@@ -1440,26 +1440,44 @@ const upOv=()=>{const c=E.cur;E.cur=null;
   if(c.b&&Math.hypot(c.a[0]-c.b[0],c.a[1]-c.b[1])<.01){redrawOv();return;}
   if(c.t==='fill'){if(c.ocr){E.cur=null;redrawOv();ocrModal(E.page,{x0:Math.min(c.a[0],c.b[0]),y0:Math.min(c.a[1],c.b[1]),x1:Math.max(c.a[0],c.b[0]),y1:Math.max(c.a[1],c.b[1])});return;}delete c.live;if(c.k==='l'&&c.p.length<3){redrawOv();return;}}addAnn(c);};
 ov.addEventListener('pointerup',upOv);ov.addEventListener('pointercancel',()=>{const c=E.cur;E.cur=null;if(c&&c.mv&&c.moved){const a=c.mv,p=E.page;if(a.x!==c.before.x||a.y!==c.before.y){p.hist.push({k:'mod',a,b:c.before,n:{x:a.x,y:a.y}});p.fut.length=0;}syncControls();}redrawOv();});
-function ensureTf(){let r=$('#tfRow');if(r)return r;const ar=(typeof lang==='undefined'||lang==='ar');r=document.createElement('div');r.id='tfRow';
-  r.innerHTML='<div id="tfFonts"></div><div id="tfWt"></div><label class="tfs"><span>'+(ar?'الحجم':'Size')+'</span><input type="range" id="tfSz" min="15" max="110"></label><div id="tfCol"></div>';
-  const tb=$('#textBar');tb.insertBefore(r,$('#textIn'));
+function txRevealRect(top,bot){const tb=$('#textBar'),sh=document.getElementById('txS'),st=$('#editStage').getBoundingClientRect(),dock=sh||(tb&&!tb.hidden?tb:null);let lim=innerHeight;
+  if(dock){const pop=dock.querySelector('.txpop');lim=(pop&&!pop.hidden?pop:dock).getBoundingClientRect().top;}
+  lim-=10;const tt=st.top+6;let dy=0;if(bot>lim)dy=lim-bot;if(top+dy<tt)dy=tt-top;if(Math.abs(dy)<1)return;
+  if(Z.s>1.001){Z.y+=dy;limZ();}else{const h=$('#ov').getBoundingClientRect().height;Z.lift=clamp((Z.lift||0)-dy,0,h*.7);applyZ();}}
+function txVisible(a){const tb=$('#textBar');if(!a||!E.page||!tb||tb.hidden)return;const o=$('#ov'),rc=o.getBoundingClientRect(),w=o.width,h=o.height;if(!w||!rc.width)return;const L=layoutText(mctx,w,a),q=tpos(L,w,h,a),k=rc.width/w;txRevealRect(rc.top+q[1]*k,rc.top+(q[1]+L.bh)*k);}
+function txVis(){cancelAnimationFrame(E._txr);E._txr=requestAnimationFrame(()=>txVisible(E.ta));}
+function txTabIn(dock,k){const pop=dock.querySelector('.txpop'),cur=pop.dataset.cur===k?'':k;pop.dataset.cur=cur;pop.hidden=!cur;pop.querySelectorAll('.pp').forEach(x=>x.hidden=x.dataset.pp!==cur);dock.querySelectorAll('.txc[data-p]').forEach(b=>b.classList.toggle('on',b.dataset.p===cur));
+  if(cur){const t=dock.querySelector('textarea');if(t)t.blur();}setTimeout(()=>{if(dock._rv)dock._rv();},40);}
+(function(){const vv=window.visualViewport,rs=document.documentElement.style;let t=0;const set=()=>{const h=vv?vv.height:innerHeight,top=vv?vv.offsetTop:0,kb=vv?Math.max(0,Math.round(innerHeight-h-top)):0;rs.setProperty('--kb',kb+'px');rs.setProperty('--vvh',Math.round(h)+'px');rs.setProperty('--vvt',Math.round(top)+'px');cancelAnimationFrame(t);t=requestAnimationFrame(()=>{const tb=$('#textBar'),d=document.getElementById('txS')||(tb&&!tb.hidden?tb:null);if(d&&d._rv)d._rv();});};if(vv){vv.addEventListener('resize',set);vv.addEventListener('scroll',set);}addEventListener('resize',set);set();})();
+function ensureTf(){let r=$('#txPop');if(r)return r;const ar=(typeof lang==='undefined'||lang==='ar'),tb=$('#textBar'),ti=$('#textIn');
+  const r1=document.createElement('div');r1.className='txr1';tb.insertBefore(r1,ti);r1.append(ti,$('#textAdd'),$('#textCancel'));
+  const r2=document.createElement('div');r2.className='txr2';
+  r2.innerHTML='<button type="button" class="txc" data-p="f" aria-label="'+(ar?'الخط':'Font')+'"><span class="txf"></span></button><button type="button" class="txc" data-z="-1" aria-label="'+(ar?'تصغير':'Smaller')+'">A−</button><button type="button" class="txc" data-p="s" id="txBN" aria-label="'+(ar?'الحجم':'Size')+'"></button><button type="button" class="txc" data-z="1" aria-label="'+(ar?'تكبير':'Larger')+'">A+</button><button type="button" class="txc" data-p="c" id="txBC" aria-label="'+(ar?'اللون':'Color')+'"><i class="txd"></i></button>';
+  r1.after(r2);
+  r=document.createElement('div');r.id='txPop';r.className='txpop';r.hidden=true;
+  r.innerHTML='<div class="pp" data-pp="f"><div id="tfFonts"></div><div id="tfWt" style="margin-top:8px"></div></div><div class="pp" data-pp="s"><label class="tfs"><span>'+(ar?'الحجم':'Size')+'</span><input type="range" id="tfSz" min="15" max="110"></label></div><div class="pp" data-pp="c"><div id="tfCol"></div></div>';
+  tb.appendChild(r);tb._rv=()=>txVisible(E.ta);
   const col=$('#tfCol',r);COLORS.concat(['#FFFFFF']).forEach(c=>{const b=document.createElement('button');b.type='button';b.className='tfc';b.style.background=c;b.dataset.c=c;b.setAttribute('aria-label',c);b.onclick=()=>{E.tc=c;tfApply();tfSync();};col.appendChild(b);});
   fontCards($('#tfFonts',r),E.tf,k=>{E.tf=k;tfApply();tfSync();});wtSeg($('#tfWt',r),E.tw||600,w=>{E.tw=w;tfApply();tfSync();});
   $('#tfSz',r).oninput=e=>{E.tsz=e.target.value/1000;tfApply();tfSync();};
-  $('#textIn').addEventListener('input',tfApply);
+  ti.addEventListener('input',tfApply);
+  const keep=e=>{if(e.target.closest('[data-z]'))e.preventDefault();};r2.addEventListener('pointerdown',keep);r2.addEventListener('mousedown',keep);
+  r2.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.z){E.tsz=clamp(E.tsz+(+b.dataset.z)*.003,.015,.11);tfApply();tfSync();}else if(b.dataset.p)txTabIn(tb,b.dataset.p);};
   try{window.TXFONTS.then(()=>redrawOv());}catch(_){}
   return r;}
-function tfApply(){const a=E.ta;if(!a)return;a.txt=$('#textIn').value;a.f=E.tf;a.w=E.tw||600;a.s=E.tsz;if(a.t==='text'&&E.tc)a.c=E.tc;redrawOv();}
-function tfSync(){const r=$('#tfRow'),ti=$('#textIn'),a=E.ta;if(!r||!a)return;fontCardsSet($('#tfFonts',r),E.tf);wtSet($('#tfWt',r),E.tw||600);$('#tfSz',r).value=Math.round(E.tsz*1000);
-  $('#tfCol',r).style.display=a.t==='note'?'none':'flex';$$('.tfc',r).forEach(b=>b.classList.toggle('on',b.dataset.c.toLowerCase()===String(E.tc).toLowerCase()));
-  ti.style.fontFamily=(TFONTS[E.tf]||TFONTS.manrope)[1];ti.style.fontWeight=E.tw||600;ti.style.fontSize='18px';}
+function tfApply(){const a=E.ta;if(!a)return;const ti=$('#textIn');a.txt=ti.value;a.f=E.tf;a.w=E.tw||600;a.s=E.tsz;if(a.t==='text'&&E.tc)a.c=E.tc;ti.style.height='auto';ti.style.height=Math.min(ti.scrollHeight+2,84)+'px';redrawOv();txVis();}
+function tfSync(){const r=$('#txPop'),ti=$('#textIn'),a=E.ta;if(!r||!a)return;fontCardsSet($('#tfFonts',r),E.tf);wtSet($('#tfWt',r),E.tw||600);const n=Math.round(E.tsz*1000);$('#tfSz',r).value=n;$('#txBN').textContent=n;
+  const f=TFONTS[E.tf]||TFONTS.manrope,fb=$('#textBar').querySelector('.txf');fb.textContent=f[0].replace('Noto Sans Arabic','Noto');fb.style.fontFamily=f[1];fb.style.fontWeight=E.tw||600;
+  const cb=$('#txBC');cb.style.display=a.t==='note'?'none':'';cb.querySelector('.txd').style.background=E.tc||'#111';
+  $$('.tfc',r).forEach(b=>b.classList.toggle('on',b.dataset.c.toLowerCase()===String(E.tc).toLowerCase()));
+  ti.style.fontFamily=f[1];ti.style.fontWeight=E.tw||600;ti.style.fontSize='16px';}
 function openTextBar(pt,edit){ensureTf();const ti=$('#textIn'),isNote=edit?edit.t==='note':E.tool==='note';E.pending=pt||null;E.edit=edit||null;E.draft=null;
   if(edit){E.ta=edit;E.snap={txt:edit.txt,f:edit.f,w:edit.w||600,s:edit.s,c:edit.c};E.tf=edit.f||'manrope';E.tw=edit.w||600;E.tsz=edit.s;E.tc=edit.c;E.sel=edit;ti.value=edit.txt;}
   else{E.snap=null;E.tf=E.tfPref||'cairo';E.tw=E.twPref||600;E.tsz=E.tszPref||SIZES.txt[E.size]*(isNote?.85:1);E.tc=(E.color==='#FFD60A'?'#111111':E.color);
     const d={t:isNote?'note':'text',c:isNote?'#2A2200':E.tc,x:pt[0],y:pt[1],s:E.tsz,f:E.tf,txt:''};E.draft=d;E.ta=d;E.sel=d;ti.value='';}
-  $('#textBar').hidden=false;tfSync();redrawOv();ti.focus();}
+  $('#textBar').hidden=false;const pp=$('#txPop');pp.hidden=true;pp.dataset.cur='';$$('#textBar .txc.on').forEach(x=>x.classList.remove('on'));tfSync();ti.style.height='auto';ti.style.height=Math.min(ti.scrollHeight+2,84)+'px';redrawOv();ti.focus();setTimeout(txVis,80);setTimeout(txVis,420);}
 function closeTextBar(keep){if(!keep&&E.edit&&E.snap)Object.assign(E.ta,E.snap);E.draft=null;E.ta=null;E.edit=null;E.snap=null;E.pending=null;if(!keep)E.sel=null;
-  const tb=$('#textBar');if(tb)tb.hidden=true;const ti=$('#textIn');if(ti)ti.blur();redrawOv();}
+  const tb=$('#textBar');if(tb)tb.hidden=true;const ti=$('#textIn');if(ti)ti.blur();try{Z.lift=0;applyZ();}catch(_){}redrawOv();}
 $('#textCancel').onclick=()=>closeTextBar();
 $('#textAdd').onclick=()=>{const a=E.ta,v=$('#textIn').value.trim();if(!a){closeTextBar();return;}
   if(E.edit){const p=E.page;
@@ -1808,9 +1826,9 @@ function applyFills(ctx,w,h,list,pg){if(pg&&pg.ink)applyInk(ctx,w,h,pg.ink);for(
 const fsig=p=>p.id+':'+p.ann.filter(a=>a.t==='fill'||a.t==='txtr').map(a=>a.id).join();
 $('#toolRow').addEventListener('click',e=>{const b=e.target.closest('.tool');if(b&&/^(cbrush|classo|cbox)$/.test(b.dataset.k))toast(lang==='ar'?'حدّد العنصر غير المرغوب وسيُمسح بلون الورقة':'Mark the unwanted item; it is filled with the paper color');});
 const Z={s:1,x:0,y:0},PT=new Map();let zp=null;
-function applyZ(){$('#wrap').style.transform=(Z.s===1&&!Z.x&&!Z.y)?'':`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;}
+function applyZ(){const ly=Z.lift||0;$('#wrap').style.transform=(Z.s===1&&!Z.x&&!Z.y&&!ly)?'':`translate(${Z.x}px,${Z.y-ly}px) scale(${Z.s})`;}
 function resetZ(){Z.s=1;Z.x=Z.y=0;applyZ();}
-function zoomAt(cx,cy,s2){const r=$('#editStage').getBoundingClientRect(),ox=r.left+r.width/2,oy=r.top+r.height/2;s2=clamp(s2,1,8);const k=s2/Z.s;
+function zoomAt(cx,cy,s2){if(Z.lift){Z.y-=Z.lift;Z.lift=0;}const r=$('#editStage').getBoundingClientRect(),ox=r.left+r.width/2,oy=r.top+r.height/2;s2=clamp(s2,1,8);const k=s2/Z.s;
  Z.x=(cx-ox)-(cx-ox-Z.x)*k;Z.y=(cy-oy)-(cy-oy-Z.y)*k;Z.s=s2;limZ();}
 function limZ(){if(Z.s<=1.001){Z.s=1;Z.x=Z.y=0;}else{const wr=$('#wrap'),lx=wr.offsetWidth*Z.s/2,ly=wr.offsetHeight*Z.s/2;Z.x=clamp(Z.x,-lx,lx);Z.y=clamp(Z.y,-ly,ly);}applyZ();}
 const stg=$('#editStage');stg.style.touchAction='none';
@@ -2185,21 +2203,24 @@ function txtDraw(ctx,w,h,a){const bx=Math.min(a.x0,a.x1)*w,by=Math.min(a.y0,a.y1
  let fs=bh/n*.8;ctx.save();ctx.font=wt+fs+'px '+ff;const mx=Math.max(1,...L.map(l=>ctx.measureText(l).width));if(mx>bw*.98)fs*=bw*.98/mx;fs*=(a.sz||1);ctx.font=wt+fs+'px '+ff;
  ctx.direction=rtl?'rtl':'ltr';ctx.textAlign=rtl?'right':'left';ctx.textBaseline='middle';ctx.fillStyle=ctx.shadowColor=a.c;ctx.globalAlpha=.92;ctx.shadowBlur=fs*(a.bl==null?3:a.bl)*.012;
  const lh=bh/n;L.forEach((l,i)=>ctx.fillText(l,rtl?bx+bw:bx,by+lh*(i+.5)));ctx.restore();}
-function txtSheet(a){const p=E.page,old=document.getElementById('txS');if(old)old.remove();const m=document.createElement('div');m.id='txS';
- const top=(a.y0+a.y1)/2>.5;m.style.cssText='position:fixed;left:0;right:0;z-index:9000;background:var(--surface,#fff);color:var(--ink,#111);box-shadow:0 0 24px #0007;padding:12px 14px;display:flex;flex-direction:column;gap:9px;font:600 14px system-ui;max-height:50%;overflow:auto;'+(top?'top:0;padding-top:calc(env(safe-area-inset-top,0px) + 12px);border-radius:0 0 18px 18px':'bottom:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);border-radius:18px 18px 0 0');
- m.innerHTML='<textarea dir="auto" rows="2" style="border-radius:10px;padding:8px;font:16px system-ui;border:1px solid #8884"></textarea><div id="txF"></div><div id="txW"></div><label style="display:flex;gap:8px;align-items:center">'+(AR()?'الحجم':'Size')+'<input type="range" min="50" max="170" data-r="sz" style="flex:1"></label><label style="display:flex;gap:8px;align-items:center">'+(AR()?'البلور':'Blur')+'<input type="range" min="0" max="10" step=".5" data-r="bl" style="flex:1"></label><div style="display:flex;gap:8px"><button class="chip" data-x="d">'+(AR()?'حذف':'Delete')+'</button><button class="chip on" data-x="k">'+(AR()?'تم':'Done')+'</button></div>';
- document.body.appendChild(m);const ta=m.querySelector('textarea'),sz=m.querySelector('[data-r=sz]'),bl=m.querySelector('[data-r=bl]');ta.value=a.txt;sz.value=(a.sz||1)*100;bl.value=a.bl==null?3:a.bl;
- const fc=m.querySelector('#txF'),wg=m.querySelector('#txW');const sy=()=>{fontCardsSet(fc,TPICK[(a.ff==null?5:a.ff)-5]);wtSet(wg,a.w||(a.b?800:400));};fontCards(fc,null,k=>{a.ff=5+TPICK.indexOf(k);sy();redrawOv();});wtSeg(wg,null,w=>{a.w=w;a.b=0;sy();redrawOv();});sy();
- ta.oninput=()=>{if(ta.value.trim()){a.txt=ta.value;redrawOv();}};sz.oninput=()=>{a.sz=sz.value/100;redrawOv();};bl.oninput=()=>{a.bl=+bl.value;redrawOv();};
- m.onclick=e=>{const d=e.target.dataset||{};if(0){}
-  else if(d.x==='k')m.remove();
-  else if(d.x==='d'){p.ann=p.ann.filter(x=>x!==a);p.hist=p.hist.filter(h=>h.a!==a);p.fut=p.fut.filter(h=>h.a!==a);m.remove();renderEdit();syncControls();}};}
+function txtSheet(a){const p=E.page,old=document.getElementById('txS');if(old)old.remove();const ar=AR(),m=document.createElement('div');m.id='txS';m.className='tbar txdock';
+ m.innerHTML='<div class="txr1"><textarea dir="auto" rows="2"></textarea></div><div class="txr2"><button type="button" class="txc" data-p="f"><span class="txf"></span></button><button type="button" class="txc" data-p="s">'+(ar?'الحجم':'Size')+'</button><button type="button" class="txc" data-p="b">'+(ar?'التنعيم':'Blur')+'</button><span style="flex:1"></span><button type="button" class="txc" data-x="d">'+(ar?'حذف':'Delete')+'</button><button type="button" class="txc pri" data-x="k">'+(ar?'تم':'Done')+'</button></div><div class="txpop" hidden><div class="pp" data-pp="f"><div id="txF"></div><div id="txW" style="margin-top:8px"></div></div><div class="pp" data-pp="s"><label class="tfs"><span>'+(ar?'الحجم':'Size')+'</span><input type="range" min="50" max="170" data-r="sz"></label></div><div class="pp" data-pp="b"><label class="tfs"><span>'+(ar?'التنعيم':'Blur')+'</span><input type="range" min="0" max="10" step=".5" data-r="bl"></label></div></div>';
+ document.body.appendChild(m);const ta=m.querySelector('textarea'),sz=m.querySelector('[data-r=sz]'),bl=m.querySelector('[data-r=bl]'),fb=m.querySelector('.txf');ta.value=a.txt;sz.value=(a.sz||1)*100;bl.value=a.bl==null?3:a.bl;
+ const fc=m.querySelector('#txF'),wg=m.querySelector('#txW');
+ const sy=()=>{const k=TPICK[(a.ff==null?5:a.ff)-5]||'cairo',f=TFONTS[k];fontCardsSet(fc,k);wtSet(wg,a.w||(a.b?800:400));fb.textContent=f[0].replace('Noto Sans Arabic','Noto');fb.style.fontFamily=f[1];};
+ fontCards(fc,null,k=>{a.ff=5+TPICK.indexOf(k);sy();redrawOv();});wtSeg(wg,null,w=>{a.w=w;a.b=0;sy();redrawOv();});sy();
+ const fit=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight+2,84)+'px';};fit();
+ m._rv=()=>{const rc=$('#ov').getBoundingClientRect();txRevealRect(rc.top+Math.min(a.y0,a.y1)*rc.height,rc.top+Math.max(a.y0,a.y1)*rc.height);};
+ ta.oninput=()=>{fit();if(ta.value.trim()){a.txt=ta.value;redrawOv();}};sz.oninput=()=>{a.sz=sz.value/100;redrawOv();};bl.oninput=()=>{a.bl=+bl.value;redrawOv();};
+ const end=()=>{m.remove();try{Z.lift=0;applyZ();}catch(_){}};
+ m.onclick=e=>{const b=e.target.closest('[data-p],[data-x]');if(!b)return;if(b.dataset.p)txTabIn(m,b.dataset.p);else if(b.dataset.x==='k')end();else if(b.dataset.x==='d'){p.ann=p.ann.filter(x=>x!==a);p.hist=p.hist.filter(h=>h.a!==a);p.fut=p.fut.filter(h=>h.a!==a);end();renderEdit();syncControls();}};
+ setTimeout(m._rv,60);setTimeout(m._rv,420);}
 $('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ocrB"><svg class="i"><use href="#i-pen"/></svg><span>'+(AR()?'استخراج النص':'Extract text')+'</span></button>');
 $('#ocrB').onclick=()=>{if(E.page)ocrModal(E.page,null);};
 async function ocrModal(p,box){let lang=localStorage.getItem('tx_ol')||(AR()?'ara':'eng');
- const m=document.createElement('div');m.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:14px';
+ const m=document.createElement('div');m.style.cssText='position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box';
  const LB=[['ara',AR()?'عربي':'Arabic'],['eng','English'],['ara+eng',AR()?'الاتنين':'Both']];
- m.innerHTML='<div style="background:var(--surface,#fff);color:var(--ink,#111);border-radius:16px;padding:14px;width:min(460px,100%);max-height:92%;display:flex;flex-direction:column;gap:10px;font:600 15px system-ui"><div style="display:flex;gap:6px" id="oL">'+LB.map(l=>'<button class="chip" data-l="'+l[0]+'">'+l[1]+'</button>').join('')+'</div><div id="oS"></div><textarea dir="auto" style="flex:1;min-height:170px;border-radius:10px;padding:10px;font:16px system-ui;border:1px solid #8884" hidden></textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" data-a="c" hidden>'+(AR()?'نسخ':'Copy')+'</button><button class="chip" data-a="d" hidden>TXT</button>'+(box?'<button class="chip on" data-a="r" hidden>'+(AR()?'استبدال في الصورة':'Replace in image')+'</button>':'')+'<button class="chip" data-a="x">'+(AR()?'إغلاق':'Close')+'</button></div></div>';
+ m.innerHTML='<div style="background:var(--surface,#fff);color:var(--ink,#111);border-radius:16px;padding:14px;width:min(460px,100%);max-height:100%;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;font:600 15px system-ui"><div style="display:flex;gap:6px" id="oL">'+LB.map(l=>'<button class="chip" data-l="'+l[0]+'">'+l[1]+'</button>').join('')+'</div><div id="oS"></div><textarea dir="auto" style="flex:1;min-height:96px;max-height:40vh;border-radius:10px;padding:10px;font:16px system-ui;border:1px solid #8884" hidden></textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" data-a="c" hidden>'+(AR()?'نسخ':'Copy')+'</button><button class="chip" data-a="d" hidden>TXT</button>'+(box?'<button class="chip on" data-a="r" hidden>'+(AR()?'استبدال في الصورة':'Replace in image')+'</button>':'')+'<button class="chip" data-a="x">'+(AR()?'إغلاق':'Close')+'</button></div></div>';
  document.body.appendChild(m);const st=m.querySelector('#oS'),ta=m.querySelector('textarea');let dead=0,run=0,cv=null,ink='#222';
  const sync=()=>m.querySelectorAll('#oL .chip').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));sync();
  const go=async()=>{const id=++run;let sg='render';ta.hidden=true;m.querySelectorAll('[data-a=c],[data-a=d],[data-a=r]').forEach(x=>x.hidden=true);st.textContent=AR()?'جاري التحميل...':'Loading...';
@@ -3132,4 +3153,25 @@ window.__txNewChooser=function(){var ar=(typeof lang!=='undefined'?lang:'ar')===
 .wseg button{min-height:40px;border-radius:9px;font-size:13px;color:var(--ink2);transition:background .15s,color .15s}
 .wseg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 #tfFonts,#tfWt,#txF,#txW{min-width:0}
-</style></body></html>
+</style><style id="txv2">
+:root{--kb:0px}
+.txdock{position:fixed;left:8px;right:8px;bottom:calc(var(--kb,0px) + 8px + env(safe-area-inset-bottom,0px));z-index:500;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;padding:8px;margin:0 auto;max-width:560px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:0 12px 34px -8px #000b;font:600 14px system-ui}
+.txdock[hidden]{display:none}
+#txS.txdock{z-index:9000}
+.txdock .txr1{flex:1 1 100%;display:flex;gap:6px;align-items:flex-end;min-width:0}
+.txdock textarea{flex:1;min-width:0;min-height:40px;max-height:84px;padding:9px 11px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:none;font:600 16px system-ui;-webkit-user-select:text;user-select:text}
+.txdock .txr1 .btn{min-height:40px}
+.txdock .txr2{flex:1 1 100%;display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none}
+.txdock .txr2::-webkit-scrollbar{display:none}
+.txc{flex:none;min-height:38px;min-width:38px;padding:0 11px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);font:700 13px system-ui;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.txc.on{border-color:var(--accent,#1b63f0);background:color-mix(in srgb,var(--accent,#1b63f0) 14%,transparent)}
+.txc.pri{background:var(--accent,#1b63f0);border-color:transparent;color:#fff}
+.txc .txd{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);display:inline-block}
+.txc .txf{max-width:92px;overflow:hidden;text-overflow:ellipsis}
+.txpop{position:absolute;left:0;right:0;bottom:calc(100% + 8px);max-height:min(280px,calc(var(--vvh,100vh) - var(--kb,0px) - 190px));overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 12px 34px -8px #000b}
+.txpop[hidden]{display:none}
+.txpop .tfs{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink2)}
+.txpop .tfs input{flex:1;min-width:0}
+#tfCol{display:flex;gap:10px;flex-wrap:wrap}
+</style>
+</body></html>
