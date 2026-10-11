@@ -3515,7 +3515,28 @@ function mount(){
  const fix=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));const g=document.getElementById('galFab');if(g)g.setAttribute('aria-label',L('استيراد من الجهاز','Import from device'));};
  fix();new MutationObserver(fix).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+/* ---- header dock: ✨ + ⋯ + sound + language live in ONE glass pill, so nothing is pushed under the logo ---- */
+const dcss=document.createElement('style');dcss.textContent=`
+#vHome .top{flex-wrap:wrap!important;row-gap:8px!important}
+#vHome .hdock{display:flex;align-items:center;gap:2px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);flex:none;order:1}
+#vHome .hdock>button{width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;margin:0!important;border:0!important;border-radius:14px!important;background:transparent!important;color:#fff!important;display:grid!important;place-items:center;font-size:12px;font-weight:800;opacity:1!important;box-shadow:none!important}
+#vHome .hdock>button:active{background:rgba(255,255,255,.2)!important}
+#vHome .hdock>button#tgBtn svg{width:20px;height:20px}
+#vHome .top .brand{order:0!important;flex:1 1 0!important;min-width:0!important}
+#vHome .top .inst{order:1;flex:none;height:34px;padding:0 10px;font-size:12px;white-space:nowrap}
+#vHome .top .utils{order:2}
+@media (max-width:480px){#vHome .top .utils{order:3!important;flex:1 1 100%!important;justify-content:space-between!important}}`;
+document.head.appendChild(dcss);
+function dock(){
+ const top=document.querySelector('#vHome .top');if(!top||top.querySelector('.hdock'))return;
+ const lb=document.getElementById('langBtn'),tg=document.getElementById('tgBtn'),fx=document.getElementById('fxBtn');
+ const more=[...top.children].find(e=>e.tagName==='BUTTON'&&e.textContent.trim()==='⋯');
+ if(!lb||!tg)return;
+ const d=document.createElement('div');d.className='hdock';lb.parentNode.insertBefore(d,lb);
+ [tg,more,fx,lb].forEach(e=>{if(e)d.appendChild(e);});
+}
+function start(){mount();dock();setTimeout(dock,700);setTimeout(dock,2000);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
 </body></html>
