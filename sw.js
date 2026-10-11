@@ -1,5 +1,6 @@
-const CACHE='timaxo-v30';
-self.addEventListener('install',()=>{});            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
+const CACHE='timaxo-v32';
+const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','apple-touch-icon.png'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{}))))));            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(
   caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE&&x!=='timaxo-share').map(x=>caches.delete(x)))).then(()=>self.clients.claim())));

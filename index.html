@@ -378,7 +378,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   <div class="toast" id="toast"></div>
 </div>
 <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
-<input type="file" id="galIn" accept="image/*" multiple hidden>
+<input type="file" id="galIn" accept="image/*,application/pdf,.pdf" multiple hidden>
 
 <style id="timaxo-theme">
 /* ===== Timaxo Scan 2.0 theme: matches the app icon (royal navy, electric blue, cyan scan beam) ===== */
@@ -1117,7 +1117,7 @@ function renderHome(fresh){
   $('#count').textContent=n?t('pages',n):'';updLib();
   $('#exportBtn').disabled=!n;$('#newBtn').style.visibility=n?'visible':'hidden';
   if(!n){
-    sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><div class="emact"><button class="btn pri" id="emCam" type="button"><i class="emi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></i><span>${AR0?'صوّر أول مستند':'Scan your first document'}</span></button><button class="btn" id="emGal" type="button"><i class="emi g"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></i><span>${AR0?'من المعرض':'From gallery'}</span></button></div><ul class="emtips"><li>${AR0?'صوّر الورقة على سطح غامق وإضاءة كويسة عشان القص التلقائي يظبط.':'Shoot the page on a dark surface in good light for cleaner auto-crop.'}</li><li>${AR0?'تقدر تضيف صفحات تانية لنفس المستند وتصدّره PDF واحد.':'Add more pages to the same document and export one PDF.'}</li><li>${AR0?'كل حاجة بتتحفظ على جهازك بس، فاعمل نسخة احتياطية من «مستنداتي» من وقت للتاني.':'Everything stays on your device only, so back up from My documents once in a while.'}</li></ul><button class="btn" id="sampleBtn">${t('sample')}</button></div>`;
+    sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><div class="emact"><button class="btn pri" id="emCam" type="button"><i class="emi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></i><span>${AR0?'صوّر أول مستند':'Scan your first document'}</span></button><button class="btn" id="emGal" type="button"><i class="emi g"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></i><span>${AR0?'من المعرض أو PDF':'Gallery or PDF'}</span></button></div><ul class="emtips"><li>${AR0?'صوّر الورقة على سطح غامق وإضاءة كويسة عشان القص التلقائي يظبط.':'Shoot the page on a dark surface in good light for cleaner auto-crop.'}</li><li>${AR0?'تقدر تضيف صفحات تانية لنفس المستند وتصدّره PDF واحد.':'Add more pages to the same document and export one PDF.'}</li><li>${AR0?'كل حاجة بتتحفظ على جهازك بس، فاعمل نسخة احتياطية من «مستنداتي» من وقت للتاني.':'Everything stays on your device only, so back up from My documents once in a while.'}</li></ul><button class="btn" id="sampleBtn">${t('sample')}</button></div>`;
     $('#sampleBtn').onclick=startSample;$('#emCam').onclick=()=>$('#camIn').click();$('#emGal').onclick=()=>$('#galIn').click();return;
   }
   sh.innerHTML='<div class="grid"></div>';const g=$('.grid',sh);
@@ -1165,7 +1165,35 @@ async function ingest(file){
 }
 function nextQueued(){const f=state.queue.shift();if(f){ingest(f);return true;}return false;}
 $('#camIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)ingest(fs[0]);});
-$('#galIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;state.queue=fs.slice(1);ingest(fs[0]);});
+const isPdf=f=>f&&(f.type==='application/pdf'||/\.pdf$/i.test(f.name||''));
+async function importPdf(file){
+  busy(true);let made=0,first=null;
+  try{
+    const lib=await import('./pdf.min.mjs');lib.GlobalWorkerOptions.workerSrc=new URL('./pdf.worker.min.mjs',location.href).href;
+    const doc=await lib.getDocument({data:await file.arrayBuffer(),wasmUrl:new URL('./',location.href).href}).promise;
+    const MAXP=60,n=Math.min(doc.numPages,MAXP);
+    if(window.__txNew){window.__txNew=false;if(state.pages.length)await startNew();}
+    for(let i=1;i<=n;i++){
+      toast(lang==='ar'?('بحوّل صفحة '+i+' من '+n+'…'):('Converting page '+i+' of '+n+'…'));
+      const pg=await doc.getPage(i),v0=pg.getViewport({scale:1}),sc=Math.min(4,2200/Math.max(v0.width,v0.height)),vp=pg.getViewport({scale:sc});
+      const cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+      await pg.render({canvasContext:cx,viewport:vp,canvas:cv}).promise;pg.cleanup();
+      const blob=await toBlob(cv,'image/jpeg',.9);cv.width=cv.height=1;
+      const p={id:newId(),blob,src:null,corners:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],rot:0,filter:'original',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
+      p.thumb=await makeThumb(p);state.pages.push(p);await persist(p);made++;if(!first)first=p;
+    }
+    await persistMeta();try{doc.destroy();}catch(_){}
+    if(doc.numPages>MAXP)toast(lang==='ar'?('اتحوّل أول '+MAXP+' صفحة بس'):('Only the first '+MAXP+' pages were imported'));
+    else toast(lang==='ar'?('اتضاف '+made+' صفحة من الـPDF'):(made+' page(s) imported from PDF'));
+  }catch(e){console.error(e);toast(lang==='ar'?'تعذّر فتح ملف الـPDF (ممكن يكون محمي بكلمة سر أو تالف)':'Could not open the PDF (it may be password-protected or damaged)');}
+  busy(false);
+  if(first){goHome();renderHome(first.id);}
+}
+window.__txImportPdf=importPdf;
+$('#galIn').addEventListener('change',async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
+  const pdfs=fs.filter(isPdf),imgs=fs.filter(f=>!isPdf(f));
+  for(const f of pdfs)await importPdf(f);
+  if(imgs.length){state.queue=imgs.slice(1);ingest(imgs[0]);}});
 $('#scanBtn').onclick=()=>$('#camIn').click();
 $('#galBtn').onclick=()=>$('#galIn').click();
 
@@ -1835,7 +1863,8 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
    idc:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.2 3-2.2s2.4.6 3 2.2M14 10h4M14 13h3"/>',
    idx:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2M9 11h4M11 9v4"/>',
    snd:'<path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10"/>',
-   lng:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'};
+   lng:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+   off:'<path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5 4 4 0 0 1 17 18"/><path d="M12 11v7M9 15l3 3 3-3"/>'};
   const bg=document.createElement('div');bg.id='mrBg';
   const bx=document.createElement('div');bx.id='mrBx';bg.appendChild(bx);
   const close=()=>{bg.classList.remove('in');setTimeout(()=>bg.remove(),230);};
@@ -1863,6 +1892,14 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
     try{localStorage.setItem('tx_bgocr',bgOn()?'0':'1');}catch(e){}
     const s=x.querySelector('.st');s.className='st'+(bgOn()?' on':'');s.textContent=bgOn()?T('مفعّل','On'):T('غير مفعّل','Off');
     toast(bgOn()?T('الفهرسة التلقائية شغالة (تحتاج إنترنت)','Auto-index on (needs internet)'):T('الفهرسة التلقائية موقوفة','Auto-index off'));if(bgOn())setTimeout(bgOcr,300);},1);
+  const offOk=()=>{try{return !!localStorage.getItem('tx_offline')}catch(e){return false}};
+  card(g3,'off','#16a34a',T('تجهيز الأوفلاين (OCR)','Prepare offline (OCR)'),[offOk()?T('جاهز','Ready'):T('غير جاهز','Not ready'),offOk()],async(x)=>{
+    const s=x.querySelector('.st');
+    if(!navigator.onLine){toast(T('محتاج إنترنت مرة واحدة للتجهيز','Needs internet once to prepare'));return;}
+    if(!window.__txWarm){toast(T('الميزة مش متاحة دلوقتي','Not available right now'));return;}
+    s.className='st';s.textContent=T('جاري التحميل…','Downloading…');toast(T('بحمّل محرك التعرف على النص مرة واحدة، ممكن ياخد دقيقة','Downloading the text engine once, may take a minute'));
+    try{await window.__txWarm();try{localStorage.setItem('tx_offline',String(Date.now()));}catch(e){}s.className='st on';s.textContent=T('جاهز','Ready');toast(T('جاهز: الـOCR هيشتغل بدون إنترنت','Ready: OCR will work offline'));}
+    catch(e){s.className='st';s.textContent=T('فشل','Failed');toast(T('تعذّر التحميل، جرّب مع إنترنت أقوى','Download failed, try a stronger connection'));}},1);
   const g4=sec(T('التطبيق','App'));
   card(g4,'snd','#e08a1b',T('صوت الكاميرا','Camera sound'),onOff(sndOn()),(x)=>{
     try{localStorage.setItem('tx_snd',sndOn()?'0':'1');}catch(e){}
@@ -2093,6 +2130,7 @@ const TU=['https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','h
 const loadT=async()=>{if(window.Tesseract)return window.Tesseract;for(const u of TU){try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no(new Error('script'));};document.head.appendChild(sc);});if(window.Tesseract)return window.Tesseract;}catch(_){}}throw new Error('script blocked or offline');};
 const WK={};let logCb=()=>{};
 async function getW(l){if(WK[l])return WK[l];const T=await loadT();return WK[l]=await T.createWorker(l,1,{langPath:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_fast',logger:x=>logCb(x)});}
+window.__txWarm=async function(){await loadT();const w=await getW('ara+eng');try{await w.terminate();}catch(_){}delete WK['ara+eng'];return 1;};
 const FONTS=[['Tahoma',"Tahoma,'Segoe UI',Arial,sans-serif"],['نسخ',"'Noto Naskh Arabic','Traditional Arabic',Amiri,'Times New Roman',serif"],['Arial',"Arial,Helvetica,sans-serif"],['Times',"'Times New Roman',Times,serif"],['Courier',"'Courier New',monospace"]];
 function txtDraw(ctx,w,h,a){const bx=Math.min(a.x0,a.x1)*w,by=Math.min(a.y0,a.y1)*h,bw=Math.abs(a.x1-a.x0)*w,bh=Math.abs(a.y1-a.y0)*h,L=a.txt.split('\n').filter(x=>x.trim()),n=Math.max(1,L.length),rtl=/[\u0600-\u06FF]/.test(a.txt),ff=(FONTS[a.ff||0]||FONTS[0])[1],wt=a.b?'bold ':'';
  let fs=bh/n*.8;ctx.save();ctx.font=wt+fs+'px '+ff;const mx=Math.max(1,...L.map(l=>ctx.measureText(l).width));if(mx>bw*.98)fs*=bw*.98/mx;fs*=(a.sz||1);ctx.font=wt+fs+'px '+ff;
@@ -2997,7 +3035,7 @@ html[dir=rtl] #mrBg #mrBx .cd:not(:has(.st))::after{content:"‹"}
 var IC={cam:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>',gal:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>',blank:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>'};
 window.__txNewChooser=function(){var ar=(typeof lang!=='undefined'?lang:'ar')==='ar',T=function(a,e){return ar?a:e};
  var bg=document.createElement('div');bg.id='nwBg';var bx=document.createElement('div');bx.id='nwBx';
- var O=[['cam','📷','#1b63f0',T('تصوير بالكاميرا','Scan with camera'),T('صوّر الورقة وهتتقص وتتحسن تلقائي','Capture a page, auto-crop and enhance')],['gal','🖼','#8a5cf0',T('من المعرض','From gallery'),T('اختار صورة أو أكتر من الفون','Pick one or more photos from your phone')],['blank','📄','#e08a1b',T('صفحة A4 فاضية','Blank A4 page'),T('ابدأ بورقة بيضا واكتب عليها','Start with a white page and annotate')]];
+ var O=[['cam','📷','#1b63f0',T('تصوير بالكاميرا','Scan with camera'),T('صوّر الورقة وهتتقص وتتحسن تلقائي','Capture a page, auto-crop and enhance')],['gal','🖼','#8a5cf0',T('من المعرض أو PDF','Gallery or PDF'),T('اختار صور أو ملف PDF من الفون','Pick photos or a PDF from your phone')],['blank','📄','#e08a1b',T('صفحة A4 فاضية','Blank A4 page'),T('ابدأ بورقة بيضا واكتب عليها','Start with a white page and annotate')]];
  bx.innerHTML='<div style="width:42px;height:5px;border-radius:3px;background:var(--line,#8886);margin:6px auto 10px"></div><h3>'+T('مستند جديد من…','New document from…')+'</h3>';
  O.forEach(function(o){var b=document.createElement('button');b.type='button';b.className='o';b.style.setProperty('--c',o[2]);b.innerHTML='<i>'+IC[o[0]]+'</i><span><b>'+o[3]+'</b><small>'+o[4]+'</small></span>';
   b.onclick=function(){bg.remove();var m=document.querySelector('#fabMenu [data-a="'+o[0]+'"]');if(m)m.click();};bx.appendChild(b)});
