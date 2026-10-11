@@ -1,4 +1,4 @@
-const CACHE='timaxo-v43';
+const CACHE='timaxo-v44';
 const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{}))))));            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
@@ -10,8 +10,8 @@ self.addEventListener('fetch',e=>{
   if(r.method!=='GET')return;
   const same=new URL(r.url).origin===location.origin;
   if(same){ // ملفات التطبيق: النت الأول، والكاش للأوفلاين
-    e.respondWith(fetch(r,{cache:'no-cache'}).then(res=>{const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));return res})
-      .catch(()=>caches.match(r).then(m=>m||caches.match('index.html'))));
+    e.respondWith(caches.match(r).then(m=>{const net=fetch(r,{cache:'no-cache'}).then(res=>{if(res&&res.ok){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));}return res}).catch(()=>m||caches.match('index.html'));
+      return m||net;})); // الكاش الأول (فتح فوري) + تحديث في الخلفية
   }else{ // خطوط ومكتبات خارجية: الكاش الأول
     e.respondWith(caches.match(r).then(m=>m||fetch(r).then(res=>{if(res&&(res.ok||res.type==='opaque')){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c))}return res})));
   }
