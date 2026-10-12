@@ -2486,6 +2486,8 @@ addEventListener('popstate',()=>{
  if(layers()>0){back();return}
  try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
 });
+window.__txBack=function(){return layers()>0?back():false};
+window.__txToast=function(m){try{toast(m)}catch(e){}};
 const st=document.createElement('style');st.textContent='#libUse::after{content:" · v19.2"}';document.head.appendChild(st);
 })();
 /* ===== v20: target size • card & ID-photo layouts • invoice→CSV ===== */
