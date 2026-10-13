@@ -3033,7 +3033,8 @@ function ocrLtWords(M,W,H){const ws=M.filter(w=>w.c>=40&&(w.y1-w.y0)>4),out=[];l
  for(const l of tbLines(ws).sort((a,b)=>a.cy-b.cy)){const r=tbIsAr(l.w.map(w=>w.t).join(' '));
   for(const w of l.w.slice().sort((p,q)=>r?q.x0-p.x0:p.x0-q.x0))out.push({t:w.t,x0:w.x0/W,y0:w.y0/H,x1:w.x1/W,y1:w.y1/H,l:li,r:r?1:0});li++;}
  return out;}
-function ltStore(p,cv,M){try{LTC[p.id]={ar:cv.width/cv.height,ws:ocrLtWords(M,cv.width,cv.height)};}catch(e){}}
+function ltSig(p,lg){try{return lg+'|'+JSON.stringify(p,(k,v)=>(k==='src'||k==='blob'||k==='th'||k==='thumb'||k==='id'||(typeof v==='string'&&v.length>300)||(typeof Blob!=='undefined'&&v instanceof Blob)||(typeof HTMLCanvasElement!=='undefined'&&v instanceof HTMLCanvasElement)||(typeof ImageBitmap!=='undefined'&&v instanceof ImageBitmap))?undefined:v);}catch(e){return lg+'|'+Date.now();}}
+function ltStore(p,cv,M,sig){try{LTC[p.id]={ar:cv.width/cv.height,sig:sig,ws:ocrLtWords(M,cv.width,cv.height)};}catch(e){}}
 function ltText(ws,a,b){let o='',pl=-1;for(let i=a;i<=b;i++){const w=ws[i];if(pl>=0)o+=w.l===pl?' ':'\n';o+=w.t;pl=w.l;}return o;}
 /* v60: smart background rebuild, skew detection, button-fit safety net */
 function bgCoons(ctx,x0,y0,x1,y1,w,h){
@@ -3144,12 +3145,12 @@ async function liveText(p){
    else if(k==='s'&&r){try{await navigator.share({text:ltText(S.ws,r[0],r[1])});}catch(_){}}};
   bar.onclick=mn.onclick=clk;
   S.busy=true;drawBar();
-  let c=LTC[p.id];const asp=cb.width/cb.height;
-  if(!c||Math.abs(c.ar-asp)/asp>.01){o.classList.add('scan');
+  let lg=['ara','eng'];try{(localStorage.getItem('tx_ol')||'').split('+').forEach(x=>{if(OCR_LANGS.some(l=>l.c===x)&&!lg.includes(x))lg.push(x);});}catch(_){}
+  const sig=ltSig(p,lg.join('+'));let c=LTC[p.id];const asp=cb.width/cb.height;
+  if(!c||c.sig!==sig||Math.abs(c.ar-asp)/asp>.01){o.classList.add('scan');
    logCb=x=>{if(S.dead)return;if(x.status==='recognizing text'){const v=Math.round(x.progress*100);if(v>S.pr){S.pr=v;drawBar();}}};
    try{const f=await renderFinal(p,2200);if(S.dead)return;
-    let lg=(localStorage.getItem('tx_ol')||'ara+eng').split('+').filter(x=>OCR_LANGS.some(l=>l.c===x));if(!lg.length)lg=['ara','eng'];
-    const best=await ocrRun(f,lg.join('+'),OQ(),'3',false,()=>{},()=>S.dead);if(S.dead||!best)return;ltStore(p,f,best.M);c=LTC[p.id];}
+    const best=await ocrRun(f,lg.join('+'),OQ(),'3',false,()=>{},()=>S.dead);if(S.dead||!best)return;ltStore(p,f,best.M,sig);c=LTC[p.id];}
    catch(err){console.error(err);if(!S.dead){toast(T('تعذّرت القراءة — محتاج إنترنت أول مرة','Could not read — needs internet the first time'));ltExit();}return;}}
   if(S.dead)return;o.classList.remove('scan');S.busy=false;S.ws=(c&&c.ws)||[];
   if(!S.ws.length){bar.innerHTML='<span class="t">'+T('ما لقيتش نص واضح','No clear text found')+'</span><button type="button" data-k="m">'+T('النص الكامل','Full text')+'</button><button type="button" data-k="x">✕</button>';setTimeout(()=>{if(LT===S&&!S.ws.length)ltExit();},2600);return;}
