@@ -36,7 +36,10 @@ html[dir=rtl] .txhint button{margin:-6px 0 0 -6px}
 #bkBar .y{flex:none;height:40px;padding:0 14px;border:0;border-radius:12px;background:var(--accent,#1b63f0);color:var(--accent-ink,#fff);font:700 13px system-ui}
 #bkBar .n{flex:none;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--ink2);font-size:16px}
 </style>
-</head><body>
+<style id="tbcss">.tbx{display:flex;flex-direction:column;gap:10px;min-height:0}.tbx[hidden]{display:none}.tbx-h{display:flex;align-items:center;gap:10px}.tbx-h b{display:block;font:800 14px system-ui;color:var(--ink)}.tbx-h small{display:block;font:600 12px system-ui;color:var(--ink2);margin-top:2px}
+.tbx-w{overflow:auto;max-height:40vh;border:1px solid var(--line);border-radius:12px;background:var(--surface2);-webkit-overflow-scrolling:touch}.tbx-t{border-collapse:collapse;min-width:100%;font:600 13px/1.5 system-ui;color:var(--ink)}
+.tbx-t td{border:1px solid var(--line);padding:7px 9px;min-width:64px;vertical-align:middle;outline:none;white-space:pre-wrap}.tbx-t td:focus{background:rgba(27,99,240,.12);box-shadow:inset 0 0 0 2px var(--accent,#1b63f0)}
+.tbx-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tbx-a2{display:flex;gap:8px}.tbx-a2 .ox-btn{flex:1;height:42px;font-size:13px}.tbx-n{font:600 12px/1.5 system-ui;color:var(--ink2)}.ox-btn:disabled{opacity:.55}</style></head><body>
 <title>Timaxo Scan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2372,14 +2375,14 @@ function ocrBlurBig(a,w,h,sig){const f=Math.max(1,Math.floor(sig/8)),sw=Math.max
  let b=s;const r=Math.max(1,Math.round(sig/f/1.8));for(let k=0;k<3;k++)b=ocrBox(b,sw,sh,r);
  const o=new Float32Array(w*h);for(let y=0;y<h;y++){const fy=Math.min(sh-1.001,Math.max(0,y/f-.5)),y0=fy|0,wy=fy-y0;for(let x=0;x<w;x++){const fx=Math.min(sw-1.001,Math.max(0,x/f-.5)),x0=fx|0,wx=fx-x0,i=y0*sw+x0;
   o[y*w+x]=b[i]*(1-wx)*(1-wy)+b[i+1]*wx*(1-wy)+b[i+sw]*(1-wx)*wy+b[i+sw+1]*wx*wy;}}return o;}
-function ocrPrep(cv,mode){const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,N=w*h,g=new Float32Array(N);
+function ocrPrep(cv,mode,kk){if(kk&&kk!==1){const s2=document.createElement('canvas');s2.width=Math.max(8,Math.round(cv.width*kk));s2.height=Math.max(8,Math.round(cv.height*kk));const sx2=s2.getContext('2d');sx2.imageSmoothingQuality='high';sx2.drawImage(cv,0,0,s2.width,s2.height);cv=s2;}const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,N=w*h,g=new Float32Array(N);
  const ch=mode==='chB'?2:mode==='chR'?0:-1;
- for(let i=0;i<N;i++)g[i]=ch<0?.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2]:d[i*4+ch];
+ for(let i=0;i<N;i++)g[i]=ch<0?.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2]:d[i*4+ch];if(mode==='inv')for(let i=0;i<N;i++)g[i]=255-g[i];
  let n=g;
- if(mode==='flat'||mode==='flat40'||mode==='chB'||mode==='chR'){const sig=mode==='flat40'?Math.max(w,h)/40:Math.max(w,h)/12,bg=ocrBlurBig(g,w,h,sig);n=new Float32Array(N);for(let i=0;i<N;i++){const v=g[i]/(bg[i]+1)*200;n[i]=v>255?255:v;}}
+ if(mode==='flat'||mode==='flat40'||mode==='chB'||mode==='chR'||mode==='inv'||mode==='bin'){const sig=mode==='flat40'?Math.max(w,h)/40:Math.max(w,h)/12,bg=ocrBlurBig(g,w,h,sig);n=new Float32Array(N);for(let i=0;i<N;i++){const v=g[i]/(bg[i]+1)*200;n[i]=v>255?255:v;}}
  const hs=new Uint32Array(256);for(let i=0;i<N;i++)hs[Math.max(0,Math.min(255,n[i]|0))]++;let a=0,lo=0,hi=255;for(let i=0;i<256;i++){a+=hs[i];if(a>=N*.01){lo=i;break;}}a=0;for(let i=255;i>=0;i--){a+=hs[i];if(a>=N*.01){hi=i;break;}}
  const sc=255/Math.max(20,hi-lo),o=document.createElement('canvas');o.width=w;o.height=h;const x=o.getContext('2d'),im=x.createImageData(w,h),p=im.data;
- for(let i=0;i<N;i++){let v=(n[i]-lo)*sc;v=v<0?0:v>255?255:v;p[i*4]=p[i*4+1]=p[i*4+2]=v;p[i*4+3]=255;}
+ for(let i=0;i<N;i++){let v=(n[i]-lo)*sc;v=v<0?0:v>255?255:v;if(mode==='bin')v=v<150?0:255;p[i*4]=p[i*4+1]=p[i*4+2]=v;p[i*4+3]=255;}
  x.putImageData(im,0,0);return o;}
 const ocrWords=r=>{let W=r&&r.data&&r.data.words;if(!W||!W.length){W=[];((r&&r.data&&r.data.lines)||[]).forEach(l=>(l.words||[]).forEach(w=>W.push(w)));}return W;};
 const ocrScore=W=>{let tot=0,n=0,s=0;for(const w of W){const c=w.confidence,t=(w.text||'').trim();if(c>=50&&/[\p{L}\p{N}]/u.test(t)){tot+=c/100*Math.min(t.length,10);n++;s+=c;}}return{tot,n,mean:n?s/n:0};};
@@ -2388,17 +2391,24 @@ function ocrText(r,minConf){const Ls=(r&&r.data&&r.data.lines)||[];let T='';
  else T=((r&&r.data&&r.data.text)||'').trim();return T;}
 /* runs 1-2 passes (more in deep mode) over differently prepared copies of the image and keeps the one Tesseract trusts most */
 async function ocrRun(cv,lang,q,psm,deep,stage,isDead){
- const vs=deep?['flat','plain','flat40','chB']:['flat','plain'];let best=null;
- const wk=await getW(lang,q);
- try{await wk.setParameters({tessedit_pageseg_mode:psm,preserve_interword_spaces:'1'});}catch(_){}
- try{await wk.setParameters({user_defined_dpi:'300'});}catch(_){}
- for(let i=0;i<vs.length;i++){
-  if(isDead())return null;
-  if(i>0&&!deep&&best&&best.sc.mean>=82&&best.sc.n>=10)break;
-  stage(i,vs.length);const pc=ocrPrep(cv,vs[i]);await new Promise(r=>setTimeout(r,0));
-  const r=await wk.recognize(pc);if(isDead())return null;const W=ocrWords(r),sc=ocrScore(W);
-  if(!best||sc.tot>best.sc.tot)best={r,W,sc,v:vs[i]};}
- return best;}
+ const wk=await getW(lang,q),sp=psm==='6'?'6':'11',R=[];let pc1=null,idx=0;
+ const plan=deep?[{m:'flat',k:1,p:psm},{m:'plain',k:1,p:psm},{m:'flat',k:.4,p:sp},{m:'flat',k:.22,p:sp},{m:'inv',k:1,p:sp},{m:'bin',k:.5,p:sp},{m:'flat40',k:1,p:psm},{m:'chB',k:1,p:psm}]:[];
+ const run=async v=>{if(isDead())return false;stage(idx++,deep?plan.length:3);
+  try{await wk.setParameters({tessedit_pageseg_mode:v.p,preserve_interword_spaces:'1',user_defined_dpi:'300'});}catch(_){}
+  const pc=ocrPrep(cv,v.m,v.k);if(v.m==='flat'&&v.k===1&&!pc1)pc1=pc;await new Promise(r=>setTimeout(r,0));
+  const r=await wk.recognize(pc);if(isDead())return false;
+  const W=ocrWords(r);R.push({r,W,N:ocrNorm(W,v.k,0),sc:ocrScore(W),v:v.m,k:v.k});return true;};
+ const top=()=>R.reduce((a,x)=>!a||x.sc.tot>a.sc.tot?x:a,null);
+ if(deep){for(const v of plan)if(!await run(v))return null;}
+ else{
+  if(!await run({m:'flat',k:1,p:psm}))return null;
+  let b=top();const miss=ocrMiss(pc1,b.N),weak=b.sc.mean<82||b.sc.n<10;
+  /* big / decorative text is usually missed at full size: retry on a shrunk copy with sparse-text mode */
+  if(weak||miss>.06){if(!await run({m:'flat',k:.4,p:sp}))return null;b=top();
+   if(b.sc.mean<80||b.sc.n<8){if(!await run({m:'plain',k:1,p:psm}))return null;}}
+ }
+ const P=top(),mg=ocrMerge(P.N,R.filter(x=>x!==P).map(x=>x.N.filter(w=>w.c>=55)));
+ return{r:P.r,W:P.W,sc:P.sc,v:P.v,M:mg.M,pc:pc1,T:mg.changed?(P.k===1?ocrCompose(P,mg.added):tbText(mg.M.filter(w=>w.c>=35),null)):null};}
 $('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ocrB"><svg class="i"><use href="#i-pen"/></svg><span>'+(AR()?'استخراج النص':'Extract text')+'</span></button>');
 $('#ocrB').onclick=()=>{if(E.page)ocrModal(E.page,null);};
 if(!document.getElementById('oxcss')){const s=document.createElement('style');s.id='oxcss';s.textContent=`
@@ -2441,7 +2451,7 @@ if(!document.getElementById('oxcss')){const s=document.createElement('style');s.
 .ox-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ox-btn[hidden]{display:none}
 .ox .ocx{order:0;margin-top:0}
-#oHint{position:absolute;inset-block-start:10px;inset-inline-end:10px;z-index:3;height:32px;min-width:32px;padding:0 10px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(10,18,34,.78);color:#fff;border:1px solid rgba(34,211,245,.55);font:700 12px system-ui;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transform:translateY(-6px) scale(.92);transition:opacity .35s,transform .35s,padding .3s;touch-action:none;box-shadow:0 0 0 0 rgba(34,211,245,.5)}
+#oHint{position:absolute;inset-block-start:10px;inset-inline-end:10px;z-index:60;pointer-events:auto;height:32px;min-width:32px;padding:0 10px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(10,18,34,.78);color:#fff;border:1px solid rgba(34,211,245,.55);font:700 12px system-ui;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transform:translateY(-6px) scale(.92);transition:opacity .35s,transform .35s,padding .3s;touch-action:none;box-shadow:0 0 0 0 rgba(34,211,245,.5)}
 #oHint.in{opacity:1;transform:none;animation:ohp 2.2s ease-out 1}
 #oHint.min{padding:0;width:32px;opacity:.62}
 #oHint.min span{display:none}
@@ -2455,6 +2465,125 @@ const OX_SVG={scan:'<svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 
  redo:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',
  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'};
+/* ===== v57: merge passes + tables (detect > editable grid > copy / Excel / Word) ===== */
+function ocrNorm(W,k,minC){return(W||[]).filter(w=>w&&w.bbox&&(w.text||'').trim()&&w.confidence>=minC&&/[\p{L}\p{N}]/u.test(w.text)).map(w=>({t:w.text.trim(),x0:w.bbox.x0/k,y0:w.bbox.y0/k,x1:w.bbox.x1/k,y1:w.bbox.y1/k,c:w.confidence}));}
+function ocrCov(a,b){const ix=Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0),iy=Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0);if(ix<=0||iy<=0)return 0;return ix*iy/Math.max(1,Math.min((a.x1-a.x0)*(a.y1-a.y0),(b.x1-b.x0)*(b.y1-b.y0)));}
+function ocrMerge(P,Es){let M=P.slice(),ch=false;const added=[];
+ for(const E of Es)for(const e of E){if(e.c<55)continue;const hit=M.filter(m=>ocrCov(m,e)>.3);
+  if(!hit.length){M.push(e);added.push(e);ch=true;}
+  else if(e.c>=70&&hit.every(m=>m.c<e.c-15)){M=M.filter(m=>!hit.includes(m));M.push(e);added.push(e);ch=true;}}
+ return{M,changed:ch,added};}
+function ocrMiss(pc,N){try{const w=pc.width,h=pc.height,d=pc.getContext('2d').getImageData(0,0,w,h).data,cov=new Uint8Array(w*h);
+ for(const b of N){const x0=Math.max(0,(b.x0|0)-2),x1=Math.min(w-1,(b.x1|0)+2),y0=Math.max(0,(b.y0|0)-2),y1=Math.min(h-1,(b.y1|0)+2);for(let y=y0;y<=y1;y++)cov.fill(1,y*w+x0,y*w+x1+1);}
+ let tot=0,un=0;for(let i=0;i<w*h;i++)if(d[i*4]<110){tot++;if(!cov[i])un++;}return tot>200?un/tot:0;}catch(e){return 0;}}
+function ocrCompose(P,extra){const Ls=((P.r&&P.r.data&&P.r.data.lines)||[]).map(l=>{const ws=(l.words||[]).filter(w=>w.confidence>=35&&/[\p{L}\p{N}]/u.test(w.text||'')),bb=l.bbox||{x0:0,y0:0,x1:0,y1:0};
+  return{t:ws.map(w=>w.text).join(' ').trim(),cy:(bb.y0+bb.y1)/2,x0:bb.x0,x1:bb.x1,y0:bb.y0,y1:bb.y1,c:ws.length?Math.max(...ws.map(w=>w.confidence)):0};}).filter(l=>l.t&&/[\p{L}\p{N}]{2}|^[\p{L}\p{N}]$/u.test(l.t));
+ for(const el of tbLines(extra)){const bb={x0:Math.min(...el.w.map(w=>w.x0)),x1:Math.max(...el.w.map(w=>w.x1)),y0:Math.min(...el.w.map(w=>w.y0)),y1:Math.max(...el.w.map(w=>w.y1))};
+  for(let i=Ls.length-1;i>=0;i--)if(Ls[i].c<60&&ocrCov(Ls[i],bb)>.3)Ls.splice(i,1);
+  const t=tbText(el.w,null);let at=0;for(let i=0;i<Ls.length;i++)if(Ls[i].cy<el.cy)at=i+1;Ls.splice(at,0,{t,cy:el.cy,c:100});}
+ return Ls.map(l=>l.t).join('\n');}
+const tbIsAr=s=>(s.match(/[\u0600-\u06FF]/g)||[]).length>(s.match(/[A-Za-z]/g)||[]).length;
+const tbDigits=s=>String(s).replace(/[\u0660-\u0669]/g,c=>String(c.charCodeAt(0)-1632)).replace(/[\u06f0-\u06f9]/g,c=>String(c.charCodeAt(0)-1776));
+function tbMedian(a){if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1];}
+function tbLines(ws){const s=ws.slice().sort((a,b)=>(a.y0+a.y1)-(b.y0+b.y1)),L=[];
+ for(const w of s){const cy=(w.y0+w.y1)/2,h=w.y1-w.y0,ln=L[L.length-1];
+  if(ln&&Math.abs(cy-ln.cy)<Math.max(ln.h,h)*.5){ln.w.push(w);ln.cy=(ln.cy*(ln.w.length-1)+cy)/ln.w.length;ln.h=Math.max(ln.h,h);}else L.push({w:[w],cy,h});}
+ return L;}
+function tbText(ws,rtl){return tbLines(ws).map(l=>{const r=typeof rtl==='boolean'?rtl:tbIsAr(l.w.map(w=>w.t).join(' '));return l.w.slice().sort((p,q)=>r?q.x0-p.x0:p.x0-q.x0).map(w=>w.t).join(' ');}).join('\n');}
+function tbCols(ws,x0,x1,nR){const W=Math.max(1,Math.round(x1-x0)+1),cov=new Uint16Array(W);
+ for(const w of ws)for(let x=Math.max(0,Math.floor(w.x0-x0));x<=Math.min(W-1,Math.floor(w.x1-x0));x++)cov[x]++;
+ const mh=tbMedian(ws.map(w=>w.y1-w.y0)),minGap=Math.max(6,mh*.7),thr=Math.floor(nR*.12),cut=[x0];let x=0;
+ while(x<W){if(cov[x]<=thr){const s=x;while(x<W&&cov[x]<=thr)x++;if(s>0&&x<W&&x-s>=minGap)cut.push(x0+Math.round((s+x)/2));}else x++;}
+ cut.push(x1+1);return cut;}
+/* finds ruled tables: groups long horizontal lines with the same extent, then vertical lines between them */
+function tbGrid(cv,pc){pc=pc||ocrPrep(cv,'flat');const w=pc.width,h=pc.height,d=pc.getContext('2d').getImageData(0,0,w,h).data,minL=Math.max(90,w*.15),H=[];
+ for(let y=0;y<h;y++){let st=-1,last=-1,b=0,bs=0,be=0;const o=y*w;
+  for(let x=0;x<w;x++){if(d[(o+x)*4]<150){if(st<0)st=x;last=x;}else if(st>=0&&x-last>3){if(last-st+1>b){b=last-st+1;bs=st;be=last;}st=-1;}}
+  if(st>=0&&last-st+1>b){b=last-st+1;bs=st;be=last;}
+  if(b>=minL)H.push({y,x0:bs,x1:be});}
+ if(H.length<2)return null;
+ const C=[];for(const l of H){const c=C[C.length-1];if(c&&l.y-c.y1<=3){c.y1=l.y;c.x0=Math.min(c.x0,l.x0);c.x1=Math.max(c.x1,l.x1);}else C.push({y0:l.y,y1:l.y,x0:l.x0,x1:l.x1});}
+ const T=C.filter(c=>c.y1-c.y0<=12);let grp=[];for(const a of T){const g=T.filter(b=>Math.abs(b.x0-a.x0)<w*.04&&Math.abs(b.x1-a.x1)<w*.04);if(g.length>grp.length)grp=g;}
+ if(grp.length<2)return null;
+ const x0=Math.min(...grp.map(c=>c.x0)),x1=Math.max(...grp.map(c=>c.x1)),ya=grp[0].y0,yb=grp[grp.length-1].y1,hh=yb-ya;if(hh<24)return null;
+ const ys=grp.map(c=>(c.y0+c.y1)/2),V=[];
+ for(let x=x0;x<=x1;x++){let n=0;for(let y=ya;y<=yb;y++)if(d[(y*w+x)*4]<150)n++;if(n>=hh*.6)V.push(x);}
+ const VC=[];for(const x of V){const c=VC[VC.length-1];if(c&&x-c.b<=3){c.b=x;}else VC.push({a:x,b:x});}
+ let xs=VC.map(c=>(c.a+c.b)/2);
+ if(xs.length>=2){if(xs[0]-x0>14)xs.unshift(x0);if(x1-xs[xs.length-1]>14)xs.push(x1+1);}else xs=null;
+ return{ys,xs,x0,x1,ya,yb};}
+function tbBuild(M,cv,pc){const ws=M.filter(w=>w.c>=30&&(w.y1-w.y0)>4);if(ws.length<4)return null;
+ const rtl=tbIsAr(ws.map(w=>w.t).join(' '));let g=null;try{g=tbGrid(cv,pc);}catch(e){}
+ let ys=null,xs=null,x0,x1,ruled=false,inw=ws;
+ if(g){inw=ws.filter(w=>{const cx=(w.x0+w.x1)/2,cy=(w.y0+w.y1)/2;return cx>=g.x0-4&&cx<=g.x1+4&&cy>=g.ya-4&&cy<=g.yb+4;});
+  if(inw.length>=3){x0=g.x0;x1=g.x1;xs=g.xs;if(g.ys.length>=3){ys=g.ys;ruled=true;}}else{g=null;inw=ws;}}
+ if(!ys){const ln=tbLines(inw);if(ln.length<3)return null;
+  if(!g){x0=Math.min(...inw.map(w=>w.x0));x1=Math.max(...inw.map(w=>w.x1));}
+  ys=[ln[0].cy-ln[0].h];for(let i=0;i<ln.length-1;i++)ys.push((ln[i].cy+ln[i+1].cy)/2);ys.push(ln[ln.length-1].cy+ln[ln.length-1].h);}
+ if(!xs)xs=tbCols(inw,x0,x1,ys.length-1);
+ const nR=ys.length-1,nC=xs.length-1;if(nC<2||nR<2)return null;
+ const cell=Array.from({length:nR},()=>Array.from({length:nC},()=>[])),fi=(a,v)=>{for(let i=0;i<a.length-1;i++)if(v>=a[i]&&v<a[i+1])return i;return-1;};
+ for(const w of inw){const r=fi(ys,(w.y0+w.y1)/2),c=fi(xs,(w.x0+w.x1)/2);if(r>=0&&c>=0)cell[r][c].push(w);}
+ if(ruled){const f=cell.flat().filter(c=>c.length).length;if(f<Math.max(3,nR*nC*.2))return null;}
+ else{const mu=cell.filter(r=>r.filter(c=>c.length).length>=2).length;if(mu<3||mu<nR*.6)return null;}
+ const rows=cell.map(r=>r.map(c=>tbText(c,rtl))),kc=[],kr=[];
+ for(let c=0;c<nC;c++)if(rows.some(r=>r[c]))kc.push(c);for(let r=0;r<nR;r++)if(rows[r].some(x=>x))kr.push(r);
+ if(kc.length<2||kr.length<2)return null;if(rtl)kc.reverse();
+ return{rows:kr.map(r=>kc.map(c=>rows[r][c])),rtl,ruled,strong:ruled||(kr.length>=4&&kc.length>=3),boxes:kr.map(r=>kc.map(c=>({x0:xs[c],x1:xs[c+1],y0:ys[r],y1:ys[r+1]})))};}
+/* re-reads every cell on its own (zoomed, one block) which is the most accurate way for numbers */
+async function tbRefine(cv,tb,lang,q,prog,isDead){const wk=await getW(lang,q);try{await wk.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',user_defined_dpi:'300'});}catch(_){}
+ const f=ocrPrep(cv,'flat'),fx=f.getContext('2d'),tot=tb.boxes.length*tb.boxes[0].length,mh=tbMedian(tb.boxes.map(r=>r[0].y1-r[0].y0));let n=0;const out=[];
+ for(const row of tb.boxes){const o=[];for(const b of row){if(isDead())return null;
+  const ins=5,x0=Math.max(0,Math.round(b.x0+ins)),y0=Math.max(0,Math.round(b.y0+ins)),sw=Math.min(Math.round(b.x1-b.x0-ins*2),f.width-x0),sh=Math.min(Math.round(b.y1-b.y0-ins*2),f.height-y0);let txt='';
+  if(sw>=10&&sh>=8){const dd=fx.getImageData(x0,y0,sw,sh).data;let dk=0;for(let i=0;i<dd.length;i+=4)if(dd[i]<130)dk++;
+   if(dk>sw*sh*.004){const k=Math.max(1,Math.min(4,90/sh)),pd=16,c=document.createElement('canvas');c.width=Math.round(sw*k)+pd*2;c.height=Math.round(sh*k)+pd*2;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality='high';x.drawImage(f,x0,y0,sw,sh,pd,pd,sw*k,sh*k);
+    txt=ocrText(await wk.recognize(c),25);}}
+  o.push(txt.replace(/\s*\n\s*/g,sh>mh*2.2?'\n':' ').trim());n++;prog(n/tot);await new Promise(r=>setTimeout(r,0));}out.push(o);}
+ return out;}
+/* ---- file writers (no libraries: tiny store-only ZIP so .xlsx / .docx work offline) ---- */
+const TBCRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+const tbCrc=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=TBCRC[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
+function tbZip(files,mime){const enc=new TextEncoder(),parts=[],cen=[],u16=v=>[v&255,(v>>8)&255],u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];let off=0;
+ for(const f of files){const nm=enc.encode(f.n),d=enc.encode(f.d),crc=tbCrc(d),lh=new Uint8Array([0x50,0x4b,3,4,...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(crc),...u32(d.length),...u32(d.length),...u16(nm.length),...u16(0)]);
+  parts.push(lh,nm,d);cen.push(new Uint8Array([0x50,0x4b,1,2,...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(crc),...u32(d.length),...u32(d.length),...u16(nm.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]),nm);off+=lh.length+nm.length+d.length;}
+ let cs=0;for(const c of cen)cs+=c.length;
+ return new Blob([...parts,...cen,new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cs),...u32(off),0,0])],{type:mime});}
+const tbX=s=>String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const tbNum=s=>{const t=tbDigits(s).replace(/[\u066c\u060c]/g,',').replace(/\u066b/g,'.').trim();
+ if(/^[-+]?(0|[1-9]\d{0,2}(,\d{3})+|[1-9]\d*)(\.\d+)?$|^[-+]?0\.\d+$/.test(t)){const v=t.replace(/,/g,'').replace(/^\+/,'');if(v.replace(/\D/g,'').length<=15)return v;}return null;};
+function tbHtml(rows,rtl){const e=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+ return'<meta charset="utf-8"><table dir="'+(rtl?'rtl':'ltr')+'" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;border:1px solid #000">'+rows.map(r=>'<tr>'+r.map(c=>'<td style="border:1px solid #000;vertical-align:middle">'+e(c)+'</td>').join('')+'</tr>').join('')+'</table>';}
+function tbTsv(rows){return rows.map(r=>r.map(c=>{c=String(c);return/[\t\n"]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join('\t')).join('\r\n');}
+function tbCsv(rows){return'\ufeff'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');}
+const TBH='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+function tbXlsx(rows,rtl){const nC=Math.max(...rows.map(r=>r.length)),cn=i=>{let s='',n=i+1;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=(n-m-1)/26;}return s;},wd=[];
+ for(let c=0;c<nC;c++){let m=4;for(const r of rows)for(const ln of String(r[c]||'').split('\n'))m=Math.max(m,ln.length);wd.push(Math.min(60,Math.round(m*1.25+3)));}
+ let sd='';rows.forEach((r,i)=>{sd+='<row r="'+(i+1)+'">';for(let c=0;c<nC;c++){const v=r[c]==null?'':String(r[c]),ref=cn(c)+(i+1),nm=tbNum(v);
+  if(v==='')sd+='<c r="'+ref+'" s="1"/>';else if(nm!==null)sd+='<c r="'+ref+'" s="2"><v>'+nm+'</v></c>';else sd+='<c r="'+ref+'" s="1" t="inlineStr"><is><t xml:space="preserve">'+tbX(v)+'</t></is></c>';}sd+='</row>';});
+ const NS='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',RN='http://schemas.openxmlformats.org/package/2006/relationships',OD='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+ return tbZip([
+ {n:'[Content_Types].xml',d:TBH+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+ {n:'_rels/.rels',d:TBH+'<Relationships xmlns="'+RN+'"><Relationship Id="rId1" Type="'+OD+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+ {n:'xl/workbook.xml',d:TBH+'<workbook '+NS+' xmlns:r="'+OD+'"><sheets><sheet name="Table" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+ {n:'xl/_rels/workbook.xml.rels',d:TBH+'<Relationships xmlns="'+RN+'"><Relationship Id="rId1" Type="'+OD+'/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+OD+'/styles" Target="styles.xml"/></Relationships>'},
+ {n:'xl/styles.xml',d:TBH+'<styleSheet '+NS+'><fonts count="1"><font><sz val="12"/><name val="Arial"/><family val="2"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs></styleSheet>'},
+ {n:'xl/worksheets/sheet1.xml',d:TBH+'<worksheet '+NS+'><sheetViews><sheetView workbookViewId="0"'+(rtl?' rightToLeft="1"':'')+'/></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols>'+wd.map((x,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+x+'" customWidth="1"/>').join('')+'</cols><sheetData>'+sd+'</sheetData></worksheet>'}
+ ],'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');}
+function tbDocx(rows,rtl){const nC=Math.max(...rows.map(r=>r.length)),wide=nC>6,TW=wide?15300:10400,len=[];
+ for(let c=0;c<nC;c++){let m=4;for(const r of rows)for(const ln of String(r[c]||'').split('\n'))m=Math.max(m,ln.length);len.push(Math.min(m,40));}
+ const sum=len.reduce((a,b)=>a+b,0),tw=len.map(l=>Math.max(700,Math.round(TW*l/sum))),AR=/[\u0600-\u06FF]/;
+ const para=t=>{const a=AR.test(t);return'<w:p><w:pPr>'+(a?'<w:bidi/>':'')+'<w:spacing w:before="40" w:after="40"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/>'+(a?'<w:rtl/>':'')+'</w:rPr><w:t xml:space="preserve">'+tbX(t)+'</w:t></w:r></w:p>';};
+ const B=['top','left','bottom','right','insideH','insideV'].map(s=>'<w:'+s+' w:val="single" w:sz="6" w:space="0" w:color="000000"/>').join('');
+ let tb='<w:tbl><w:tblPr>'+(rtl?'<w:bidiVisual/>':'')+'<w:tblW w:w="'+TW+'" w:type="dxa"/><w:tblBorders>'+B+'</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'+tw.map(x=>'<w:gridCol w:w="'+x+'"/>').join('')+'</w:tblGrid>';
+ for(const r of rows){tb+='<w:tr><w:trPr><w:cantSplit/></w:trPr>';for(let c=0;c<nC;c++){const t=r[c]==null?'':String(r[c]);tb+='<w:tc><w:tcPr><w:tcW w:w="'+tw[c]+'" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>'+(t?t.split('\n').map(para).join(''):'<w:p/>')+'</w:tc>';}tb+='</w:tr>';}
+ tb+='</w:tbl><w:p/>';
+ const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+ return tbZip([
+ {n:'[Content_Types].xml',d:TBH+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'},
+ {n:'_rels/.rels',d:TBH+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
+ {n:'word/document.xml',d:TBH+'<w:document '+W+'><w:body>'+tb+'<w:sectPr>'+(wide?'<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>':'<w:pgSz w:w="11906" w:h="16838"/>')+'<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/>'+(rtl?'<w:bidi/>':'')+'</w:sectPr></w:body></w:document>'}
+ ],'application/vnd.openxmlformats-officedocument.wordprocessingml.document');}
+/* ===== end v57 helpers ===== */
 async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
  let sel=(localStorage.getItem('tx_ol')||(ar?'ara+eng':'eng+ara')).split('+').filter(x=>OCR_LANGS.some(l=>l.c===x));if(!sel.length)sel=['ara','eng'];
  const lname=l=>ar?l.ar:l.en,main=OCR_LANGS.slice(0,2),extra=OCR_LANGS.slice(2);
@@ -2474,14 +2603,43 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   $m('#oM').innerHTML=extra.map(l=>chip(l,sel.includes(l.c)?'on':'')).join('');};paint();
  const lang=()=>{const o=OCR_LANGS.map(l=>l.c);return sel.slice().sort((a,b)=>o.indexOf(a)-o.indexOf(b)).join('+');};
  const stage=(i,n)=>{t1.textContent=n>1&&i>0?L2('بجرّب طريقة تانية للصورة…','Trying another image treatment…'):L2('بيظبط الصورة ويقرأ…','Tuning the image and reading…');};
- const finish=(best,deep)=>{const W=best.W,sc=best.sc;let T=ocrText(best.r,35);
+ const finish=(best,deep)=>{const W=best.W,sc=best.sc;let T=best.T!=null?best.T:ocrText(best.r,35);
   ta.value=T;res.hidden=false;acts.hidden=false;run.hidden=true;th.classList.add('done');
   const pct=Math.round(sc.mean),qc=pct>=85?'g':pct>=70?'m':'l',ql=pct>=85?L2('دقة عالية','High accuracy'):pct>=70?L2('دقة جيدة','Good accuracy'):L2('راجع النص','Please review');
   const nw=T.split(/\s+/).filter(Boolean).length,nl=T.split('\n').filter(Boolean).length;
   meta.innerHTML=T?'<span class="ox-b q '+qc+'">'+ql+' · '+pct+'%</span><span class="ox-b">'+nw+' '+L2('كلمة','words')+'</span><span class="ox-b">'+nl+' '+L2('سطر','lines')+'</span>':'';
   note.textContent=T?(pct<70?L2('الثقة منخفضة. جرّب «قراءة أدق» أو غيّر اللغة، وراجع الأرقام والأسماء.','Low confidence. Try Deep read or another language, and check numbers and names.'):L2('راجع الأرقام والأسماء قبل الاستخدام.','Check numbers and names before using.')):L2('ما لقيتش نص واضح. جرّب لغة تانية أو «قراءة أدق».','No clear text. Try another language or Deep read.');
   try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
-  if(!T)ta.hidden=true;else ta.hidden=false;deepNext=!deep;};
+  if(!T)ta.hidden=true;else ta.hidden=false;deepNext=!deep;try{tblInit(best)}catch(e){console.warn('tbl',e)}};
+ const tbx=document.createElement('div');tbx.className='tbx';tbx.hidden=true;res.appendChild(tbx);
+ let TB=null,tbTok=0;
+ const tbSave=(n,b)=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
+ const tbRows=()=>Array.from(tbx.querySelectorAll('.tbx-t tr')).map(tr=>Array.from(tr.children).map(td=>td.innerText.replace(/\u00a0/g,' ').trim()));
+ const tbView=v=>{const on=v==='tb',ox=ta.nextElementSibling;tbx.hidden=!on;ta.hidden=on||!ta.value.trim();if(ox&&ox.classList.contains('ocx'))ox.hidden=on;note.hidden=on;acts.hidden=on;meta.querySelectorAll('[data-tv]').forEach(b=>b.classList.toggle('on',b.dataset.tv===v));};
+ const tbDraw=()=>{const R=TB.rows,nC=Math.max(...R.map(r=>r.length));
+  tbx.innerHTML='<div class="tbx-h"><div class="ox-ic">'+OX_SVG.scan+'</div><div><b>'+L2('جدول متحدد','Table detected')+'</b><small>'+R.length+' × '+nC+' · '+L2('اضغط على أي خلية لتعديلها قبل الحفظ','Tap a cell to edit before saving')+'</small></div></div>'+
+  '<div class="tbx-w"><table class="tbx-t" dir="'+(TB.rtl?'rtl':'ltr')+'">'+R.map(r=>'<tr>'+r.map(c=>'<td contenteditable="true" dir="auto">'+tbX(c).replace(/\n/g,'<br>')+'</td>').join('')+'</tr>').join('')+'</table></div>'+
+  '<div class="tbx-a"><button type="button" class="ox-btn pri" data-t="copy">'+OX_SVG.copy+'<span>'+L2('نسخ الجدول','Copy table')+'</span></button><button type="button" class="ox-btn" data-t="xlsx">Excel</button><button type="button" class="ox-btn" data-t="docx">Word</button><button type="button" class="ox-btn" data-t="csv">CSV</button></div>'+
+  '<div class="tbx-a2"><button type="button" class="ox-btn" data-t="refine">'+L2('قراءة الخلايا بدقة أعلى','Precise cell read')+'</button><button type="button" class="ox-btn" data-t="deep">'+L2('قراءة أدق للصفحة','Deep read')+'</button></div>'+
+  '<div class="tbx-n" id="tbN">'+L2('الجدول بيتنسخ ويتحفظ بنفس ترتيب الأعمدة والصفوف. راجع الأرقام قبل الاستخدام.','Rows and columns keep the same order. Check the numbers before using.')+'</div>';};
+ tbx.onclick=async e=>{const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t,rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
+  if(k==='copy'){let ok=false;try{if(window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([tbHtml(rows,TB.rtl)],{type:'text/html'}),'text/plain':new Blob([tbTsv(rows)],{type:'text/plain'})})]);ok=true;}}catch(_){}
+   if(!ok){try{await navigator.clipboard.writeText(tbTsv(rows));ok=true;}catch(_){}}
+   toast(ok?L2('اتنسخ الجدول — الصقه في Word أو Excel','Table copied — paste it into Word or Excel'):L2('تعذّر النسخ','Copy failed'));}
+  else if(k==='xlsx')tbSave(nm+'.xlsx',tbXlsx(rows,TB.rtl));
+  else if(k==='docx')tbSave(nm+'.docx',tbDocx(rows,TB.rtl));
+  else if(k==='csv')tbSave(nm+'.csv',new Blob([tbCsv(rows)],{type:'text/csv;charset=utf-8'}));
+  else if(k==='deep')go(true);
+  else if(k==='refine'){const my=++tbTok,nt=tbx.querySelector('#tbN');b.disabled=true;
+   try{const out=await tbRefine(cv,TB,lang(),OQ(),pr=>{nt.textContent=L2('بقرأ الخلايا واحدة واحدة… ','Reading cells one by one… ')+Math.round(pr*100)+'%';},()=>dead||my!==tbTok);
+    if(out&&!dead&&my===tbTok){TB.rows=out;tbDraw();tbx.querySelector('#tbN').textContent=L2('تمت القراءة الدقيقة ✓ راجع الأرقام قبل الاستخدام.','Precise read done ✓ check the numbers.');}}
+   catch(err){console.error(err);nt.textContent=L2('تعذّرت القراءة: ','Failed: ')+String(err&&err.message||err).slice(0,80);}
+   b.disabled=false;}};
+ meta.onclick=e=>{const b=e.target.closest('[data-tv]');if(b)tbView(b.dataset.tv);};
+ const tblInit=best=>{tbTok++;tbx.hidden=true;tbx.innerHTML='';TB=null;meta.querySelectorAll('[data-tv]').forEach(x=>x.remove());
+  if(box||!best||!best.M)return;const t=tbBuild(best.M,cv,best.pc);if(!t)return;TB=t;tbDraw();
+  meta.insertAdjacentHTML('beforeend','<button type="button" class="ox-chip on" data-tv="t">'+L2('النص','Text')+'</button><button type="button" class="ox-chip" data-tv="tb">'+L2('جدول','Table')+'</button>');
+  tbView(t.strong?'tb':'t');};
  const go=async(deep)=>{const id=++rid;res.hidden=true;acts.hidden=true;run.hidden=false;th.classList.remove('done');t1.textContent=L2('جاري التحميل…','Loading…');t2.textContent=lang().split('+').map(c=>lname(OCR_LANGS.find(l=>l.c===c))).join(' + ')+' · '+(OQ()==='best'?L2('نموذج عالي الدقة','High-accuracy model'):L2('نموذج سريع','Fast model'));pb.style.width='6%';
   let sg='render';
   try{if(!cv){const f=await renderFinal(p,2200);if(!box)cv=f;else{const sx=Math.round(box.x0*f.width),sy=Math.round(box.y0*f.height),cw=Math.max(8,Math.round((box.x1-box.x0)*f.width)),ch=Math.max(8,Math.round((box.y1-box.y0)*f.height)),k=clamp(110/ch,1,3),pd=12;
@@ -2518,14 +2676,14 @@ function ocrHintMaybe(p){try{if(!oHintOn()||!p||oHinted.has(p.id)||!E.page||E.pa
  if(!(idx.length>=25||textLikely(cb)))return;oHinted.add(p.id);
  const st=document.getElementById('editStage');if(!st)return;const old=document.getElementById('oHint');if(old)old.remove();
  const b=document.createElement('button');b.id='oHint';b.type='button';b.setAttribute('aria-label',AR()?'اقتراح: استخراج النص من الصورة':'Suggestion: extract text from the image');b.innerHTML=OX_SVG.scan+'<span>'+(AR()?'فيها نص؟':'Has text?')+'</span>';st.appendChild(b);
- const born=Date.now();let sx=0,sy=0,mv=0,down=0;const kill=()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(iv);b.classList.remove('in');setTimeout(()=>b.remove(),380);};
+ const born=Date.now();let sx=0,sy=0,mv=0,down=0,opened=0;const openIt=()=>{if(opened)return;opened=1;kill();ocrModal(p,null);};const kill=()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(iv);b.classList.remove('in');setTimeout(()=>b.remove(),380);};
  requestAnimationFrame(()=>b.classList.add('in'));const t1=setTimeout(()=>b.classList.add('min'),6500),t2=setTimeout(kill,16000);
  const iv=setInterval(()=>{if(!b.isConnected||V.cur!=='vEdit'||E.page!==p){kill();}},500);
  b.addEventListener('pointerdown',e=>{e.stopPropagation();sx=e.clientX;sy=e.clientY;mv=0;down=1;});
  b.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-sx,e.clientY-sy)>14)mv=1;e.stopPropagation();});
  b.addEventListener('pointerup',e=>{e.stopPropagation();if(!down)return;down=0;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.hypot(dx,dy)>24){kill();return;}
-  if(Date.now()-born<700||mv)return;kill();ocrModal(p,null);});
- b.addEventListener('pointercancel',()=>{down=0;});b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();});
+  if(mv)return;openIt();});
+ b.addEventListener('pointercancel',()=>{down=0;});b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(!mv)openIt();});
  const ov=document.getElementById('ov');if(ov)ov.addEventListener('pointerdown',()=>{if(b.isConnected)b.classList.add('min');},{once:true});
 }catch(e){console.warn('ocrHint',e);}}
 {const _oe=openEdit;openEdit=async function(p){const r=await _oe.apply(this,arguments);setTimeout(()=>ocrHintMaybe(p),1100);return r;};}
