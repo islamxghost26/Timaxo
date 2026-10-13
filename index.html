@@ -1185,8 +1185,13 @@ async function ingest(file){
     const canvas=(file&&file.__cv)||await decodeBlob((file&&file.__blob)||file),bp=(file&&file.__blob)?Promise.resolve(file.__blob):toBlob(canvas,'image/jpeg',.9);
     let lq=(file&&file.__q)||null,cr0;
     if(lq&&file.__x)cr0=lq.map(x=>({x:x.x,y:x.y}));
-    else if(lq){try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:2});}catch(e){cr0=lq;}} /* live quad already found: just refine it, no second full detection */
+    else if(lq){try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}
+     /* full analysis of the captured frame: results feed the auto button; if it agrees with the live quad, use its sharper fit */
+     await new Promise(r=>setTimeout(r,0));
+     try{const d0=detectCorners(canvas),al=detectCorners.alts;if(detectCorners.found&&d0){const dd=Math.max(...d0.map((p,i)=>Math.hypot(p.x-cr0[i].x,p.y-cr0[i].y)));
+      if(dd<.03)cr0=d0;else{al.splice(0,0,cr0.map(p=>({x:p.x,y:p.y})));detectCorners.alts=al.slice(0,4).concat(al.slice(-1));}}}catch(e){}}
     else{await new Promise(r=>setTimeout(r,30));cr0=detectCorners(canvas);}
+    window.__lastDet={src:canvas};
     const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
     state.draft=p;busy(false);await openCrop(p,'new');
   }catch(e){busy(false);toast(t('openFail'));console.error(e);}
@@ -2012,12 +2017,18 @@ addEventListener('error',e=>{try{const a=JSON.parse(localStorage.getItem('tx_err
 
 /* ===== v4: live camera with auto-detect + auto-capture ===== */
 let nat=0;
+const camAsk=id=>navigator.mediaDevices.getUserMedia({video:Object.assign(id?{deviceId:{exact:id}}:{facingMode:{ideal:'environment'}},{width:{ideal:1920},height:{ideal:1440},frameRate:{ideal:30,max:30}}),audio:false});
+const camOpen=()=>camAsk(localStorage.getItem('tx_lens')).catch(()=>camAsk(null));
+let camP=null,camT=0;
+document.addEventListener('pointerdown',e=>{try{if(nat||camP||document.getElementById('lv')||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))return;
+ if(!e.target.closest||!e.target.closest('#scanBtn,#emCam,.add,#libNew'))return;
+ camT=performance.now();const pr=camP=camOpen();pr.catch(()=>{});
+ setTimeout(()=>{if(camP===pr){camP=null;pr.then(s=>s.getTracks().forEach(t=>t.stop())).catch(()=>{});}},3500);}catch(x){}},true);
 $('#camIn').addEventListener('click',e=>{if(nat||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))return;e.preventDefault();e.stopImmediatePropagation();openLive();},true);
 async function openLive(){
  const ar=AR(),T=(a,b)=>ar?a:b;
- const ask=id=>navigator.mediaDevices.getUserMedia({video:Object.assign(id?{deviceId:{exact:id}}:{facingMode:{ideal:'environment'}},{width:{ideal:1920},height:{ideal:1440},frameRate:{ideal:30,max:30}}),audio:false});
- let stream;try{stream=await ask(localStorage.getItem('tx_lens')).catch(()=>ask(null));}
- catch(e){toast(T('الكاميرا غير متاحة، هنفتح كاميرا الجهاز','Camera unavailable, using device camera'));nat=1;$('#camIn').click();nat=0;return;}
+ const ask=camAsk;
+ let stream=null;const sp=camP||camOpen();camP=null;sp.catch(()=>{});
  if(!document.getElementById('lvcss')){const s=document.createElement('style');s.id='lvcss';s.textContent=`
 #lv{position:fixed;inset:0;z-index:9500;background:#000;display:flex;flex-direction:column;font-family:system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;animation:lvin .2s ease-out}
 @keyframes lvin{from{opacity:0;transform:scale(1.04)}}
@@ -2135,7 +2146,7 @@ async function openLive(){
   mb.classList.toggle('on',multi);snb.classList.toggle('on',snd);snb.innerHTML=S(snd?'sn':'sm');
   const ix=mode==='doc'?0:mode==='id'?1:2;seg.style.transform='translateX('+ix*100+'%)';m.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
   db.style.display=files.length?'flex':'none';db.querySelector('span').textContent=T('تم','Done')+' · '+files.length;};
- const close=()=>{alive=false;clearTimeout(dtm);cancelAnimationFrame(raf);try{wk&&wk.terminate()}catch(e){}wk=null;try{ac&&ac.close()}catch(e){}stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>m.remove(),160);};
+ const close=()=>{alive=false;clearTimeout(dtm);cancelAnimationFrame(raf);try{wk&&wk.terminate()}catch(e){}wk=null;try{ac&&ac.close()}catch(e){}stream&&stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>m.remove(),160);};
  const finish=()=>{close();if(!files.length)return;state.queue=files.slice(1);ingest(files[0]);};
  const guideQ=()=>{const vw=v.videoWidth||4,vh=v.videoHeight||3;let gw,gh;
   if(mode==='id'){gw=.88*vw;gh=gw/1.586;if(gh>.78*vh){gh=.78*vh;gw=gh*1.586;}}else{gh=.8*vh;gw=gh*.75;if(gw>.88*vw){gw=.88*vw;gh=gw/.75;}}
@@ -2172,7 +2183,7 @@ async function openLive(){
  let wk=null,wkBusy=0,wkT=0,miss=0;
  const mkWorker=()=>{try{if(!(window.Worker&&window.OffscreenCanvas&&window.createImageBitmap))return null;
   const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+maxFilter.toString()+';'+asp.toString()+';const GRAYC=new WeakMap();'+grayOf.toString()+';'+bilG.toString()+';'+lineInter2.toString()+';'+refineQuad.toString()+';'+detectCorners.toString()
-   +';onmessage=e=>{const b=e.data;let q=null,f=false,s=0;try{q=detectCorners(b,1);f=detectCorners.found;s=detectCorners.best;if(f&&q){try{q=refineQuad(b,q,{R:.03,passes:2})}catch(x){}}}catch(x){}try{b.close()}catch(x){}postMessage({q:q,f:f,s:s})};';
+   +';let P=null,N=0;onmessage=e=>{const b=e.data;let q=null,f=false,s=0;try{if(P&&N%3){try{const r=refineQuad(b,P.q,{R:.035,passes:2}),dd=Math.max.apply(null,r.map((p,i)=>Math.hypot(p.x-P.q[i].x,p.y-P.q[i].y)));if(dd<.03){q=r;f=true;s=P.s;}}catch(x){}}if(!q){q=detectCorners(b,1);f=detectCorners.found;s=detectCorners.best;if(f&&q){try{q=refineQuad(b,q,{R:.03,passes:2})}catch(x){}}}P=(f&&q)?{q:q,s:s}:null;N++;}catch(x){}try{b.close()}catch(x){}postMessage({q:q,f:f,s:s})};';
   const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'})),w=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
   w.onmessage=e=>{wkBusy=0;try{if(alive&&e.data&&e.data.q&&mode==='doc'&&!gb)judge(e.data.q,e.data.f,e.data.s);}catch(x){}};
   w.onerror=()=>{wkBusy=0;try{w.terminate()}catch(x){}if(wk===w)wk=null;};return w;}catch(e){return null;}};
@@ -2191,7 +2202,7 @@ async function openLive(){
   if(wk){if(wkBusy){if(performance.now()-wkT>4000){try{wk.terminate()}catch(e){}wk=null;wkBusy=0;}nx(60);return;}
    wkBusy=1;wkT=performance.now();const W=480,H=Math.round(W*v.videoHeight/v.videoWidth);
    createImageBitmap(v,{resizeWidth:W,resizeHeight:H,resizeQuality:'low'}).then(bm=>wk.postMessage(bm,[bm])).catch(()=>{wkBusy=0;try{wk&&wk.terminate()}catch(e){}wk=null;});
-   nx(80);return;}
+   nx(50);return;}
   const t0=performance.now();try{detect();}catch(e){}
   nx(Math.min(900,Math.max(150,(performance.now()-t0)*2)));};
  /* capture: grab the frame synchronously and hand the canvas straight to ingest (no encode/decode round-trip) */
@@ -2222,7 +2233,10 @@ async function openLive(){
   else if(a==='sn'){snd=!snd;localStorage.setItem('tx_snd',snd?'1':'0');lab();if(snd)sfx.on();buzz(8);}
   else if(a==='f'){setTorch(!torch);torch?sfx.on():sfx.off();}
   else if(a==='l'){if(backs.length<2){toast(T('مفيش عدسات تانية','No other lens'));return;}b.classList.remove('sp');void b.offsetWidth;b.classList.add('sp');sfx.sel();bi=(bi+1)%backs.length;sw(backs[bi].deviceId);toast(T('عدسة ','Lens ')+(bi+1)+'/'+backs.length);}});
- wk=mkWorker();attach(stream);shLoop();lab();lenses();raf=requestAnimationFrame(frame);loop();
+ wk=mkWorker();
+  let s0;try{s0=await sp;}catch(e){alive=false;try{wk&&wk.terminate()}catch(x){}wk=null;m.remove();toast(T('الكاميرا غير متاحة، هنفتح كاميرا الجهاز','Camera unavailable, using device camera'));nat=1;$('#camIn').click();nat=0;return;}
+  if(!alive){s0.getTracks().forEach(t=>t.stop());return;}
+  attach(s0);shLoop();lab();lenses();raf=requestAnimationFrame(frame);loop();
 }
 
 /* ===== v6: OCR (full page + region), text replace ===== */
