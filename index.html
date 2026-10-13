@@ -1181,7 +1181,7 @@ function hitTest(a,px,py,w,h,tol){if(a.t==='fill'||a.t==='sig'||a.t==='txtr')ret
 
 /* ---------- views ---------- */
 const V={cur:'vHome'};
-function show(id){V.cur=id;$$('.view').forEach(v=>v.classList.toggle('on',v.id===id));}
+function show(id){if(id!=='vEdit'){try{closeEditDocks();}catch(_){}}V.cur=id;$$('.view').forEach(v=>v.classList.toggle('on',v.id===id));}
 let toastT=0;
 function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2200);}
 const busy=on=>$('#busy').classList.toggle('on',on);
@@ -1603,12 +1603,13 @@ async function commitPage(){
   if(E.isDraft){state.pages.push(p);E.isDraft=false;state.draft=null;}
   p.thumb=await makeThumb(p);await persist(p);await persistMeta();
 }
-$('#doneBtn').onclick=async()=>{busy(true);await commitPage();const id=E.page&&E.page.id;busy(false);E.page=null;if(!nextQueued())goHome(id);};
+$('#doneBtn').onclick=async()=>{closeEditDocks();busy(true);await commitPage();const id=E.page&&E.page.id;busy(false);E.page=null;if(!nextQueued())goHome(id);};
 $('#nextBtn').onclick=async()=>{
-  $('#camIn').click();
+  closeEditDocks();$('#camIn').click();
   await commitPage();const id=E.page&&E.page.id;E.page=null;goHome(id);
 };
 $('#editBack').onclick=async()=>{
+  closeEditDocks();
   if(E.isDraft){openCrop(E.page,'edit');return;}
   busy(true);await commitPage();const id=E.page.id;busy(false);E.page=null;goHome(id);
 };
@@ -2333,6 +2334,8 @@ function txtDraw(ctx,w,h,a){let bx=Math.min(a.x0,a.x1)*w,by=Math.min(a.y0,a.y1)*
  let fs=bh/n*.8;ctx.save();if(rotd){ctx.translate(cx0,cy0);ctx.rotate(rt);}ctx.font=wt+fs+'px '+ff;const mx=Math.max(1,...L.map(l=>ctx.measureText(l).width));if(mx>bw*.98)fs*=bw*.98/mx;fs*=(a.sz||1);ctx.font=wt+fs+'px '+ff;
  ctx.direction=rtl?'rtl':'ltr';ctx.textAlign=rtl?'right':'left';ctx.textBaseline='middle';ctx.fillStyle=ctx.shadowColor=a.c;ctx.globalAlpha=.92;ctx.shadowBlur=fs*(a.bl==null?3:a.bl)*.012;
  const lh=bh/n;L.forEach((l,i)=>ctx.fillText(l,rtl?bx+bw:bx,by+lh*(i+.5)));ctx.restore();}
+function closeEditDocks(){const m=document.getElementById('txS');if(m)m.remove();E.pick=null;try{sgClose();}catch(_){}try{Z.lift=0;applyZ();}catch(_){}}
+setInterval(()=>{if(document.getElementById('txS')&&(V.cur!=='vEdit'||!E.page))closeEditDocks();},300);
 function txtSheet(a){const p=E.page,old=document.getElementById('txS');if(old)old.remove();const ar=AR(),m=document.createElement('div');m.id='txS';m.className='tbar txdock';if(!a.c0)a.c0=a.c;
  const SWB=['#FFFFFF','#F6F1E4','#EDEDED','#FFF6BF','#DDEBFF','#222222'];
  const seg=g=>'<div class="mdl-seg" data-g="'+g+'"><button type="button" data-m="a">'+(ar?'تلقائي':'Auto')+'</button><button type="button" data-m="m">'+(ar?'أنا أختار':'Manual')+'</button></div>';
@@ -2345,7 +2348,9 @@ function txtSheet(a){const p=E.page,old=document.getElementById('txS');if(old)ol
  document.body.appendChild(m);const ta=m.querySelector('textarea'),sz=m.querySelector('[data-r=sz]'),bl=m.querySelector('[data-r=bl]'),fb=m.querySelector('.txf');ta.value=a.txt;sz.value=(a.sz||1)*100;bl.value=a.bl==null?3:a.bl;
  const fc=m.querySelector('#txF'),wg=m.querySelector('#txW');
  const hex=(r,g,b)=>'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''),toHex=c=>{if(/^#[0-9a-f]{6}$/i.test(c))return c;const t=String(c).match(/\d+/g);return t&&t.length>=3?hex(+t[0],+t[1],+t[2]):'#222222';};
- const guess=()=>{try{const c=$('#cvBase'),g=c.getContext('2d'),x=clamp(Math.round(Math.min(a.x0,a.x1)*c.width)-3,0,c.width-1),y=clamp(Math.round((a.y0+a.y1)/2*c.height),0,c.height-1),d=g.getImageData(x,y,1,1).data;return d[3]<10?'#FFFFFF':hex(d[0],d[1],d[2]);}catch(e){return '#FFFFFF';}};
+ const guess=()=>{try{const c=$('#cvBase'),g=c.getContext('2d'),W=c.width,H=c.height,X0=Math.round(Math.min(a.x0,a.x1)*W),X1=Math.round(Math.max(a.x0,a.x1)*W),Y0=Math.round(Math.min(a.y0,a.y1)*H),Y1=Math.round(Math.max(a.y0,a.y1)*H),m=Math.max(3,Math.round(W*.008)),rx=clamp(X0-m,0,W-1),ry=clamp(Y0-m,0,H-1),rw=clamp(X1+m,1,W)-rx,rh=clamp(Y1+m,1,H)-ry;if(rw<1||rh<1)return '#FFFFFF';
+  const d=g.getImageData(rx,ry,rw,rh).data,R=[],G=[],B=[];for(let y=0;y<rh;y++)for(let x=0;x<rw;x++){const X=rx+x,Y=ry+y;if(X>=X0&&X<X1&&Y>=Y0&&Y<Y1)continue;const i=(y*rw+x)*4;if(d[i+3]<10)continue;R.push(d[i]);G.push(d[i+1]);B.push(d[i+2]);}
+  if(!R.length)return '#FFFFFF';const md=A=>(A.sort((p,q)=>p-q),A[A.length>>1]);return hex(md(R),md(G),md(B));}catch(e){return '#FFFFFF';}};
  const syc=()=>{[['bg',a.bg],['tx',a.cm?a.c:null]].forEach(([g,v])=>{const man=!!v;m.querySelectorAll('[data-g='+g+'] button').forEach(b=>b.classList.toggle('on',(b.dataset.m==='m')===man));const row=m.querySelector('[data-s='+g+']');row.hidden=!man;row.querySelectorAll('.sw2[data-c]').forEach(b=>b.classList.toggle('on',man&&b.dataset.c.toLowerCase()===String(v).toLowerCase()));if(man)row.querySelector('input[type=color]').value=toHex(v);});};
  const sy=()=>{const k=TPICK[(a.ff==null?5:a.ff)-5]||'cairo',f=TFONTS[k];fontCardsSet(fc,k);wtSet(wg,a.w||(a.b?800:400));fb.textContent=f[0].replace('Noto Sans Arabic','Noto');fb.style.fontFamily=f[1];};
  fontCards(fc,null,k=>{a.ff=5+TPICK.indexOf(k);sy();redrawOv();});wtSeg(wg,null,w=>{a.w=w;a.b=0;sy();redrawOv();});sy();syc();
@@ -2630,8 +2635,26 @@ function ltText(ws,a,b){let o='',pl=-1;for(let i=a;i<=b;i++){const w=ws[i];if(pl
 function bgCoons(ctx,x0,y0,x1,y1,w,h){
  const W=x1-x0,H=y1-y0;if(W<3||H<3)return false;const bw=Math.max(3,Math.round(w*.008)),rx0=Math.max(0,x0-bw),ry0=Math.max(0,y0-bw),rx1=Math.min(w,x1+bw),ry1=Math.min(h,y1+bw),RW=rx1-rx0,d=ctx.getImageData(rx0,ry0,RW,ry1-ry0).data;
  const med=a=>(a.sort((p,q)=>p-q),a[a.length>>1]),px=(x,y)=>((y-ry0)*RW+(x-rx0))*4;
- const prof=(n,get)=>{const o=[];let any=false;for(let i=0;i<n;i++){const pts=get(i);if(!pts.length){o.push(null);continue;}const R=[],G=[],B=[];for(const p of pts){const k=px(p[0],p[1]);R.push(d[k]);G.push(d[k+1]);B.push(d[k+2]);}o.push([med(R),med(G),med(B)]);any=true;}
-  if(!any)return null;const k=Math.max(2,Math.round(n/10)),s=[];for(let i=0;i<n;i++){let a=0,b=0,c=0,m=0;for(let j=Math.max(0,i-k);j<=Math.min(n-1,i+k);j++)if(o[j]){a+=o[j][0];b+=o[j][1];c+=o[j][2];m++;}s.push(m?[a/m,b/m,c/m]:null);}return s;};
+ const lum=v=>.3*v[0]+.59*v[1]+.11*v[2];
+ /* the old text is always the minority inside its own box, so the box median is a good reference for 'paper' */
+ const IL=[];for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){const k=px(x,y);IL.push(.3*d[k]+.59*d[k+1]+.11*d[k+2]);}
+ const refL=IL.length?med(IL.slice()):null,refD=refL==null?0:med(IL.map(v=>Math.abs(v-refL)).sort((p,q)=>p-q)),refT=Math.max(48,4*refD*1.48);
+ const prof=(n,get)=>{const P=[];let any=false;for(let i=0;i<n;i++){const pts=get(i);let v=[];for(const p of pts){const k=px(p[0],p[1]);v.push([d[k],d[k+1],d[k+2]]);}v=refL==null?v:v.filter(q=>Math.abs(lum(q)-refL)<=refT);P.push(v);if(v.length)any=true;}
+  if(!any)return null;
+  const mid=v=>{const R=v.map(q=>q[0]),G=v.map(q=>q[1]),B=v.map(q=>q[2]);return[med(R),med(G),med(B)];};
+  let o=P.map(v=>v.length?mid(v):null);
+  /* noise level of this side, then drop pixels that are far from their local median (ink / neighbouring letters) */
+  const dev=[];P.forEach((v,i)=>{if(o[i]){const l=lum(o[i]);v.forEach(q=>dev.push(Math.abs(lum(q)-l)));}});
+  const thr=Math.max(16,3*(dev.length?med(dev.slice())*1.48:0));
+  o=P.map((v,i)=>{if(!o[i])return null;const l=lum(o[i]),ok=v.filter(q=>Math.abs(lum(q)-l)<=thr);return ok.length>=Math.max(1,v.length*.3)?mid(ok):null;});
+  /* rows/columns still dominated by ink: compare against the neighbours and discard */
+  const wk=Math.max(3,Math.round(n/8)),ls=o.map(v=>v?lum(v):null);
+  o=o.map((v,i)=>{if(!v)return null;const nb=[];for(let j=Math.max(0,i-wk);j<=Math.min(n-1,i+wk);j++)if(ls[j]!=null)nb.push(ls[j]);return Math.abs(ls[i]-med(nb.slice()))>thr*1.6?null:v;});
+  if(!o.some(v=>v))return null;
+  /* fill the gaps by linear interpolation between the nearest good neighbours */
+  let a=-1;for(let i=0;i<n;i++){if(o[i]){if(a<0){for(let j=0;j<i;j++)o[j]=o[i];}else if(i-a>1){for(let j=a+1;j<i;j++){const t=(j-a)/(i-a);o[j]=[0,1,2].map(c=>o[a][c]*(1-t)+o[i][c]*t);}}a=i;}}
+  for(let j=a+1;j<n;j++)o[j]=o[a];
+  const k=Math.max(2,Math.round(n/10)),s=[];for(let i=0;i<n;i++){let x=0,y=0,z=0,m=0;for(let j=Math.max(0,i-k);j<=Math.min(n-1,i+k);j++){x+=o[j][0];y+=o[j][1];z+=o[j][2];m++;}s.push([x/m,y/m,z/m]);}return s;};
  const rng=(a,b)=>{const r=[];for(let i=a;i<b;i++)r.push(i);return r;};
  let L=x0-rx0>=2?prof(H,y=>rng(rx0,x0).map(x=>[x,y0+y])):null,R=rx1-x1>=2?prof(H,y=>rng(x1,rx1).map(x=>[x,y0+y])):null,T=y0-ry0>=2?prof(W,x=>rng(ry0,y0).map(y=>[x0+x,y])):null,B=ry1-y1>=2?prof(W,x=>rng(y1,ry1).map(y=>[x0+x,y])):null;
  if(!(L||R)&&!(T||B))return false;
