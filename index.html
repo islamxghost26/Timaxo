@@ -697,14 +697,15 @@ function boxBlur(a,w,h,r){
   const t=new Float32Array(w*h),o=new Float32Array(w*h),n=2*r+1;
   for(let y=0;y<h;y++){const row=y*w;let s=0;for(let x=-r;x<=r;x++)s+=a[row+clamp(x,0,w-1)];
     for(let x=0;x<w;x++){t[row+x]=s/n;s+=a[row+Math.min(w-1,x+r+1)]-a[row+Math.max(0,x-r)];}}
-  for(let x=0;x<w;x++){let s=0;for(let y=-r;y<=r;y++)s+=t[clamp(y,0,h-1)*w+x];
-    for(let y=0;y<h;y++){o[y*w+x]=s/n;s+=t[Math.min(h-1,y+r+1)*w+x]-t[Math.max(0,y-r)*w+x];}}
+  const cs=new Float64Array(w);
+  for(let y=-r;y<=r;y++){const b=clamp(y,0,h-1)*w;for(let x=0;x<w;x++)cs[x]+=t[b+x];}
+  for(let y=0;y<h;y++){const ro=y*w,ra=Math.min(h-1,y+r+1)*w,rs=Math.max(0,y-r)*w;for(let x=0;x<w;x++){o[ro+x]=cs[x]/n;cs[x]+=t[ra+x]-t[rs+x];}}
   return o;
 }
 function maxFilter(a,w,h,r){
   const t=new Float32Array(w*h),o=new Float32Array(w*h);
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let m=0;for(let k=-r;k<=r;k++){const v=a[y*w+clamp(x+k,0,w-1)];if(v>m)m=v;}t[y*w+x]=m;}
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let m=0;for(let k=-r;k<=r;k++){const v=t[clamp(y+k,0,h-1)*w+x];if(v>m)m=v;}o[y*w+x]=m;}
+  for(let y=0;y<h;y++){const ro=y*w;for(let x=0;x<w;x++){let m=0;const k1=Math.min(w-1,x+r);for(let k=Math.max(0,x-r);k<=k1;k++){const v=a[ro+k];if(v>m)m=v;}t[ro+x]=m;}}
+  for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h-1,y+r);for(let x=0;x<w;x++){let m=0;for(let k=y0;k<=y1;k++){const v=t[k*w+x];if(v>m)m=v;}o[y*w+x]=m;}}
   return o;
 }
 
@@ -775,11 +776,11 @@ function detectCorners(src,fast,thorough){
   for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;
     const gx=gs[i-w+1]+2*gs[i+1]+gs[i+w+1]-gs[i-w-1]-2*gs[i-1]-gs[i+w-1];
     const gy=gs[i+w-1]+2*gs[i+w]+gs[i+w+1]-gs[i-w-1]-2*gs[i-w]-gs[i-w+1];
-    const m=Math.hypot(gx,gy);mag[i]=m;if(m>mx)mx=m;}
+    const m=Math.sqrt(gx*gx+gy*gy);mag[i]=m;if(m>mx)mx=m;}
   const hist=new Uint32Array(256);for(let i=0;i<N;i++)hist[Math.min(255,(mag[i]/mx*255)|0)]++;
   const thrAt=p=>{let a=0;for(let b=255;b>=0;b--){a+=hist[b];if(a>=p*N)return b/255*mx;}return 0;};
   const mm=new Float32Array(N);
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let m=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<w&&Y<h){const v=mag[Y*w+X];if(v>m)m=v;}}mm[y*w+x]=m;}
+  mm.set(maxFilter(mag,w,h,1));
   const tS=thrAt(.12);
   const comp=m=>{const lab=new Int32Array(N),st=new Int32Array(N);let bl=0,bn=0,L=0;
     for(let s=0;s<N;s++){if(!m[s]||lab[s])continue;L++;let sp=0,n=0;st[sp++]=s;lab[s]=L;
@@ -857,7 +858,7 @@ function detectCorners(src,fast,thorough){
   // C) colour distance from the border background (white paper on light table)
   if(!good()){const bw=Math.max(3,Math.round(Math.min(w,h)*.04)),smp=[];
    for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(x<bw||y<bw||x>=w-bw||y>=h-bw)smp.push(y*w+x);}
-   const med=c=>{const v=smp.map(i=>d[i*4+c]).sort((a,b)=>a-b);return v[v.length>>1];},mr=med(0),mg=med(1),mb=med(2);
+   const med=c=>{const H=new Uint32Array(256);for(let k=0;k<smp.length;k++)H[d[smp[k]*4+c]]++;let a=0;const t=smp.length>>1;for(let v=0;v<256;v++){a+=H[v];if(a>t)return v;}return 0;},mr=med(0),mg=med(1),mb=med(2);
    const ds=new Float32Array(N);for(let i=0;i<N;i++)ds[i]=(Math.abs(d[i*4]-mr)+Math.abs(d[i*4+1]-mg)+Math.abs(d[i*4+2]-mb))/3;
    const db=boxBlur(ds,w,h,2),hh=new Float64Array(256);for(let i=0;i<N;i++)hh[clamp(db[i]|0,0,255)]++;
    let s2=0;for(let i=0;i<256;i++)s2+=i*hh[i];let w1=0,s1=0,bv2=-1,t2=20;
@@ -879,7 +880,7 @@ function detectCorners(src,fast,thorough){
   if(!good()){const bw=Math.max(3,Math.round(Math.min(w,h)*.04)),smp=[];
    for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(x<bw||y<bw||x>=w-bw||y>=h-bw)smp.push(y*w+x);}
    const all=[];for(let i=0;i<N;i+=3)all.push(i);
-   const medOf=(S,c)=>{const v=S.map(i=>d[i*4+c]).sort((a,b)=>a-b);return v[v.length>>1];};
+   const medOf=(S,c)=>{const H=new Uint32Array(256);for(let k=0;k<S.length;k++)H[d[S[k]*4+c]]++;let a=0;const t=S.length>>1;for(let v=0;v<256;v++){a+=H[v];if(a>t)return v;}return 0;};
    const refs=[smp,all].map(S=>[medOf(S,0),medOf(S,1),medOf(S,2)]);
    for(const R0 of refs){const Lb=.299*R0[0]+.587*R0[1]+.114*R0[2],tb=R0[2]-R0[0],fs=new Float32Array(N);
     for(let i=0;i<N;i++){const r=d[i*4],g2=d[i*4+1],b=d[i*4+2],L=.299*r+.587*g2+.114*b;fs[i]=Math.max(0,L-Lb)+1.5*Math.max(0,(b-r)-tb);}
@@ -899,7 +900,11 @@ function detectCorners(src,fast,thorough){
   for(const c of cands){if(c.s<Math.max(.3,cands[0].s*.55))break;const n=norm(c.q);
     if(!raw.some(o=>o.every((p,i)=>Math.hypot(p.x-n[i].x,p.y-n[i].y)<.05)))raw.push(n);if(raw.length>=3)break;}
   const out=fast?raw:raw.map((n,i)=>{if(i>0&&!thorough)return n;try{return refineQuad(src,n,{R:.025,passes:3});}catch(e){return n;}});
-  const nFound=raw.length;out.push(full);
+  const nFound=raw.length;
+  if(nFound&&out.length<3){const b=out[0],cx=b.reduce((a,p)=>a+p.x,0)/4,cy=b.reduce((a,p)=>a+p.y,0)/4;
+   for(const k of[.965,1.035]){if(out.length>=3)break;const g=k<1?-.025:.025,d=b.map(p=>{const dx=p.x-cx,dy=p.y-cy,L=Math.sqrt(dx*dx+dy*dy)||1;return{x:clamp(p.x+dx/L*g,.01,.99),y:clamp(p.y+dy/L*g,.01,.99)};});
+    if(!out.some(o=>o.every((p,i)=>Math.hypot(p.x-d[i].x,p.y-d[i].y)<.012)))out.push(d);}}
+  out.push(full);
   detectCorners.alts=out;detectCorners.src=src;detectCorners.full=!!thorough;detectCorners.found=nFound>0;detectCorners.best=cands.length?cands[0].s:0;
   return out[0];
 }
@@ -1318,7 +1323,7 @@ $$('#nudge .nb').forEach(b=>{const dir={l:[-1,0],r:[1,0],u:[0,-1],d:[0,1]}[b.dat
 addEventListener('keydown',e=>{if(V.cur!=='vCrop'||!C.page||/INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||''))return;
   const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!m)return;e.preventDefault();const k=e.shiftKey?5:1;nudge(m[0]*k,m[1]*k);});
 new ResizeObserver(()=>{if(V.cur==='vCrop')layoutCrop();}).observe($('#cropStage'));
-let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){busy(true);await sleep(20);detectCorners(C.src);busy(false);autoI=0;}else{autoI++;if(!detectCorners.full){busy(true);await sleep(20);detectCorners(C.src,0,1);detectCorners.full=1;busy(false);}}const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);if(al.length>1)toast((lang==='ar'?'اقتراح ':'Suggestion ')+((autoI%al.length)+1)+'/'+al.length+(lang==='ar'?' — اضغط تاني لاقتراح مختلف':' — tap again for another'));};
+let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){busy(true);await sleep(20);detectCorners(C.src);busy(false);autoI=0;}else{autoI++;}const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);if(al.length>1)toast((lang==='ar'?'اقتراح ':'Suggestion ')+((autoI%al.length)+1)+'/'+al.length+(lang==='ar'?' — اضغط تاني لاقتراح مختلف':' — tap again for another'));};
 $('#fullBtn').onclick=()=>tween(C.page.corners,[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],320);
 $('#cropBack').onclick=()=>{
   if(C.from==='new'){state.draft=null;C.page=null;state.queue=[];goHome();}
@@ -2166,7 +2171,7 @@ async function openLive(){
  /* worker keeps detection off the UI thread; falls back to the main thread when OffscreenCanvas/Worker aren't available */
  let wk=null,wkBusy=0,wkT=0,miss=0;
  const mkWorker=()=>{try{if(!(window.Worker&&window.OffscreenCanvas&&window.createImageBitmap))return null;
-  const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+asp.toString()+';const GRAYC=new WeakMap();'+grayOf.toString()+';'+bilG.toString()+';'+lineInter2.toString()+';'+refineQuad.toString()+';'+detectCorners.toString()
+  const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+maxFilter.toString()+';'+asp.toString()+';const GRAYC=new WeakMap();'+grayOf.toString()+';'+bilG.toString()+';'+lineInter2.toString()+';'+refineQuad.toString()+';'+detectCorners.toString()
    +';onmessage=e=>{const b=e.data;let q=null,f=false,s=0;try{q=detectCorners(b,1);f=detectCorners.found;s=detectCorners.best;if(f&&q){try{q=refineQuad(b,q,{R:.03,passes:2})}catch(x){}}}catch(x){}try{b.close()}catch(x){}postMessage({q:q,f:f,s:s})};';
   const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'})),w=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
   w.onmessage=e=>{wkBusy=0;try{if(alive&&e.data&&e.data.q&&mode==='doc'&&!gb)judge(e.data.q,e.data.f,e.data.s);}catch(x){}};
