@@ -772,11 +772,11 @@ function detectCorners(src,fast,thorough){
   const d=cx.getImageData(0,0,w,h).data,g=new Float32Array(N);
   for(let i=0;i<N;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
   const gs=boxBlur(Float32Array.from(g),w,h,1),gb=boxBlur(Float32Array.from(g),w,h,3);
-  const mag=new Float32Array(N);let mx=1;
+  const mag=new Float32Array(N),GX=new Float32Array(N),GY=new Float32Array(N);let mx=1;
   for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;
     const gx=gs[i-w+1]+2*gs[i+1]+gs[i+w+1]-gs[i-w-1]-2*gs[i-1]-gs[i+w-1];
     const gy=gs[i+w-1]+2*gs[i+w]+gs[i+w+1]-gs[i-w-1]-2*gs[i-w]-gs[i-w+1];
-    const m=Math.sqrt(gx*gx+gy*gy);mag[i]=m;if(m>mx)mx=m;}
+    const m=Math.sqrt(gx*gx+gy*gy);mag[i]=m;GX[i]=gx;GY[i]=gy;if(m>mx)mx=m;}
   const hist=new Uint32Array(256);for(let i=0;i<N;i++)hist[Math.min(255,(mag[i]/mx*255)|0)]++;
   const thrAt=p=>{let a=0;for(let b=255;b>=0;b--){a+=hist[b];if(a>=p*N)return b/255*mx;}return 0;};
   const mm=new Float32Array(N);
@@ -826,7 +826,7 @@ function detectCorners(src,fast,thorough){
     const r=[];for(let i=0;i<4;i++){const p=inter(Ls[(i+3)%4],Ls[i]);r.push(p&&isFinite(p.x)&&isFinite(p.y)?p:q[i]);}
     return r;};
   const cands=[];
-  const good=()=>!thorough&&cands.length>0&&Math.max(...cands.map(c=>c.s))>=.78; /* early exit: stop trying more strategies once one is clearly good */
+  let fOK=0;const good=()=>!thorough&&fOK||!thorough&&cands.length>0&&Math.max(...cands.map(c=>c.s))>=.78; /* early exit: stop trying more strategies once one is clearly good */
   /* real-boundary gate: each side must separate two clearly different colours (paper vs background) and the inside must look like one sheet */
   const px3=(x,y)=>{x=clamp(Math.round(x),1,w-2);y=clamp(Math.round(y),1,h-2);let r=0,g2=0,b2=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const k=((y+j)*w+x+i)*4;r+=d[k];g2+=d[k+1];b2+=d[k+2];}return[r/9,g2/9,b2/9];};
   const gate=q=>{const cxq=(q[0].x+q[1].x+q[2].x+q[3].x)/4,cyq=(q[0].y+q[1].y+q[2].y+q[3].y)/4,off=Math.max(3,Math.round(Math.max(w,h)/90)),T=9;let sum=0,mn=1;
@@ -843,11 +843,62 @@ function detectCorners(src,fast,thorough){
     return Math.min(1,A/.3)*ang*(A>.9?.5:1)*asp(q);};
   const add=q=>{if(!q)return;const s0=score(q);let b=q,s=s0;const q2=snap(q,8),s2=score(q2);if(s2>=s0*.95&&Math.abs(area(q2)-area(q))<.25*area(q)){b=q2;s=s2;}
     const gm=geo(b);if(gm<=0)return;const gg=gate(b);if(gg.min<.5||gg.mean<.7)return;cands.push({q:b,s:(.6*gg.mean+.4*gg.min)*gm*(.75+.25*Math.min(1,s))});};
+
+  /* F) straight-line quad finder: oriented Hough on strong edges, then the best-supported 4-line rectangle. Robust for hand-held boxes and papers with busy backgrounds */
+  const houghQuads=()=>{
+    const cM=new Float32Array(N),cX=new Float32Array(N),cY=new Float32Array(N);let cmx=1;
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,a0=(i-w-1)*4,a1=(i-w)*4,a2=(i-w+1)*4,b0=(i-1)*4,b2=(i+1)*4,c0=(i+w-1)*4,c1=(i+w)*4,c2=(i+w+1)*4;
+      for(let ch=0;ch<3;ch++){const gx=d[a2+ch]+2*d[b2+ch]+d[c2+ch]-d[a0+ch]-2*d[b0+ch]-d[c0+ch],gy=d[c0+ch]+2*d[c1+ch]+d[c2+ch]-d[a0+ch]-2*d[a1+ch]-d[a2+ch],m=gx*gx+gy*gy;
+        if(m>cM[i]){cM[i]=m;cX[i]=gx;cY[i]=gy;}}}
+    const ch2=new Uint32Array(256);for(let i=0;i<N;i++){const m=Math.sqrt(cM[i]);cM[i]=m;if(m>cmx)cmx=m;}
+    for(let i=0;i<N;i++)ch2[Math.min(255,(cM[i]/cmx*255)|0)]++;
+    const pct=pp=>{let a=0;for(let b=255;b>=0;b--){a+=ch2[b];if(a>=pp*N)return b/255*cmx;}return 0;};
+    const tH=Math.max(pct(.1),cmx*.05),tC=Math.max(pct(.12),cmx*.05),cmm=maxFilter(cM,w,h,1),diag=Math.ceil(Math.hypot(w,h)),RW=2*diag+1,TB=180,acc=new Float32Array(TB*RW),TS=Math.PI/TB,CT=new Float32Array(TB),ST=new Float32Array(TB);for(let b=0;b<TB;b++){CT[b]=Math.cos(b*TS);ST[b]=Math.sin(b*TS);}
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,m=cM[i];if(m<tH)continue;
+      let a=Math.atan2(cY[i],cX[i]);if(a<0)a+=Math.PI;if(a>=Math.PI)a-=Math.PI;const b0=Math.round(a/TS),wt=m/tH;
+      for(let db=-2;db<=2;db++){const b=(b0+db+TB)%TB,r=Math.round(x*CT[b]+y*ST[b])+diag;acc[b*RW+r]+=wt*(db===0?1:Math.abs(db)===1?.7:.35);}}
+    const minV=.22*Math.min(w,h),Ls=[],rs=Math.max(4,Math.round(Math.max(w,h)*.02));
+    /* smooth over rho and pick peaks with suppression */
+    const sm2=new Float32Array(TB*RW);for(let b=0;b<TB;b++){const o=b*RW;for(let r=1;r<RW-1;r++)sm2[o+r]=acc[o+r-1]*.5+acc[o+r]+acc[o+r+1]*.5;}
+    const pk=[],thr=minV*.7;
+    for(let b=0;b<TB;b++){const o=b*RW,o1=((b+1)%TB)*RW,o0=((b+TB-1)%TB)*RW;for(let r=1;r<RW-1;r++){const v=sm2[o+r];if(v<thr)continue;
+      if(v>=sm2[o+r-1]&&v>=sm2[o+r+1]&&v>=sm2[o1+r]&&v>=sm2[o0+r])pk.push({b,r,v});}}
+    pk.sort((a,b)=>b.v-a.v);
+    for(const P of pk){if(Ls.length>=36)break;let near=0;
+      for(const L of Ls){let db=Math.abs(L.b-P.b);if(db>TB/2)db=TB-db;if(db<=7&&Math.abs(L.r-P.r)<=rs){near=1;break;}}
+      if(!near)Ls.push({b:P.b,r:P.r,th:P.b*TS,rho:P.r-diag,v:P.v});}
+    const Hs=[],Vs=[];
+    for(const L of Ls){const c=Math.cos(L.th),sn=Math.sin(L.th);L.c=c;L.s=sn;
+      if(L.th<Math.PI/4||L.th>=3*Math.PI/4){L.pos=(L.rho-(h/2)*sn)/(c||1e-6);Vs.push(L);}else{L.pos=(L.rho-(w/2)*c)/(sn||1e-6);Hs.push(L);}}
+    Hs.sort((a,b)=>b.v-a.v);Vs.sort((a,b)=>b.v-a.v);Hs.length=Math.min(Hs.length,11);Vs.length=Math.min(Vs.length,11);Hs.sort((a,b)=>a.pos-b.pos);Vs.sort((a,b)=>a.pos-b.pos);
+    const X=(A,B)=>{const den=A.c*B.s-A.s*B.c;if(Math.abs(den)<.3)return null;return{x:(A.rho*B.s-B.rho*A.s)/den,y:(A.c*B.rho-B.c*A.rho)/den};};
+    const out=[],mg=.12;let tried=0;
+    for(let i=0;i<Hs.length;i++)for(let j=i+1;j<Hs.length;j++){if(Hs[j].pos-Hs[i].pos<h*.18)continue;
+     for(let k=0;k<Vs.length;k++)for(let l=k+1;l<Vs.length;l++){if(Vs[l].pos-Vs[k].pos<w*.18)continue;
+      const q=[X(Hs[i],Vs[k]),X(Hs[i],Vs[l]),X(Hs[j],Vs[l]),X(Hs[j],Vs[k])];if(q.some(p=>!p))continue;
+      if(q.some(p=>p.x<-w*mg||p.x>w*(1+mg)||p.y<-h*mg||p.y>h*(1+mg)))continue;
+      let sg=0,ok=1;for(let t=0;t<4;t++){const c=cross(q[t],q[(t+1)%4],q[(t+2)%4]);if(!sg)sg=c>0?1:-1;else if((c>0?1:-1)!==sg){ok=0;break;}}
+      if(!ok)continue;const A=area(q)/N;if(A<.1||A>1.2)continue;
+      for(let t=0;t<4;t++){const a=q[t],b=q[(t+1)%4],e=q[(t+2)%4],ux=a.x-b.x,uy=a.y-b.y,vx=e.x-b.x,vy=e.y-b.y,co=(ux*vx+uy*vy)/((Math.hypot(ux,uy)*Math.hypot(vx,vy))||1);if(Math.abs(co)>.55){ok=0;break;}}
+      if(!ok)continue;tried++;
+      let sum=0,mn=1,bad=0;
+      for(let t=0;t<4;t++){const a=q[t],b=q[(t+1)%4],len=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(12,(len/3.5)|0);let hit=0;
+        for(let u=0;u<n;u++){const f=(u+.5)/n,x=Math.round(a.x+(b.x-a.x)*f),y=Math.round(a.y+(b.y-a.y)*f);
+          if(x<=1||y<=1||x>=w-2||y>=h-2)hit+=.55;else if(cmm[y*w+x]>tC)hit++;}
+        const sd=hit/n;if(sd<.4){bad=1;break;}sum+=sd;if(sd<mn)mn=sd;}
+      if(bad)continue;
+      const sc=(.5*sum/4+.5*mn)*(.5+.5*Math.sqrt(Math.min(1,A)));
+      out.push({q,sc,mn,A});}}
+    out.sort((a,b)=>b.sc-a.sc);const top=out.slice(0,6),rest=out.slice(6).sort((a,b)=>b.sc*b.A-a.sc*a.A).slice(0,4);return top.concat(rest);};
+  const add2=(q,fs)=>{const qc=q.map(p=>({x:clamp(p.x,0,w-1),y:clamp(p.y,0,h-1)}));const gm=geo(qc);if(gm<=0)return;const gg=gate(qc),sc=score(qc);
+    if(gg.min<.3||gg.mean<.55){if(fs>=.6)cands.push({q:qc,s:.55*fs*gm});return;}
+    cands.push({q:qc,s:(.6*gg.mean+.4*gg.min)*gm*(.75+.25*Math.min(1,sc))*(.8+.2*Math.min(1,area(qc)/N/.55))});};
   // A) brightness segmentation, both polarities
   const hs=new Float64Array(256);for(let i=0;i<N;i++)hs[clamp(gb[i]|0,0,255)]++;
   let sum=0;for(let i=0;i<256;i++)sum+=i*hs[i];let wB=0,sB=0,bv=-1,th=128;
   for(let i=0;i<256;i++){wB+=hs[i];if(!wB)continue;const wF=N-wB;if(!wF)break;sB+=i*hs[i];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)*(mB-mF);if(v>bv){bv=v;th=i;}}
   for(const pol of[true,false]){const m=new Uint8Array(N);for(let i=0;i<N;i++)m[i]=((gb[i]>th)===pol)?1:0;const r=comp(m);if(r.bn/N>.1)add(quadOf(r.lab,r.bl));}
+  if(!fast||!good()){try{const HQ=houghQuads();for(const o of HQ)if(o.mn>=.4)add2(o.q,o.sc);if(HQ.length&&HQ[0].sc>=.7&&HQ[0].mn>=.6&&cands.length)fOK=1;}catch(e){}}
   // B) closed-edge regions at several sensitivities
   if(!good())for(const p of[.06,.1,.15,.22]){if(good())break;const th2=thrAt(p),e=new Float32Array(N);for(let i=0;i<N;i++)e[i]=mag[i]>th2?1:0;
     const ed=boxBlur(e,w,h,2),bg=new Uint8Array(N),st=new Int32Array(N);let sp=0;
@@ -1179,6 +1230,23 @@ async function getSrc(p){if(!p.src)p.src=await decodeBlob(p.blob);return p.src;}
 async function makeThumb(p){const src=await getSrc(p),w=warpRot(src,p,360),b=makeBase(w),tc=toneCanvas(b,p.filter,p.br,p.ct,p.sat);applyFills(tc.getContext('2d'),tc.width,tc.height,p.ann,p);drawAnn(tc.getContext('2d'),tc.width,tc.height,p.ann);return tc.toDataURL('image/jpeg',.82);}
 
 /* ---------- capture / import ---------- */
+/* full edge analysis off the UI thread (imports, captured photos, auto button); falls back to the main thread */
+let _dw=null,_did=0;
+function detWorker(){if(_dw!==null)return _dw||null;
+  try{if(!(window.Worker&&window.OffscreenCanvas&&window.createImageBitmap)){_dw=false;return null;}
+   const code='const clamp='+clamp.toString()+';const mk=(w,h)=>new OffscreenCanvas(w,h);'+boxBlur.toString()+';'+maxFilter.toString()+';'+asp.toString()+';const GRAYC=new WeakMap();'+grayOf.toString()+';'+bilG.toString()+';'+lineInter2.toString()+';'+refineQuad.toString()+';'+detectCorners.toString()
+    +';onmessage=e=>{const b=e.data.bm,r={id:e.data.id};try{r.q=detectCorners(b);r.alts=detectCorners.alts;r.found=detectCorners.found;r.best=detectCorners.best;}catch(x){r.err=String(x);}try{b.close()}catch(x){}postMessage(r);};';
+   const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));_dw=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
+   _dw.onerror=()=>{try{_dw.terminate()}catch(x){}_dw=false;};return _dw;}catch(e){_dw=false;return null;}}
+async function detectAsync(canvas){
+  const sync=async()=>{await new Promise(r=>setTimeout(r,20));try{return detectCorners(canvas);}catch(e){return null;}};
+  const w=detWorker();if(!w)return sync();
+  try{const bm=await createImageBitmap(canvas),id=++_did;
+   const r=await new Promise((ok,no)=>{const tm=setTimeout(()=>{w.removeEventListener('message',on);no(new Error('timeout'));},12000);
+     const on=e=>{if(e.data.id!==id)return;clearTimeout(tm);w.removeEventListener('message',on);ok(e.data);};w.addEventListener('message',on);w.postMessage({bm,id},[bm]);});
+   if(r.err||!r.alts)return sync();
+   detectCorners.alts=r.alts;detectCorners.src=canvas;detectCorners.full=false;detectCorners.found=r.found;detectCorners.best=r.best;return r.q;
+  }catch(e){try{if(_dw){_dw.terminate();}}catch(x){}_dw=null;return sync();}}
 async function ingest(file){
   busy(true);
   try{
@@ -1187,10 +1255,9 @@ async function ingest(file){
     if(lq&&file.__x)cr0=lq.map(x=>({x:x.x,y:x.y}));
     else if(lq){try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}
      /* full analysis of the captured frame: results feed the auto button; if it agrees with the live quad, use its sharper fit */
-     await new Promise(r=>setTimeout(r,0));
-     try{const d0=detectCorners(canvas),al=detectCorners.alts;if(detectCorners.found&&d0){const dd=Math.max(...d0.map((p,i)=>Math.hypot(p.x-cr0[i].x,p.y-cr0[i].y)));
+     try{const d0=await detectAsync(canvas),al=detectCorners.alts;if(d0&&detectCorners.found){const dd=Math.max(...d0.map((p,i)=>Math.hypot(p.x-cr0[i].x,p.y-cr0[i].y)));
       if(dd<.03)cr0=d0;else{al.splice(0,0,cr0.map(p=>({x:p.x,y:p.y})));detectCorners.alts=al.slice(0,4).concat(al.slice(-1));}}}catch(e){}}
-    else{await new Promise(r=>setTimeout(r,30));cr0=detectCorners(canvas);}
+    else{cr0=(await detectAsync(canvas))||[{x:.05,y:.05},{x:.95,y:.05},{x:.95,y:.95},{x:.05,y:.95}];}
     window.__lastDet={src:canvas};
     const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
     state.draft=p;busy(false);await openCrop(p,'new');
@@ -1328,7 +1395,7 @@ $$('#nudge .nb').forEach(b=>{const dir={l:[-1,0],r:[1,0],u:[0,-1],d:[0,1]}[b.dat
 addEventListener('keydown',e=>{if(V.cur!=='vCrop'||!C.page||/INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||''))return;
   const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!m)return;e.preventDefault();const k=e.shiftKey?5:1;nudge(m[0]*k,m[1]*k);});
 new ResizeObserver(()=>{if(V.cur==='vCrop')layoutCrop();}).observe($('#cropStage'));
-let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){busy(true);await sleep(20);detectCorners(C.src);busy(false);autoI=0;}else{autoI++;}const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);if(al.length>1)toast((lang==='ar'?'اقتراح ':'Suggestion ')+((autoI%al.length)+1)+'/'+al.length+(lang==='ar'?' — اضغط تاني لاقتراح مختلف':' — tap again for another'));};
+let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){busy(true);await detectAsync(C.src);busy(false);autoI=0;}else{autoI++;}const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);if(al.length>1)toast((lang==='ar'?'اقتراح ':'Suggestion ')+((autoI%al.length)+1)+'/'+al.length+(lang==='ar'?' — اضغط تاني لاقتراح مختلف':' — tap again for another'));};
 $('#fullBtn').onclick=()=>tween(C.page.corners,[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],320);
 $('#cropBack').onclick=()=>{
   if(C.from==='new'){state.draft=null;C.page=null;state.queue=[];goHome();}
