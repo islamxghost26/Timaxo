@@ -2058,6 +2058,13 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
     try{localStorage.setItem('tx_bgocr',bgOn()?'0':'1');}catch(e){}
     const s=x.querySelector('.st');s.className='st'+(bgOn()?' on':'');s.textContent=bgOn()?T('مفعّل','On'):T('غير مفعّل','Off');
     toast(bgOn()?T('الفهرسة التلقائية شغالة (تحتاج إنترنت)','Auto-index on (needs internet)'):T('الفهرسة التلقائية موقوفة','Auto-index off'));if(bgOn())setTimeout(bgOcr,300);},1);
+  card(g3,'idx','#0891b2',T('دقة قراءة النص','OCR accuracy'),[(()=>{try{return localStorage.getItem('tx_oq')==='fast'}catch(e){return false}})()?T('سريع','Fast'):T('عالية','High'),(()=>{try{return localStorage.getItem('tx_oq')!=='fast'}catch(e){return true}})()],(x)=>{
+    let f=false;try{f=localStorage.getItem('tx_oq')==='fast';localStorage.setItem('tx_oq',f?'best':'fast');}catch(e){}
+    const s=x.querySelector('.st');s.className='st'+(f?' on':'');s.textContent=f?T('عالية','High'):T('سريع','Fast');
+    toast(f?T('نموذج عالي الدقة (أبطأ وأول مرة بينزّل أكبر)','High-accuracy model (slower, larger first download)'):T('نموذج سريع (أقل دقة)','Fast model (less accurate)'));},1);
+  card(g3,'idx','#8a5cf0',T('اقتراح استخراج النص','Text suggestion'),onOff((()=>{try{return localStorage.getItem('tx_ohint')!=='0'}catch(e){return true}})()),(x)=>{
+    let on=true;try{on=localStorage.getItem('tx_ohint')!=='0';localStorage.setItem('tx_ohint',on?'0':'1');}catch(e){}on=!on;
+    const s=x.querySelector('.st');s.className='st'+(on?' on':'');s.textContent=on?T('مفعّل','On'):T('غير مفعّل','Off');},1);
   const offOk=()=>{try{return !!localStorage.getItem('tx_offline')}catch(e){return false}};
   card(g3,'off','#16a34a',T('تجهيز الأوفلاين (OCR)','Prepare offline (OCR)'),[offOk()?T('جاهز','Ready'):T('غير جاهز','Not ready'),offOk()],async(x)=>{
     const s=x.querySelector('.st');
@@ -2310,8 +2317,6 @@ async function openLive(){
 const TU=['https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','https://unpkg.com/tesseract.js@5/dist/tesseract.min.js','https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'];
 const loadT=async()=>{if(window.Tesseract)return window.Tesseract;for(const u of TU){try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no(new Error('script'));};document.head.appendChild(sc);});if(window.Tesseract)return window.Tesseract;}catch(_){}}throw new Error('script blocked or offline');};
 const WK={};let logCb=()=>{};
-async function getW(l){if(WK[l])return WK[l];const T=await loadT();return WK[l]=await T.createWorker(l,1,{langPath:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_fast',logger:x=>logCb(x)});}
-window.__txWarm=async function(){await loadT();const w=await getW('ara+eng');try{await w.terminate();}catch(_){}delete WK['ara+eng'];return 1;};
 const FONTS=[['Tahoma',"Tahoma,'Segoe UI',Arial,sans-serif"],['نسخ',"'Noto Naskh Arabic','Traditional Arabic',Amiri,'Times New Roman',serif"],['Arial',"Arial,Helvetica,sans-serif"],['Times',"'Times New Roman',Times,serif"],['Courier',"'Courier New',monospace"],['Cairo',TFONTS.cairo[1]],['Noto Sans Arabic',TFONTS.noto[1]],['Inter',TFONTS.inter[1]]];
 function txtDraw(ctx,w,h,a){const bx=Math.min(a.x0,a.x1)*w,by=Math.min(a.y0,a.y1)*h,bw=Math.abs(a.x1-a.x0)*w,bh=Math.abs(a.y1-a.y0)*h,L=a.txt.split('\n').filter(x=>x.trim()),n=Math.max(1,L.length),rtl=/[\u0600-\u06FF]/.test(a.txt),ff=(FONTS[a.ff==null?5:a.ff]||FONTS[5])[1],wt=(a.w||(a.b?800:400))+' ';
  let fs=bh/n*.8;ctx.save();ctx.font=wt+fs+'px '+ff;const mx=Math.max(1,...L.map(l=>ctx.measureText(l).width));if(mx>bw*.98)fs*=bw*.98/mx;fs*=(a.sz||1);ctx.font=wt+fs+'px '+ff;
@@ -2346,32 +2351,185 @@ function txtSheet(a){const p=E.page,old=document.getElementById('txS');if(old)ol
   if(sw){const g=sw.parentNode.dataset.s;if(g==='bg')a.bg=sw.dataset.c;else{a.c=sw.dataset.c;a.cm=1;}syc();redrawOv();return;}
   if(!b)return;if(b.dataset.p)txTabIn(m,b.dataset.p);else if(b.dataset.x==='k')end();else if(b.dataset.x==='d'){p.ann=p.ann.filter(x=>x!==a);p.hist=p.hist.filter(h=>h.a!==a);p.fut=p.fut.filter(h=>h.a!==a);end();renderEdit();syncControls();}};
  setTimeout(m._rv,60);setTimeout(m._rv,420);}
+/* ===== v56: smarter OCR engine (image preparation + multi-pass + quality models) and a new extraction sheet ===== */
+const OCR_LANGS=[/* add a language here and it appears in the sheet (model downloads on first use) */
+ {c:'ara',ar:'العربية',en:'Arabic'},{c:'eng',ar:'الإنجليزية',en:'English'},
+ {c:'fra',ar:'الفرنسية',en:'French'},{c:'deu',ar:'الألمانية',en:'German'},{c:'spa',ar:'الإسبانية',en:'Spanish'},{c:'ita',ar:'الإيطالية',en:'Italian'},
+ {c:'tur',ar:'التركية',en:'Turkish'},{c:'fas',ar:'الفارسية',en:'Persian'},{c:'urd',ar:'الأردية',en:'Urdu'},{c:'rus',ar:'الروسية',en:'Russian'},{c:'por',ar:'البرتغالية',en:'Portuguese'}];
+const OQ=()=>{try{return localStorage.getItem('tx_oq')==='fast'?'fast':'best';}catch(e){return 'best';}};
+const LPATH={best:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_best',fast:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_fast'};
+async function getW(l,q){q=q||'fast';const k=l+'|'+q;if(WK[k])return WK[k];const T=await loadT();
+ try{return WK[k]=await T.createWorker(l,1,{langPath:LPATH[q],logger:x=>logCb(x)});}
+ catch(e){delete WK[k];if(q==='best')return getW(l,'fast');throw e;}}
+window.__txWarm=async function(){await loadT();for(const q of['fast','best']){try{const w=await getW('ara+eng',q);if(q==='fast'){/* keep: used by background indexing */}}catch(_){}}return 1;};
+/* ---- image preparation: evens out lighting and contrast, which is what Tesseract needs most ---- */
+function ocrBox(a,w,h,r){const t=new Float32Array(w*h),o=new Float32Array(w*h),n=2*r+1;
+ for(let y=0;y<h;y++){const row=y*w;let s=0;for(let x=-r;x<=r;x++)s+=a[row+Math.min(w-1,Math.max(0,x))];for(let x=0;x<w;x++){t[row+x]=s/n;s+=a[row+Math.min(w-1,x+r+1)]-a[row+Math.max(0,x-r)];}}
+ const cs=new Float64Array(w);for(let y=-r;y<=r;y++){const b=Math.min(h-1,Math.max(0,y))*w;for(let x=0;x<w;x++)cs[x]+=t[b+x];}
+ for(let y=0;y<h;y++){const ro=y*w,ra=Math.min(h-1,y+r+1)*w,rs=Math.max(0,y-r)*w;for(let x=0;x<w;x++){o[ro+x]=cs[x]/n;cs[x]+=t[ra+x]-t[rs+x];}}return o;}
+function ocrBlurBig(a,w,h,sig){const f=Math.max(1,Math.floor(sig/8)),sw=Math.max(2,Math.ceil(w/f)),sh=Math.max(2,Math.ceil(h/f)),s=new Float32Array(sw*sh);
+ for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){let v=0,n=0;for(let j=0;j<f;j++){const yy=y*f+j;if(yy>=h)break;for(let i=0;i<f;i++){const xx=x*f+i;if(xx>=w)break;v+=a[yy*w+xx];n++;}}s[y*sw+x]=v/(n||1);}
+ let b=s;const r=Math.max(1,Math.round(sig/f/1.8));for(let k=0;k<3;k++)b=ocrBox(b,sw,sh,r);
+ const o=new Float32Array(w*h);for(let y=0;y<h;y++){const fy=Math.min(sh-1.001,Math.max(0,y/f-.5)),y0=fy|0,wy=fy-y0;for(let x=0;x<w;x++){const fx=Math.min(sw-1.001,Math.max(0,x/f-.5)),x0=fx|0,wx=fx-x0,i=y0*sw+x0;
+  o[y*w+x]=b[i]*(1-wx)*(1-wy)+b[i+1]*wx*(1-wy)+b[i+sw]*(1-wx)*wy+b[i+sw+1]*wx*wy;}}return o;}
+function ocrPrep(cv,mode){const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,N=w*h,g=new Float32Array(N);
+ const ch=mode==='chB'?2:mode==='chR'?0:-1;
+ for(let i=0;i<N;i++)g[i]=ch<0?.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2]:d[i*4+ch];
+ let n=g;
+ if(mode==='flat'||mode==='flat40'||mode==='chB'||mode==='chR'){const sig=mode==='flat40'?Math.max(w,h)/40:Math.max(w,h)/12,bg=ocrBlurBig(g,w,h,sig);n=new Float32Array(N);for(let i=0;i<N;i++){const v=g[i]/(bg[i]+1)*200;n[i]=v>255?255:v;}}
+ const hs=new Uint32Array(256);for(let i=0;i<N;i++)hs[Math.max(0,Math.min(255,n[i]|0))]++;let a=0,lo=0,hi=255;for(let i=0;i<256;i++){a+=hs[i];if(a>=N*.01){lo=i;break;}}a=0;for(let i=255;i>=0;i--){a+=hs[i];if(a>=N*.01){hi=i;break;}}
+ const sc=255/Math.max(20,hi-lo),o=document.createElement('canvas');o.width=w;o.height=h;const x=o.getContext('2d'),im=x.createImageData(w,h),p=im.data;
+ for(let i=0;i<N;i++){let v=(n[i]-lo)*sc;v=v<0?0:v>255?255:v;p[i*4]=p[i*4+1]=p[i*4+2]=v;p[i*4+3]=255;}
+ x.putImageData(im,0,0);return o;}
+const ocrWords=r=>{let W=r&&r.data&&r.data.words;if(!W||!W.length){W=[];((r&&r.data&&r.data.lines)||[]).forEach(l=>(l.words||[]).forEach(w=>W.push(w)));}return W;};
+const ocrScore=W=>{let tot=0,n=0,s=0;for(const w of W){const c=w.confidence,t=(w.text||'').trim();if(c>=50&&/[\p{L}\p{N}]/u.test(t)){tot+=c/100*Math.min(t.length,10);n++;s+=c;}}return{tot,n,mean:n?s/n:0};};
+function ocrText(r,minConf){const Ls=(r&&r.data&&r.data.lines)||[];let T='';
+ if(Ls.length){T=Ls.map(l=>{const ws=(l.words||[]).filter(w=>w.confidence>=minConf&&/[\p{L}\p{N}]/u.test(w.text||''));return ws.map(w=>w.text).join(' ').trim();}).filter(s=>s&&/[\p{L}\p{N}]{2}|^[\p{L}\p{N}]$/u.test(s)).join('\n');}
+ else T=((r&&r.data&&r.data.text)||'').trim();return T;}
+/* runs 1-2 passes (more in deep mode) over differently prepared copies of the image and keeps the one Tesseract trusts most */
+async function ocrRun(cv,lang,q,psm,deep,stage,isDead){
+ const vs=deep?['flat','plain','flat40','chB']:['flat','plain'];let best=null;
+ const wk=await getW(lang,q);
+ try{await wk.setParameters({tessedit_pageseg_mode:psm,preserve_interword_spaces:'1'});}catch(_){}
+ try{await wk.setParameters({user_defined_dpi:'300'});}catch(_){}
+ for(let i=0;i<vs.length;i++){
+  if(isDead())return null;
+  if(i>0&&!deep&&best&&best.sc.mean>=82&&best.sc.n>=10)break;
+  stage(i,vs.length);const pc=ocrPrep(cv,vs[i]);await new Promise(r=>setTimeout(r,0));
+  const r=await wk.recognize(pc);if(isDead())return null;const W=ocrWords(r),sc=ocrScore(W);
+  if(!best||sc.tot>best.sc.tot)best={r,W,sc,v:vs[i]};}
+ return best;}
 $('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ocrB"><svg class="i"><use href="#i-pen"/></svg><span>'+(AR()?'استخراج النص':'Extract text')+'</span></button>');
 $('#ocrB').onclick=()=>{if(E.page)ocrModal(E.page,null);};
-async function ocrModal(p,box){let lang=localStorage.getItem('tx_ol')||(AR()?'ara':'eng');
- const m=document.createElement('div');m.style.cssText='position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box';
- const LB=[['ara',AR()?'عربي':'Arabic'],['eng','English'],['ara+eng',AR()?'الاتنين':'Both']];
- m.className='mdl-bd';m.style.cssText='';
- m.innerHTML='<div class="mdl" role="dialog" aria-modal="true"><div class="grab"></div><div class="mdl-h"><div class="mdl-ic">'+'<svg class="i" style="width:20px;height:20px"><use href="#i-pen"/></svg>'+'</div><div class="mdl-t">'+(box?(AR()?'قراءة المنطقة المحددة':'Read selected area'):(AR()?'استخراج النص':'Extract text'))+'<small>'+(AR()?'اختار لغة النص وراجع النتيجة قبل الاستخدام':'Pick the text language, then review the result')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+(AR()?'إغلاق':'Close')+'">'+'<svg class="i" style="width:20px;height:20px"><use href="#i-cross"/></svg>'+'</button></div><div class="mdl-seg" id="oL">'+LB.map(l=>'<button type="button" data-l="'+l[0]+'">'+l[1]+'</button>').join('')+'</div><div class="mdl-pb"><i id="oP"></i></div><div class="mdl-st" id="oS"></div><textarea dir="auto" hidden></textarea><div class="acts"><button class="chip'+(box?'':' on')+'" data-a="c" hidden>'+(AR()?'نسخ':'Copy')+'</button>'+(box?'<button class="chip on" data-a="r" hidden>'+(AR()?'استبدال في الصورة':'Replace in image')+'</button>':'')+'</div></div>';
- document.body.appendChild(m);const st=m.querySelector('#oS'),ta=m.querySelector('textarea'),pb=m.querySelector('#oP');let dead=0,run=0,cv=null,ink='#222';
- const sync=()=>m.querySelectorAll('#oL button').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));sync();
- const go=async()=>{const id=++run;let sg='render';ta.hidden=true;m.querySelectorAll('[data-a=c],[data-a=d],[data-a=r]').forEach(x=>x.hidden=true);st.textContent=AR()?'جاري التحميل...':'Loading...';pb.style.width='6%';
+if(!document.getElementById('oxcss')){const s=document.createElement('style');s.id='oxcss';s.textContent=`
+.ox{gap:10px}
+.ox-h{display:flex;align-items:center;gap:11px}
+.ox-ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none;color:#fff;background:var(--grad,linear-gradient(135deg,#1B63F0,#22D3F5));box-shadow:0 6px 16px -6px var(--accent,#1b63f0)}
+.ox-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ox-langs{display:flex;gap:6px;overflow-x:auto;padding:2px 1px 4px;margin:0 -2px;scrollbar-width:none;flex:none}
+.ox-langs::-webkit-scrollbar{display:none}
+.ox-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font:700 13px system-ui;display:flex;align-items:center;gap:6px;transition:background .15s,border-color .15s,color .15s,transform .1s}
+.ox-chip:active{transform:scale(.95)}
+.ox-chip.on{background:var(--accent,#1b63f0);border-color:var(--accent,#1b63f0);color:#fff}
+.ox-chip.auto.on{background:var(--grad,linear-gradient(135deg,#1B63F0,#22D3F5));border-color:transparent}
+.ox-chip.more{color:var(--ink2);border-style:dashed}
+.ox-more{display:flex;flex-wrap:wrap;gap:6px;flex:none}
+.ox-more[hidden]{display:none}
+.ox-run{display:flex;gap:12px;align-items:center;padding:10px;border-radius:18px;background:var(--surface2);flex:none}
+.ox-run[hidden]{display:none}
+.ox-th{position:relative;width:62px;height:82px;border-radius:10px;overflow:hidden;flex:none;background:#fff;box-shadow:0 4px 12px -4px #0007}
+.ox-th canvas{width:100%;height:100%;object-fit:cover;display:block}
+.ox-th::after{content:'';position:absolute;inset-inline:0;height:26%;top:-26%;background:linear-gradient(180deg,transparent,rgba(34,211,245,.55));border-bottom:2px solid #22d3f5;animation:oxb 1.5s ease-in-out infinite}
+.ox-th.done::after{display:none}
+@keyframes oxb{to{top:100%}}
+.ox-rt{flex:1;min-width:0}
+.ox-rt b{display:block;font:800 14px/1.3 system-ui;color:var(--ink)}
+.ox-rt span{display:block;margin-top:2px;font:600 12px/1.4 system-ui;color:var(--ink2)}
+.ox-pb{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:8px}
+.ox-pb i{display:block;height:100%;width:0;border-radius:3px;background:var(--grad,linear-gradient(90deg,#1b63f0,#22d3f5));transition:width .25s}
+.ox-res{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 auto;overflow:auto}
+.ox-res[hidden]{display:none}
+.ox-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:none}
+.ox-b{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:13px;font:700 12px system-ui;background:var(--surface2);color:var(--ink2)}
+.ox-b.q{color:#fff}.ox-b.q.g{background:#16a34a}.ox-b.q.m{background:#d97706}.ox-b.q.l{background:#dc2626}
+.ox-note{font:600 12px/1.5 system-ui;color:var(--ink2)}
+.ox-acts{display:flex;gap:8px;flex:none}
+.ox-acts[hidden]{display:none}
+.ox-btn{height:48px;border-radius:16px;padding:0 16px;font:800 14px system-ui;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--surface2);color:var(--ink);transition:transform .1s}
+.ox-btn:active{transform:scale(.96)}
+.ox-btn.pri{flex:1;background:var(--grad,linear-gradient(135deg,#1B63F0,#22A8F5));color:#fff;box-shadow:0 8px 18px -8px var(--accent,#1b63f0)}
+.ox-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ox-btn[hidden]{display:none}
+.ox .ocx{order:0;margin-top:0}
+#oHint{position:absolute;inset-block-start:10px;inset-inline-end:10px;z-index:3;height:32px;min-width:32px;padding:0 10px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(10,18,34,.78);color:#fff;border:1px solid rgba(34,211,245,.55);font:700 12px system-ui;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transform:translateY(-6px) scale(.92);transition:opacity .35s,transform .35s,padding .3s;touch-action:none;box-shadow:0 0 0 0 rgba(34,211,245,.5)}
+#oHint.in{opacity:1;transform:none;animation:ohp 2.2s ease-out 1}
+#oHint.min{padding:0;width:32px;opacity:.62}
+#oHint.min span{display:none}
+#oHint svg{width:16px;height:16px;fill:none;stroke:#22d3f5;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@keyframes ohp{0%{box-shadow:0 0 0 0 rgba(34,211,245,.55)}70%{box-shadow:0 0 0 10px rgba(34,211,245,0)}100%{box-shadow:0 0 0 0 rgba(34,211,245,0)}}
+`;document.head.appendChild(s);}
+const OX_SVG={scan:'<svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M12 9v6"/></svg>',
+ copy:'<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>',
+ share:'<svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
+ dl:'<svg viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4M5 19h14"/></svg>',
+ redo:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',
+ x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'};
+async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
+ let sel=(localStorage.getItem('tx_ol')||(ar?'ara+eng':'eng+ara')).split('+').filter(x=>OCR_LANGS.some(l=>l.c===x));if(!sel.length)sel=['ara','eng'];
+ const lname=l=>ar?l.ar:l.en,main=OCR_LANGS.slice(0,2),extra=OCR_LANGS.slice(2);
+ const m=document.createElement('div');m.className='mdl-bd';
+ m.innerHTML='<div class="mdl ox" role="dialog" aria-modal="true"><div class="grab"></div>'+
+  '<div class="ox-h"><div class="ox-ic">'+OX_SVG.scan+'</div><div class="mdl-t">'+(box?L2('قراءة المنطقة المحددة','Read selected area'):L2('استخراج النص','Extract text'))+'<small>'+L2('بيقرأ عربي وإنجليزي بدقة، وبيظبط الصورة قبل القراءة','Reads Arabic & English, tuning the image first')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+L2('إغلاق','Close')+'">'+OX_SVG.x.replace('<svg','<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"')+'</button></div>'+
+  '<div class="ox-langs" id="oL"></div><div class="ox-more" id="oM" hidden></div>'+
+  '<div class="ox-run" id="oRun"><div class="ox-th" id="oTh"></div><div class="ox-rt"><b id="oT1"></b><span id="oT2"></span><div class="ox-pb"><i id="oP"></i></div></div></div>'+
+  '<div class="ox-res" id="oRes" hidden><div class="ox-meta" id="oMeta"></div><textarea dir="auto" rows="7"></textarea><div class="ox-note" id="oNote"></div></div>'+
+  '<div class="ox-acts" id="oActs" hidden><button type="button" class="ox-btn pri" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ النص','Copy text')+'</span></button>'+(box?'<button type="button" class="ox-btn" data-a="r">'+L2('استبدال في الصورة','Replace in image')+'</button>':'')+(navigator.share?'<button type="button" class="ox-btn" data-a="s" aria-label="'+L2('مشاركة','Share')+'">'+OX_SVG.share+'</button>':'')+'<button type="button" class="ox-btn" data-a="d" aria-label="TXT">'+OX_SVG.dl+'</button><button type="button" class="ox-btn" data-a="h" aria-label="'+L2('قراءة أدق','Deep read')+'">'+OX_SVG.redo+'</button></div></div>';
+ document.body.appendChild(m);
+ const $m=s=>m.querySelector(s),ta=$m('textarea'),pb=$m('#oP'),t1=$m('#oT1'),t2=$m('#oT2'),res=$m('#oRes'),run=$m('#oRun'),acts=$m('#oActs'),meta=$m('#oMeta'),note=$m('#oNote'),th=$m('#oTh');
+ let dead=0,rid=0,cv=null,ink='#222',deepNext=false;
+ const chip=(l,cls)=>'<button type="button" class="ox-chip '+(cls||'')+'" data-l="'+l.c+'">'+lname(l)+'</button>';
+ const isAuto=()=>sel.length===2&&sel.includes('ara')&&sel.includes('eng');
+ const paint=()=>{$m('#oL').innerHTML='<button type="button" class="ox-chip auto'+(isAuto()?' on':'')+'" data-auto="1">'+L2('تلقائي','Auto')+'</button>'+main.map(l=>chip(l,sel.includes(l.c)?'on':'')).join('')+'<button type="button" class="ox-chip more" data-more="1">'+OX_SVG.plus.replace('<svg','<svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"')+L2('لغة','Language')+'</button>';
+  $m('#oM').innerHTML=extra.map(l=>chip(l,sel.includes(l.c)?'on':'')).join('');};paint();
+ const lang=()=>{const o=OCR_LANGS.map(l=>l.c);return sel.slice().sort((a,b)=>o.indexOf(a)-o.indexOf(b)).join('+');};
+ const stage=(i,n)=>{t1.textContent=n>1&&i>0?L2('بجرّب طريقة تانية للصورة…','Trying another image treatment…'):L2('بيظبط الصورة ويقرأ…','Tuning the image and reading…');};
+ const finish=(best,deep)=>{const W=best.W,sc=best.sc;let T=ocrText(best.r,35);
+  ta.value=T;res.hidden=false;acts.hidden=false;run.hidden=true;th.classList.add('done');
+  const pct=Math.round(sc.mean),qc=pct>=85?'g':pct>=70?'m':'l',ql=pct>=85?L2('دقة عالية','High accuracy'):pct>=70?L2('دقة جيدة','Good accuracy'):L2('راجع النص','Please review');
+  const nw=T.split(/\s+/).filter(Boolean).length,nl=T.split('\n').filter(Boolean).length;
+  meta.innerHTML=T?'<span class="ox-b q '+qc+'">'+ql+' · '+pct+'%</span><span class="ox-b">'+nw+' '+L2('كلمة','words')+'</span><span class="ox-b">'+nl+' '+L2('سطر','lines')+'</span>':'';
+  note.textContent=T?(pct<70?L2('الثقة منخفضة. جرّب «قراءة أدق» أو غيّر اللغة، وراجع الأرقام والأسماء.','Low confidence. Try Deep read or another language, and check numbers and names.'):L2('راجع الأرقام والأسماء قبل الاستخدام.','Check numbers and names before using.')):L2('ما لقيتش نص واضح. جرّب لغة تانية أو «قراءة أدق».','No clear text. Try another language or Deep read.');
+  try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
+  if(!T)ta.hidden=true;else ta.hidden=false;deepNext=!deep;};
+ const go=async(deep)=>{const id=++rid;res.hidden=true;acts.hidden=true;run.hidden=false;th.classList.remove('done');t1.textContent=L2('جاري التحميل…','Loading…');t2.textContent=lang().split('+').map(c=>lname(OCR_LANGS.find(l=>l.c===c))).join(' + ')+' · '+(OQ()==='best'?L2('نموذج عالي الدقة','High-accuracy model'):L2('نموذج سريع','Fast model'));pb.style.width='6%';
+  let sg='render';
   try{if(!cv){const f=await renderFinal(p,2200);if(!box)cv=f;else{const sx=Math.round(box.x0*f.width),sy=Math.round(box.y0*f.height),cw=Math.max(8,Math.round((box.x1-box.x0)*f.width)),ch=Math.max(8,Math.round((box.y1-box.y0)*f.height)),k=clamp(110/ch,1,3),pd=12;
     const d=f.getContext('2d').getImageData(sx,sy,Math.min(cw,f.width-sx),Math.min(ch,f.height-sy)).data,Y=[];for(let i=0;i<d.length;i+=4)Y.push([d[i]*.3+d[i+1]*.59+d[i+2]*.11,i]);Y.sort((a,b)=>a[0]-b[0]);const nk=Math.max(1,Y.length*.06|0);let r=0,g=0,b=0;for(let i=0;i<nk;i++){r+=d[Y[i][1]];g+=d[Y[i][1]+1];b+=d[Y[i][1]+2];}ink=`rgb(${r/nk|0},${g/nk|0},${b/nk|0})`;
-    cv=document.createElement('canvas');cv.width=cw*k+pd*2;cv.height=ch*k+pd*2;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.imageSmoothingQuality='high';x.drawImage(f,sx,sy,cw,ch,pd,pd,cw*k,ch*k);}}
-   sg='worker';logCb=x=>{if(id===run&&!dead&&x.status==='recognizing text')st.textContent=(AR()?'جاري القراءة: ':'Reading: ')+Math.round(x.progress*100)+'%',pb.style.width=Math.round(x.progress*100)+'%';};
-   const wk=await getW(lang);sg='recognize';await wk.setParameters({tessedit_pageseg_mode:box?'6':'3'});const r=await wk.recognize(cv);if(dead||id!==run)return;
-   let T=(r.data.text||'').trim();const Ls=r.data.lines;if(Ls&&Ls.length){T=Ls.map(l=>(l.words||[]).filter(w=>w.confidence>=50).map(w=>w.text).join(' ').trim()).filter(Boolean).join('\n');}
-   ta.value=T;ta.hidden=false;pb.style.width='0';try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=AR()?'تصدير كـ':'Export as';}st.textContent=T?(AR()?'راجع النص وعدّله قبل الاستخدام':'Review and edit the text'):(AR()?'ما لقيتش نص واضح، جرّب لغة تانية':'No clear text, try another language');
-   m.querySelectorAll('[data-a=c],[data-a=d],[data-a=r]').forEach(x=>x.hidden=false);}
-  catch(e){if(!dead&&id===run){console.error(e);st.textContent=(AR()?'تعذّر استخراج النص عند مرحلة ':'OCR failed at stage ')+sg+': '+String(e&&e.message||e).slice(0,160);}}};
- m.onclick=async e=>{if(e.target===m){dead=1;m.remove();return;}const t=e.target.closest('[data-l],[data-a]'),l=t&&t.dataset.l,a=t&&t.dataset.a;
-  if(l){lang=l;localStorage.setItem('tx_ol',l);sync();go();}
-  else if(a==='x'){dead=1;m.remove();}
-  else if(a==='c'){try{await navigator.clipboard.writeText(ta.value);toast(AR()?'اتنسخ':'Copied');}catch(_){ta.select();document.execCommand('copy');}}
-  else if(a==='d'){const u=URL.createObjectURL(new Blob(['\ufeff'+ta.value],{type:'text/plain;charset=utf-8'})),q=document.createElement('a');q.href=u;q.download='scan.txt';q.click();setTimeout(()=>URL.revokeObjectURL(u),3000);}
+    cv=document.createElement('canvas');cv.width=cw*k+pd*2;cv.height=ch*k+pd*2;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.imageSmoothingQuality='high';x.drawImage(f,sx,sy,cw,ch,pd,pd,cw*k,ch*k);}
+    const tc=document.createElement('canvas');tc.width=124;tc.height=164;const kk=Math.max(124/cv.width,164/cv.height);tc.getContext('2d').drawImage(cv,(124-cv.width*kk)/2,0,cv.width*kk,cv.height*kk);th.innerHTML='';th.appendChild(tc);}
+   sg='worker';let passI=0,passN=1;logCb=x=>{if(id===rid&&!dead&&x.status==='recognizing text'){const base=passI/passN;pb.style.width=Math.round((base+x.progress/passN)*100)+'%';t2.textContent=L2('جاري القراءة ','Reading ')+Math.round(x.progress*100)+'%'+(passN>1&&passI>0?' · '+L2('محاولة ','try ')+(passI+1):'');}};
+   sg='recognize';
+   const best=await ocrRun(cv,lang(),OQ(),box?'6':'3',!!deep,(i,n)=>{passI=i;passN=Math.max(n,2);stage(i,n);},()=>dead||id!==rid);
+   if(!best||dead||id!==rid)return;pb.style.width='100%';finish(best,!!deep);}
+  catch(e){if(!dead&&id===rid){console.error(e);run.hidden=false;th.classList.add('done');t1.textContent=L2('تعذّر استخراج النص','Could not extract text');t2.textContent=sg+': '+String(e&&e.message||e).slice(0,140)+(navigator.onLine?'':' · '+L2('مفيش إنترنت. جهّز الأوفلاين من «المزيد».','Offline. Prepare offline from More.'));pb.style.width='0';}}};
+ m.onclick=async e=>{if(e.target===m){dead=1;m.remove();return;}
+  const t=e.target.closest('[data-l],[data-a],[data-auto],[data-more]');if(!t)return;const a=t.dataset.a;
+  if(t.dataset.more){const mm=$m('#oM');mm.hidden=!mm.hidden;return;}
+  if(t.dataset.auto){sel=['ara','eng'];localStorage.setItem('tx_ol',lang());paint();go();return;}
+  if(t.dataset.l){const c=t.dataset.l,i=sel.indexOf(c);if(i>=0){if(sel.length>1)sel.splice(i,1);}else sel.push(c);try{localStorage.setItem('tx_ol',lang());}catch(_){}paint();clearTimeout(m._lt);m._lt=setTimeout(()=>go(),350);return;}
+  if(a==='x'){dead=1;m.remove();}
+  else if(a==='c'){try{await navigator.clipboard.writeText(ta.value);}catch(_){ta.select();document.execCommand('copy');}toast(L2('اتنسخ','Copied'));}
+  else if(a==='s'){try{await navigator.share({text:ta.value});}catch(_){}}
+  else if(a==='h'){go(true);}
+  else if(a==='d'){const u=URL.createObjectURL(new Blob(['﻿'+ta.value],{type:'text/plain;charset=utf-8'})),q=document.createElement('a');q.href=u;q.download='scan.txt';q.click();setTimeout(()=>URL.revokeObjectURL(u),3000);}
   else if(a==='r'&&ta.value.trim()){dead=1;m.remove();const na={t:'txtr',id:newId(),x0:box.x0,y0:box.y0,x1:box.x1,y1:box.y1,txt:ta.value,c:ink,c0:ink,bg:null,ff:5,sz:1,bl:3};addAnn(na);txtSheet(na);}};
  go();}
+/* ---- small, deliberate suggestion: appears only when the opened page looks like it has text ---- */
+const oHintOn=()=>{try{return localStorage.getItem('tx_ohint')!=='0';}catch(e){return true;}};
+const oHinted=new Set();
+function textLikely(cv){try{const W=300,H=Math.max(40,Math.round(cv.height*W/cv.width)),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(cv,0,0,W,H);
+ const d=x.getImageData(0,0,W,H).data,g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+ const row=new Float32Array(H);let tot=0;for(let y=1;y<H-1;y++){let n=0;for(let xx=2;xx<W-2;xx++){const i=y*W+xx,gx=Math.abs(g[i+1]-g[i-1]);if(gx>34)n++;}row[y]=n/W;tot+=row[y];}
+ const avg=tot/H;if(avg<.012||avg>.32)return false;let bands=0,on=false,dens=0;const th=avg*.8;for(let y=2;y<H-2;y++){const v=(row[y-1]+row[y]+row[y+1])/3;if(v>th&&!on){on=true;bands++;}else if(v<=th*.6)on=false;if(v>th)dens++;}
+ const fr=dens/H;return bands>=5&&fr>.2&&fr<.85;}catch(e){return false;}}
+function ocrHintMaybe(p){try{if(!oHintOn()||!p||oHinted.has(p.id)||!E.page||E.page.id!==p.id)return;
+ const idx=(typeof OI==='function'&&OI()[p.id])||'';const cb=document.getElementById('cvBase');if(!cb||!cb.width)return;
+ if(!(idx.length>=25||textLikely(cb)))return;oHinted.add(p.id);
+ const st=document.getElementById('editStage');if(!st)return;const old=document.getElementById('oHint');if(old)old.remove();
+ const b=document.createElement('button');b.id='oHint';b.type='button';b.setAttribute('aria-label',AR()?'اقتراح: استخراج النص من الصورة':'Suggestion: extract text from the image');b.innerHTML=OX_SVG.scan+'<span>'+(AR()?'فيها نص؟':'Has text?')+'</span>';st.appendChild(b);
+ const born=Date.now();let sx=0,sy=0,mv=0,down=0;const kill=()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(iv);b.classList.remove('in');setTimeout(()=>b.remove(),380);};
+ requestAnimationFrame(()=>b.classList.add('in'));const t1=setTimeout(()=>b.classList.add('min'),6500),t2=setTimeout(kill,16000);
+ const iv=setInterval(()=>{if(!b.isConnected||V.cur!=='vEdit'||E.page!==p){kill();}},500);
+ b.addEventListener('pointerdown',e=>{e.stopPropagation();sx=e.clientX;sy=e.clientY;mv=0;down=1;});
+ b.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-sx,e.clientY-sy)>14)mv=1;e.stopPropagation();});
+ b.addEventListener('pointerup',e=>{e.stopPropagation();if(!down)return;down=0;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.hypot(dx,dy)>24){kill();return;}
+  if(Date.now()-born<700||mv)return;kill();ocrModal(p,null);});
+ b.addEventListener('pointercancel',()=>{down=0;});b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();});
+ const ov=document.getElementById('ov');if(ov)ov.addEventListener('pointerdown',()=>{if(b.isConnected)b.classList.add('min');},{once:true});
+}catch(e){console.warn('ocrHint',e);}}
+{const _oe=openEdit;openEdit=async function(p){const r=await _oe.apply(this,arguments);setTimeout(()=>ocrHintMaybe(p),1100);return r;};}
+
 /* ===== v21: background OCR indexing (phase 1.1) ===== */
 const BGK='tx_bgocr';const bgOn=()=>{try{return localStorage.getItem(BGK)!=='0'}catch(e){return true}};
 const bgTried=new Set();let bgBusy=0,bgAgain=0;
