@@ -840,7 +840,13 @@ html body #exportBtn{padding:10px 14px;gap:8px}
 html body #exportBtn .i,html body #exportBtn svg{width:20px;height:20px}
 html body .dk,html body .tab,html body .flt,html body .tool span,html body .tgt,html body .fld>label,html body .fld>span.l{font-size:14px!important}
 html body .tool{width:74px;height:72px}
-html body .pa,html body .chip,html body .inst,html body .lang,html body .tgl{font-size:15px!important}
+html body .pa,html body .chip,html body .inst,html body .lang{font-size:14px!important}
+html body .nudge .tgl{font-size:13px!important;padding:0 10px}
+html body .nudge{flex-wrap:wrap;row-gap:6px}
+html body .nudge .pad{gap:5px}
+html body .nudge .nb{width:40px}
+video{background:transparent}
+video::-webkit-media-controls,video::-webkit-media-controls-start-playback-button,video::-webkit-media-controls-overlay-play-button{display:none!important;-webkit-appearance:none}
 html body #vHome .lang{font-size:15px!important;min-width:42px}
 html body .note,html body .lib-it .go,html body .libdel.arm,html body #tfRow .tfs,html body #xEst,html body #pfMod label,html body .sld output,html body #tg .wh,html body .hint{font-size:13.5px!important}
 html body .dk svg,html body .tab svg{width:24px;height:24px}
@@ -2568,7 +2574,7 @@ async function openLive(){
   ph:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',au:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',ck:'<path d="M5 12l5 5 9-10"/>'};
  const S=k=>'<svg viewBox="0 0 24 24">'+I[k]+'</svg>';
  const m=document.createElement('div');m.id='lv';m.style.zIndex='9500';
- m.innerHTML='<div class="st"><video playsinline muted autoplay></video><canvas></canvas><div class="tb"><button class="ib" data-a="x" aria-label="close">'+S('x')+'</button><div><button class="ib" data-a="sn" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('لقطة','Snap')+'">'+S('sn')+'</button><button class="ib" data-a="mu" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('كتم الصوت','Mute')+'">'+S('mu')+'</button><button class="ib" data-a="l" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('العدسة','Lens')+'">'+S('lens')+'</button><button class="ib fl" data-a="f" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('الفلاش','Flash')+'">'+S('fl')+'</button></div></div><div class="hint"><i></i><span></span></div><div class="fl2"></div></div>'
+ m.innerHTML='<div class="st"><video playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" disablepictureinpicture></video><canvas></canvas><div class="tb"><button class="ib" data-a="x" aria-label="close">'+S('x')+'</button><div><button class="ib" data-a="sn" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('لقطة','Snap')+'">'+S('sn')+'</button><button class="ib" data-a="mu" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('كتم الصوت','Mute')+'">'+S('mu')+'</button><button class="ib" data-a="l" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('العدسة','Lens')+'">'+S('lens')+'</button><button class="ib fl" data-a="f" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('الفلاش','Flash')+'">'+S('fl')+'</button></div></div><div class="hint"><i></i><span></span></div><div class="fl2"></div></div>'
  +'<div class="bt"><div class="seg"><b></b><button data-m="doc">'+S('doc')+T('مستند','Doc')+'</button><button data-m="id">'+S('id')+T('بطاقة','ID')+'</button><button data-m="ph">'+S('ph')+T('شخصية','Portrait')+'</button></div>'
  +'<div class="row"><div><button class="chip" data-a="a">'+S('au')+'<span></span></button></div><button class="sh" data-a="s" aria-label="capture"><span class="in"></span></button><div><button class="dn" data-a="d">'+S('ck')+'<span></span></button></div></div></div>';
  document.body.appendChild(m);
@@ -2728,8 +2734,9 @@ async function openLive(){
 }
 
 /* ===== v6: OCR (full page + region), text replace ===== */
-const TU=['https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','https://unpkg.com/tesseract.js@5/dist/tesseract.min.js','https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'];
-const loadT=async()=>{if(window.Tesseract)return window.Tesseract;for(const u of TU){try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no(new Error('script'));};document.head.appendChild(sc);});if(window.Tesseract)return window.Tesseract;}catch(_){}}throw new Error('script blocked or offline');};
+const VB=new URL('vendor/',document.baseURI).href; /* نسخة محلية من tesseract (مجلد vendor) — لو مش موجودة بيرجع للـCDN */
+const TU=[VB+'tesseract/tesseract.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','https://unpkg.com/tesseract.js@5/dist/tesseract.min.js','https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'];
+const loadT=async()=>{if(window.Tesseract)return window.Tesseract;for(const u of TU){try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no(new Error('script'));};document.head.appendChild(sc);});if(window.Tesseract){window.__txLocal=u.indexOf(VB)===0;return window.Tesseract;}}catch(_){}}throw new Error('script blocked or offline');};
 const WK={};let logCb=()=>{};let LOGMUTE=0;
 const FONTS=[['Tahoma',"Tahoma,'Segoe UI',Arial,sans-serif"],['نسخ',"'Noto Naskh Arabic','Traditional Arabic',Amiri,'Times New Roman',serif"],['Arial',"Arial,Helvetica,sans-serif"],['Times',"'Times New Roman',Times,serif"],['Courier',"'Courier New',monospace"],['Cairo',TFONTS.cairo[1]],['Noto Sans Arabic',TFONTS.noto[1]],['Inter',TFONTS.inter[1]]];
 function txtDraw(ctx,w,h,a){let bx=Math.min(a.x0,a.x1)*w,by=Math.min(a.y0,a.y1)*h,bw=Math.abs(a.x1-a.x0)*w,bh=Math.abs(a.y1-a.y0)*h;const cx0=bx+bw/2,cy0=by+bh/2,rt=a.rot||0;let rotd=0;
@@ -2777,9 +2784,11 @@ const OCR_LANGS=[/* add a language here and it appears in the sheet (model downl
  {c:'fra',ar:'الفرنسية',en:'French'},{c:'deu',ar:'الألمانية',en:'German'},{c:'spa',ar:'الإسبانية',en:'Spanish'},{c:'ita',ar:'الإيطالية',en:'Italian'},
  {c:'tur',ar:'التركية',en:'Turkish'},{c:'fas',ar:'الفارسية',en:'Persian'},{c:'urd',ar:'الأردية',en:'Urdu'},{c:'rus',ar:'الروسية',en:'Russian'},{c:'por',ar:'البرتغالية',en:'Portuguese'}];
 const OQ=()=>{try{return localStorage.getItem('tx_oq')==='fast'?'fast':'best';}catch(e){return 'best';}};
-const LPATH={best:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_best',fast:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_fast'};
+const LPATH_CDN={best:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_best',fast:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_fast'};
+const LPATH_LOCAL={best:VB+'tessdata/best',fast:VB+'tessdata/fast'};
+const wopts=q=>window.__txLocal?{workerPath:VB+'tesseract/worker.min.js',corePath:VB+'tesseract-core',langPath:LPATH_LOCAL[q]}:{langPath:LPATH_CDN[q]};
 async function getW(l,q){q=q||'fast';const k=l+'|'+q;if(WK[k])return WK[k];const T=await loadT();
- try{return WK[k]=await T.createWorker(l,1,{langPath:LPATH[q],logger:x=>{if(!LOGMUTE)logCb(x)}});}
+ try{return WK[k]=await T.createWorker(l,1,Object.assign(wopts(q),{logger:x=>{if(!LOGMUTE)logCb(x)}}));}
  catch(e){delete WK[k];if(q==='best')return getW(l,'fast');throw e;}}
 window.__txWarm=async function(){await loadT();for(const q of['fast','best']){try{const w=await getW('ara+eng',q);if(q==='fast'){/* keep: used by background indexing */}}catch(_){}}return 1;};
 /* ---- image preparation: evens out lighting and contrast, which is what Tesseract needs most ---- */
@@ -2809,7 +2818,7 @@ function ocrText(r,minConf){const Ls=(r&&r.data&&r.data.lines)||[];let T='';
 /* v59: parallel band recognition (2-3 workers) — big speed-up on multi-core phones */
 const WPN=()=>{const hc=navigator.hardwareConcurrency||4,dm=navigator.deviceMemory||4;return dm<3?1:Math.max(1,Math.min(3,hc-2));};
 async function getPool(lang,q,n){const out=[await getW(lang,q)];if(n<2)return out;const T=await loadT(),k=lang+'|'+q+'|x';WK[k]=WK[k]||[];const need=n-1-WK[k].length;
- if(need>0){const mk=[];for(let i=0;i<need;i++)mk.push(T.createWorker(lang,1,{langPath:LPATH[q]}).catch(()=>null));(await Promise.all(mk)).forEach(w=>w&&WK[k].push(w));}
+ if(need>0){const mk=[];for(let i=0;i<need;i++)mk.push(T.createWorker(lang,1,wopts(q)).catch(()=>null));(await Promise.all(mk)).forEach(w=>w&&WK[k].push(w));}
  return out.concat(WK[k].slice(0,n-1));}
 function ocrSplit(pc,n){const w=pc.width,h=pc.height;if(n<2||h<1100)return[[0,h]];const d=pc.getContext('2d').getImageData(0,0,w,h).data,row=new Float32Array(h);
  for(let y=0;y<h;y++){let s=0;for(let x=0,i=y*w*4;x<w;x+=2,i+=8)if(d[i]<110)s++;row[y]=s;}
@@ -3429,7 +3438,7 @@ const hv=document.getElementById('vHome');if(hv){const sync=()=>fab.classList.to
 fab.onclick=async()=>{
  if(!('BarcodeDetector' in window)||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){toast(L('المتصفح ده مش بيدعم قراءة QR','QR scanning is not supported here'));return;}
  let st;try{st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});}catch(e){toast(L('الكاميرا غير متاحة','Camera unavailable'));return;}
- const ov=document.createElement('div');ov.id='qrOv';ov.innerHTML='<video playsinline muted autoplay></video><div class="qf"></div><button class="qx">✕</button>';document.body.appendChild(ov);
+ const ov=document.createElement('div');ov.id='qrOv';ov.innerHTML='<video playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" disablepictureinpicture></video><div class="qf"></div><button class="qx">✕</button>';document.body.appendChild(ov);
  const v=ov.querySelector('video');v.srcObject=st;const det=new BarcodeDetector();let shown=0,res=null;
  const close=()=>{clearInterval(tm);st.getTracks().forEach(t=>t.stop());ov.remove();};
  ov.querySelector('.qx').onclick=close;
@@ -4366,4 +4375,25 @@ function icons(){var done=0;for(var id in IC){var b=document.getElementById(id);
 var n=0,iv=setInterval(function(){if(icons()||++n>30)clearInterval(iv)},300);
 })();
 </script>
-</body></html>
+<style id="fs67">
+/* v67: كل الأزرار والأيقونات تبان كاملة من غير سحب؛ السحب بس للفلاتر وصفوف الألوان */
+html body .pgact{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}
+html body .pa{height:auto!important;min-height:50px;padding:6px 8px!important;gap:6px;font-size:14px!important;line-height:1.2;min-width:0;flex-wrap:nowrap}
+html body .pa span{min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:center}
+html body .pa svg{flex:none;width:20px;height:20px}
+html body .edk>.panel{max-height:46vh;overflow-x:hidden}
+html body .nudge{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:8px 16px 4px!important;justify-content:stretch}
+html body .nudge .tgl{flex:1 1 0!important;min-width:0;height:42px!important;padding:0 8px!important;font-size:14px!important;line-height:1.15;white-space:normal;text-align:center}
+html body .nudge .pad{flex:1 1 100%!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px!important;margin:0!important}
+html body .nudge .nb{width:auto!important;height:44px!important;font-size:20px!important}
+html body .top .btn.sm,html body .top .btn.sm span{font-size:14px!important}
+html body .top .btn.sm{height:40px;padding:0 12px;gap:6px;flex:none}
+html body .top .btn.sm svg{width:18px!important;height:18px!important}
+html body #exportBtn,html body #exportBtn span{font-size:14px!important}
+html body .dk,html body .tab{font-size:13px!important}
+html body .tool span{font-size:13px!important}
+html body .chip,html body .inst,html body .lang{font-size:14px!important}
+html body .mdl-bd{background:rgba(6,10,22,.34)}
+html body .mdl{max-height:min(80%,680px)}
+html body button span,html body .btn span{min-width:0}
+</style></body></html>
