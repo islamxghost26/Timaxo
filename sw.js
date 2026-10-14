@@ -1,4 +1,4 @@
-const CACHE='timaxo-v68';
+const CACHE='timaxo-v70';
 const VCACHE='timaxo-vendor-v1'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
 const VENDOR_PRE=['vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tessdata/fast/ara.traineddata.gz','vendor/tessdata/fast/eng.traineddata.gz']; // الباقي (core وبيانات best) بيتخزن أول استخدام
 const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png'];
