@@ -1377,6 +1377,7 @@ function detectCorners(src,fast,thorough){
   detectCorners.alts=out;detectCorners.src=src;detectCorners.full=!!thorough;detectCorners.found=nFound>0;detectCorners.best=cands.length?cands[0].s:0;
   return out[0];
 }
+(window.__edges=window.__edges||{}).detectCorners=detectCorners;(window.__edges).refineQuad=refineQuad; /* hook للاختبار: بيكشف الدوال من غير ما يغيّر أي سلوك */
 
 /* ---------- perspective warp ---------- */
 function solveH(dst,srcp){
@@ -1410,9 +1411,9 @@ function pageAspect(P,sw,sh){
     const rr=Math.sqrt(q(n2)/q(n3));
     if(isFinite(rr)&&rr>.3&&rr<3.3&&rr/naive>.6&&rr/naive<1.7)r=rr;
   }
-  // snap to standard paper (A4/A5 1.414, Letter 1.294) when close
+  // snap to standard paper (A4/A5 1.414, Letter 1.294; مع tx_edge2: وبطاقة ID-1 1.586) when close
   const lg=Math.max(r,1/r),sm=Math.min(r,1/r);void sm;
-  for(const s of[1.4142,1.2941]){if(Math.abs(lg-s)/s<.045){r=r>=1?s:1/s;break;}}
+  for(const s of(localStorage.getItem('tx_edge2')==='1'?[1.4142,1.2941,1.5857]:[1.4142,1.2941])){if(Math.abs(lg-s)/s<.045){r=r>=1?s:1/s;break;}}
   return r;
 }
 function warp(src,corners,maxEdge){
@@ -1437,6 +1438,7 @@ function warp(src,corners,maxEdge){
     o[oi+3]=255;}}
   const c=mk(W,H);c.getContext('2d').putImageData(out,0,0);return c;
 }
+(window.__edges=window.__edges||{}).warp=warp;
 function rotateCanvas(c,r){r=((r%4)+4)%4;if(!r)return c;const o=r%2?mk(c.height,c.width):mk(c.width,c.height);const x=o.getContext('2d');x.translate(o.width/2,o.height/2);x.rotate(r*Math.PI/2);x.drawImage(c,-c.width/2,-c.height/2);return o;}
 const warpRot=(src,p,edge)=>rotateCanvas(warp(src,p.corners,edge),p.rot);
 
@@ -1656,7 +1658,26 @@ function detWorker(){if(_dw!==null)return _dw||null;
     +';onmessage=e=>{const b=e.data.bm,r={id:e.data.id};try{r.q=detectCorners(b);r.alts=detectCorners.alts;r.found=detectCorners.found;r.best=detectCorners.best;}catch(x){r.err=String(x);}try{b.close()}catch(x){}postMessage(r);};';
    const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));_dw=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
    _dw.onerror=()=>{try{_dw.terminate()}catch(x){}_dw=false;};return _dw;}catch(e){_dw=false;return null;}}
-async function detectAsync(canvas){
+/* ---- كشف هجين تجريبي (tx_edge2=1): نموذج ONNX + الخوارزمية الحالية، مرتّبين بدرجة ثقة. أي خطأ = نرجع للمسار القديم ---- */
+let _e2=null;
+const loadEdge2=()=>_e2||(_e2=Promise.all(['edge-model.js','edge-hybrid.js'].map(f=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=f;e.onload=ok;e.onerror=()=>no(new Error(f));document.head.appendChild(e);}))).catch(e=>{_e2=null;throw e;}));
+async function edge2Wrap(canvas,q0){
+  if(localStorage.getItem('tx_edge2')!=='1'){detectCorners.edge2=null;return q0;}
+  try{
+    await loadEdge2();
+    const f=detectCorners,cands=[];
+    if(q0)cands.push({quad:q0,src:'current',conf:f.found?Math.min(1,f.best||0):0});
+    (f.alts||[]).slice(1,3).forEach(a=>cands.push({quad:a,src:'current-alt',conf:Math.min(1,(f.best||0)*.6)}));
+    if(await EdgeModel.available()){const m=await EdgeModel.detect(canvas);if(m.quad)cands.push({quad:m.quad,src:'model',conf:m.score});}
+    const r=EdgeHybrid.rank(cands,EdgeHybrid.prepare(canvas),canvas.width/canvas.height);
+    if(!r.length)return q0;
+    f.alts=r.map(x=>x.quad);f.best=r[0].score;f.edge2=r[0].src;
+    if(r[0].src==='model'&&r[0].score>.35)f.found=true;     // لو النموذج لقى حاجة والحالية ماتلقتش
+    return r[0].quad;
+  }catch(e){console.warn('edge2 fallback',e);return q0;}
+}
+async function detectAsync(canvas){return edge2Wrap(canvas,await detectAsync0(canvas));}
+async function detectAsync0(canvas){
   const sync=async()=>{await new Promise(r=>setTimeout(r,20));try{return detectCorners(canvas);}catch(e){return null;}};
   const w=detWorker();if(!w)return sync();
   try{const bm=await createImageBitmap(canvas),id=++_did;
@@ -1665,6 +1686,7 @@ async function detectAsync(canvas){
    if(r.err||!r.alts)return sync();
    detectCorners.alts=r.alts;detectCorners.src=canvas;detectCorners.full=false;detectCorners.found=r.found;detectCorners.best=r.best;return r.q;
   }catch(e){try{if(_dw){_dw.terminate();}}catch(x){}_dw=null;return sync();}}
+(window.__edges=window.__edges||{}).detectAsync=detectAsync;
 async function ingest(file){
   busy(true);
   try{
