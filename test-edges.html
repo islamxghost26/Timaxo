@@ -256,20 +256,42 @@ async function edgeStatus() {
 }
 async function getBytes(url) { const r = await fetch(url); if (!r.ok) throw new Error(r.status + ' ' + url); return r; }
 
+/* أسماء ملفات dist الفعلية من واجهة jsDelivr؛ لو فشلت نرجع للأسماء المعروفة */
+async function ortFileList() {
+  for (const api of [`https://data.jsdelivr.com/v1/packages/npm/onnxruntime-web@${ORT_V}`, `https://data.jsdelivr.com/v1/package/npm/onnxruntime-web@${ORT_V}/flat`]) {
+    try {
+      const j = await (await getBytes(api)).json(), out = [];
+      const walk = (items, base) => (items || []).forEach(f => f.type === 'directory' ? walk(f.files, base + f.name + '/') : out.push(base + f.name));
+      if (j.files && j.files[0] && String(j.files[0].name).startsWith('/')) j.files.forEach(f => out.push(f.name.slice(1)));   // الشكل المسطّح
+      else walk(j.files, '');
+      if (out.length) return out;
+    } catch (e) { /* نجرّب الواجهة التانية */ }
+  }
+  return null;
+}
+
 $('#bRt').onclick = async () => {
   say('بنزّل onnxruntime-web ' + ORT_V + ' من jsDelivr…', true); $('#bRt').disabled = true;
   try {
-    const lic = await (await getBytes(ORT_CDN + 'LICENSE')).text();
-    if (!/MIT License|Permission is hereby granted, free of charge/i.test(lic)) throw new Error('ترخيص onnxruntime-web مش MIT — اتوقفت');
-    let js = null; const wasm = [];
-    for (const n of ['ort.wasm.min.js', 'ort.min.js']) { try { await vput('ort/' + n, await (await getBytes(ORT_CDN + 'dist/' + n)).arrayBuffer()); js = n; say('✓ ' + n); break; } catch (e) { say('· ' + n + ' مش موجود'); } }
-    if (!js) throw new Error('مالقيتش ملف المحرك JS');
-    for (const n of ['ort-wasm-simd-threaded.wasm', 'ort-wasm-simd.wasm', 'ort-wasm-threaded.wasm', 'ort-wasm.wasm']) {
-      try { const b = await (await getBytes(ORT_CDN + 'dist/' + n)).arrayBuffer(); await vput('ort/' + n, b); wasm.push(n); say(`✓ ${n} (${(b.byteLength / 1e6).toFixed(1)} MB)`); } catch (e) { /* مش كل الأسماء موجودة في كل إصدار */ }
+    const pkg = await (await getBytes(ORT_CDN + 'package.json')).json();                  // الترخيص من package.json (مفيش LICENSE في الحزمة)
+    if (pkg.license !== 'MIT') throw new Error('ترخيص onnxruntime-web مش MIT (' + pkg.license + ') — اتوقفت');
+    say('الترخيص: MIT ✓ (من package.json)');
+    const list = await ortFileList(), has = n => !list || list.includes('dist/' + n);
+    const jsName = ['ort.wasm.min.js', 'ort.min.js'].find(has);
+    let wasmNames = list ? list.filter(n => /^dist\/ort-wasm[^/]*\.wasm$/.test(n) && !/jsep|webgpu|webnn/.test(n)).map(n => n.slice(5))
+                         : ['ort-wasm-simd-threaded.wasm', 'ort-wasm-simd.wasm'];
+    const simd = wasmNames.filter(n => n.includes('simd')); if (simd.length) wasmNames = simd;   // الموبايلات الحديثة كلها بتدعم SIMD
+    say(list ? `لقيت ${list.length} ملف في الحزمة` : '(مقدرتش أجيب قايمة الملفات؛ هجرّب الأسماء المعروفة)');
+    if (!jsName) throw new Error('مالقيتش ملف المحرك JS في dist');
+    await vput('ort/' + jsName, await (await getBytes(ORT_CDN + 'dist/' + jsName)).arrayBuffer()); say('✓ ' + jsName);
+    const wasm = [];
+    for (const n of wasmNames) {
+      try { const buf = await (await getBytes(ORT_CDN + 'dist/' + n)).arrayBuffer(); await vput('ort/' + n, buf); wasm.push(n); say(`✓ ${n} (${(buf.byteLength / 1e6).toFixed(1)} MB)`); }
+      catch (e) { say('· ' + n + ': ' + e.message); }
     }
-    if (!wasm.length) throw new Error('مالقيتش ملفات wasm');
-    await vput('ort/LICENSE', lic); localStorage.setItem('edge_rt', JSON.stringify({ version: ORT_V, js, wasm }));
-    say('الترخيص: MIT ✓\nالمحرك جاهز.');
+    if (!wasm.length) throw new Error('مالقيتش ملفات wasm صالحة');
+    await vput('ort/package.json', JSON.stringify(pkg)); localStorage.setItem('edge_rt', JSON.stringify({ version: ORT_V, js: jsName, wasm }));
+    say('المحرك جاهز.');
   } catch (e) { say('✗ ' + e.message + '\n(لو الخطأ شبكة، جرّب تاني؛ الملفات اللي نزلت قبل كده متخزّنة)'); }
   $('#bRt').disabled = false; edgeStatus();
 };
