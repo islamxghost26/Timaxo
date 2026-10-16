@@ -59,16 +59,28 @@
     })().catch(e => { EdgeModel._loading = null; throw e; }));
   };
 
-  /* ---------- تجهيز المدخل: تصغير لـ256×256 + ترتيب BGR + قسمة على 255 ---------- */
+  /* ---------- تجهيز المدخل: تصغير لـ256×256 بـ bilinear "خام" (زي cv2.INTER_LINEAR) + BGR + /255 ----------
+     مهم: النموذج اتدرّب على التصغير الخام (من غير فلتر تنعيم). تصغير المتصفح الناعم (drawImage بجودة عالية) بيغيّر الصورة
+     كفاية إن النموذج يفوّت مستندات كاملة (اتقاس: 7-8 من 18 بدل 10)، فبنعمل العينات بإيدينا. */
   EdgeModel.preprocess = function (src) {
-    const c = root.document.createElement('canvas'); c.width = c.height = SIZE;
-    const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingQuality = 'high';
-    g.drawImage(src, 0, 0, SIZE, SIZE);
-    const px = g.getImageData(0, 0, SIZE, SIZE).data, n = SIZE * SIZE, out = new Float32Array(3 * n);
-    for (let i = 0; i < n; i++) {
-      out[i] = px[i * 4 + 2] / 255;            // قناة 0 = B
-      out[n + i] = px[i * 4 + 1] / 255;        // قناة 1 = G
-      out[2 * n + i] = px[i * 4] / 255;        // قناة 2 = R
+    let w = src.width, h = src.height, from = src;
+    if (Math.max(w, h) > 2048) {                         // صور ضخمة: نصغّرها الأول (زي ما اتقاس) عشان ما نقراش 48MB بكسل
+      const k = 1600 / Math.max(w, h), t = root.document.createElement('canvas'); t.width = Math.round(w * k); t.height = Math.round(h * k);
+      t.getContext('2d').drawImage(src, 0, 0, t.width, t.height); from = t; w = t.width; h = t.height;
+    }
+    const c = root.document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(from, 0, 0);
+    const px = g.getImageData(0, 0, w, h).data, n = SIZE * SIZE, out = new Float32Array(3 * n), fx = w / SIZE, fy = h / SIZE;
+    for (let y = 0; y < SIZE; y++) {
+      const sy = Math.min(h - 1, Math.max(0, (y + .5) * fy - .5)), y0 = Math.floor(sy), y1 = Math.min(h - 1, y0 + 1), wy = sy - y0;
+      for (let x = 0; x < SIZE; x++) {
+        const sx = Math.min(w - 1, Math.max(0, (x + .5) * fx - .5)), x0 = Math.floor(sx), x1 = Math.min(w - 1, x0 + 1), wx = sx - x0;
+        const i00 = (y0 * w + x0) * 4, i01 = (y0 * w + x1) * 4, i10 = (y1 * w + x0) * 4, i11 = (y1 * w + x1) * 4, o = y * SIZE + x;
+        for (let ch = 0; ch < 3; ch++) {                 // ch: 0=R 1=G 2=B في الصورة ← قناة النموذج (2-ch): B,G,R
+          const v = px[i00 + ch] * (1 - wx) * (1 - wy) + px[i01 + ch] * wx * (1 - wy) + px[i10 + ch] * (1 - wx) * wy + px[i11 + ch] * wx * wy;
+          out[(2 - ch) * n + o] = v / 255;
+        }
+      }
     }
     return out;
   };
