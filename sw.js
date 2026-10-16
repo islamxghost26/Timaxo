@@ -1,7 +1,7 @@
-const CACHE='timaxo-v85';
+const CACHE='timaxo-v87';
 const VCACHE='timaxo-vendor-v1'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
 const VENDOR_PRE=['vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tessdata/fast/ara.traineddata.gz','vendor/tessdata/fast/eng.traineddata.gz']; // الباقي (core وبيانات best) بيتخزن أول استخدام
-const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js'];
+const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js','edge-learn.js'];
 self.addEventListener('install',e=>e.waitUntil(Promise.all([caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))),caches.open(VCACHE).then(c=>Promise.all(VENDOR_PRE.map(u=>c.match(u).then(h=>h||c.add(u)).catch(()=>{}))))])));            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(

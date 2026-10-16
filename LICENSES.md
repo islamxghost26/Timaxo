@@ -16,5 +16,5 @@
 
 > نص Apache-2.0 القياسي محفوظ في `licenses/Apache-2.0.txt` (النص العام بدون اسم صاحب حقوق). عند إضافة نموذج Apache لازم نسجّل هنا اسم المشروع وصاحب الحقوق ورابط المصدر، وننسخ ملف LICENSE/NOTICE بتاع المستودع نفسه جنب النموذج.
 
-> `edge-model.js` و`edge-hybrid.js`: كود أصلي للمشروع (من غير مكتبات خارجية)؛ بيستخدموا onnxruntime-web (MIT) ونموذج DocAligner (Apache-2.0) المذكورين فوق.
+> `edge-model.js` و`edge-hybrid.js` و`edge-learn.js`: كود أصلي للمشروع (من غير مكتبات خارجية)؛ بيستخدموا onnxruntime-web (MIT) ونموذج DocAligner (Apache-2.0) المذكورين فوق.
 

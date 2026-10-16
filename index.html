@@ -1659,10 +1659,12 @@ function detWorker(){if(_dw!==null)return _dw||null;
    const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));_dw=new Worker(u);setTimeout(()=>URL.revokeObjectURL(u),3000);
    _dw.onerror=()=>{try{_dw.terminate()}catch(x){}_dw=false;};return _dw;}catch(e){_dw=false;return null;}}
 /* ---- كشف هجين تجريبي (tx_edge2=1): نموذج ONNX + الخوارزمية الحالية، مرتّبين بدرجة ثقة. أي خطأ = نرجع للمسار القديم ---- */
+const EDGE2_REVIEW=.8,reviewThr=()=>(window.EdgeLearn&&EdgeLearn.enabled()&&EdgeLearn.params().thr)||EDGE2_REVIEW; // تحت الثقة دي بنقول للمستخدم يراجع الحواف (اتقاس على 18 صورة: كل الفاشلين تحتها وصورة ناجحة واحدة بس)
 let _e2=null;
-const loadEdge2=()=>_e2||(_e2=Promise.all(['edge-model.js','edge-hybrid.js'].map(f=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=f;e.onload=ok;e.onerror=()=>no(new Error(f));document.head.appendChild(e);}))).catch(e=>{_e2=null;throw e;}));
+const loadEdge2=()=>_e2||(_e2=Promise.all(['edge-model.js','edge-hybrid.js','edge-learn.js'].map(f=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=f;e.onload=ok;e.onerror=()=>no(new Error(f));document.head.appendChild(e);}))).catch(e=>{_e2=null;throw e;}));
 async function edge2Wrap(canvas,q0){
   if(localStorage.getItem('tx_edge2')!=='1'){detectCorners.edge2=null;return q0;}
+  detectCorners.edge2=null;
   try{
     await loadEdge2();
     const f=detectCorners,cands=[];
@@ -1671,11 +1673,22 @@ async function edge2Wrap(canvas,q0){
     if(await EdgeModel.available()){const m=await EdgeModel.detect(canvas);if(m.quad)cands.push({quad:m.quad,src:'model',conf:m.score});}
     const r=EdgeHybrid.rank(cands,EdgeHybrid.prepare(canvas),canvas.width/canvas.height);
     if(!r.length)return q0;
-    f.alts=r.map(x=>x.quad);f.best=r[0].score;f.edge2=r[0].src;
+    f.alts=r.map(x=>x.quad);f.best=r[0].score;f.edge2=r[0].src;f.e2tok=window.EdgeLearn?EdgeLearn.record(r):null;     // مميزات المرشحين (محلي) لحد ما تأكّد القص
     if(r[0].src==='model'&&r[0].score>.35)f.found=true;     // لو النموذج لقى حاجة والحالية ماتلقتش
     return r[0].quad;
   }catch(e){console.warn('edge2 fallback',e);return q0;}
 }
+/* زر "AI" جنب زر اللغة: يوقّف/يشغّل التعلم المحلي من تعديلاتك. بيظهر بس مع tx_edge2. التعلم شغّال افتراضيًا. */
+(function(){
+  if(localStorage.getItem('tx_edge2')!=='1')return;
+  const lb=document.getElementById('langBtn');if(!lb)return;
+  const b=document.createElement('button');b.className=lb.className;b.id='learnBtn';b.textContent='AI';b.setAttribute('aria-label','learning');lb.insertAdjacentElement('afterend',b);
+  const st=document.createElement('style');st.textContent='#learnBtn.off{opacity:.4;text-decoration:line-through}';document.head.appendChild(st);
+  const paint=()=>{const s=EdgeLearn.stats();b.classList.toggle('off',!s.on);b.title=(lang==='ar'?'التعلم من تعديلاتي: ':'Learning from my edits: ')+(s.on?(s.active?'ON ✓ ':'ON ')+s.n:'OFF');};
+  loadEdge2().then(paint).catch(()=>b.remove());
+  b.onclick=()=>{if(!window.EdgeLearn)return;const on=!EdgeLearn.enabled();EdgeLearn.setEnabled(on);paint();const n=EdgeLearn.stats().n;
+    toast(on?(lang==='ar'?'التعلم من تعديلاتي شغّال — اتعلّمت من '+n+' تعديل':'Learning from my edits is ON — '+n+' edits so far'):(lang==='ar'?'التعلم من تعديلاتي متوقف':'Learning from my edits is OFF'));};
+})();
 async function detectAsync(canvas){return edge2Wrap(canvas,await detectAsync0(canvas));}
 async function detectAsync0(canvas){
   const sync=async()=>{await new Promise(r=>setTimeout(r,20));try{return detectCorners(canvas);}catch(e){return null;}};
@@ -1696,11 +1709,16 @@ async function ingest(file){
     else if(lq){try{cr0=refineQuad(canvas,lq.map(x=>({x:x.x,y:x.y})),{R:.02,passes:3});}catch(e){cr0=lq;}
      /* full analysis of the captured frame: results feed the auto button; if it agrees with the live quad, use its sharper fit */
      try{const d0=await detectAsync(canvas),al=detectCorners.alts;if(d0&&detectCorners.found){const dd=Math.max(...d0.map((p,i)=>Math.hypot(p.x-cr0[i].x,p.y-cr0[i].y)));
-      if(dd<.03)cr0=d0;else{al.splice(0,0,cr0.map(p=>({x:p.x,y:p.y})));detectCorners.alts=al.slice(0,4).concat(al.slice(-1));}}}catch(e){}}
+      if(dd<.03)cr0=d0;
+      else if(detectCorners.edge2&&detectCorners.edge2!=='current'&&detectCorners.best>=reviewThr()){const live=cr0.map(p=>({x:p.x,y:p.y}));cr0=d0;al.push(live);detectCorners.alts=al.slice(0,5);}
+      else{al.splice(0,0,cr0.map(p=>({x:p.x,y:p.y})));detectCorners.alts=al.slice(0,4).concat(al.slice(-1));}}}catch(e){}}
     else{cr0=(await detectAsync(canvas))||[{x:.05,y:.05},{x:.95,y:.05},{x:.95,y:.95},{x:.05,y:.95}];}
     window.__lastDet={src:canvas};
     const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
-    state.draft=p;busy(false);await openCrop(p,'new');
+    state.draft=p;busy(false);
+    if(window.EdgeLearn&&detectCorners.e2tok){EdgeLearn.bind(p,detectCorners.e2tok);detectCorners.e2tok=null;}
+    if(detectCorners.edge2&&detectCorners.best<reviewThr())setTimeout(()=>toast(lang==='ar'?'راجع الحواف — الثقة منخفضة':'Check the edges — low confidence'),900);
+    await openCrop(p,'new');
   }catch(e){busy(false);toast(t('openFail'));console.error(e);}
 }
 function nextQueued(){const f=state.queue.shift();if(f){ingest(f);return true;}return false;}
@@ -1841,7 +1859,7 @@ $('#cropBack').onclick=()=>{
   if(C.from==='new'){state.draft=null;C.page=null;state.queue=[];goHome();}
   else{openEdit(C.page,E.isDraft,true);}
 };
-$('#cropGo').onclick=()=>{ if(C.from==='new'){openEdit(C.page,true);}else{openEdit(C.page,E.isDraft,true);} };
+$('#cropGo').onclick=()=>{ try{if(window.EdgeLearn&&C.page)EdgeLearn.observePage(C.page);}catch(e){} if(C.from==='new'){openEdit(C.page,true);}else{openEdit(C.page,E.isDraft,true);} };
 
 /* ---------- editor ---------- */
 function updateEditTitle(){const p=E.page;if(!p)return;const i=state.pages.indexOf(p);$('#editTitle').textContent=i<0?t('newPage'):t('pageN',i+1);}

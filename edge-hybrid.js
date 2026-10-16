@@ -11,7 +11,8 @@
 (function (root) {
   'use strict';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-  const EdgeHybrid = {};
+  const EdgeHybrid = { DEFAULT_W: [0.30, 0.25, 0.25, 0.20] };
+  const srcClass = s => (s === 'model' ? 'model' : String(s || '').startsWith('current') ? 'current' : 'other');
 
   /* ---------- هندسة ---------- */
   function area(q) { let a = 0; for (let i = 0; i < 4; i++) { const p = q[i], n = q[(i + 1) % 4]; a += p.x * n.y - n.x * p.y; } return a / 2; }
@@ -108,12 +109,15 @@
       const geo = geometry(c.quad, asp);
       return { quad: c.quad, src: c.src, conf: clamp(c.conf == null ? 0.5 : c.conf, 0, 1), geo, area: geo.area || 0 };
     });
+    const L = root.EdgeLearn && root.EdgeLearn.params ? root.EdgeLearn.params() : null;      // أوزان متعلّمة (لو التعلم المحلي شغّال وكفاية ملاحظات)
+    const W = L ? L.w : EdgeHybrid.DEFAULT_W;
     items.forEach(it => {
       const others = items.filter(o => o !== it && o.src !== it.src && o.geo.g > 0);
       it.agree = others.length ? Math.max(...others.map(o => iou(it.quad, o.quad))) : 0;
       it.contrast = (it.geo.g > 0 && img) ? contrast(it.quad, img) : 0;
-      const fill = clamp((it.area - 0.08) / 0.32, 0, 1);
-      it.score = it.geo.g * (0.30 * it.contrast + 0.25 * it.agree + 0.25 * it.conf + 0.20 * fill);
+      it.fillV = clamp((it.area - 0.08) / 0.32, 0, 1);
+      const bias = L ? L.bias[srcClass(it.src)] : 0;
+      it.score = it.geo.g > 0 ? it.geo.g * (W[0] * it.contrast + W[1] * it.agree + W[2] * it.conf + W[3] * it.fillV) + bias : 0;
     });
     items.sort((a, b) => b.score - a.score);
     // إزالة المكرر (نفس الرباعي تقريبًا من مصدرين): نحتفظ بالأعلى
@@ -122,6 +126,7 @@
     return out;
   };
 
+  EdgeHybrid.iou = iou;
   root.EdgeHybrid = EdgeHybrid;
   if (typeof module !== 'undefined') module.exports = EdgeHybrid;
 })(typeof window !== 'undefined' ? window : globalThis);
