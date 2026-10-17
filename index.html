@@ -927,6 +927,53 @@ html body #vHome .tipi{width:44px;height:44px}
 html body #vHome .tipi svg{width:22px;height:22px}
 @media (orientation:portrait){html body #vHome .empty .demo{zoom:.74}html body #vHome .empty h1{margin-top:8px}}
 html body .tgl.on,html body .tcat.on{color:#fff}
+
+/* ===== v105 ===== */
+html body #vHome{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1536' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='e' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234aa8ff' stop-opacity='.55'/%3E%3Cstop offset='1' stop-color='%236a4dff' stop-opacity='.05'/%3E%3C/linearGradient%3E%3CradialGradient id='r' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%230a2a9a' stop-opacity='.55'/%3E%3Cstop offset='1' stop-color='%230a2a9a' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='820' cy='260' r='520' fill='url(%23r)'/%3E%3Ccircle cx='120' cy='1480' r='520' fill='url(%23r)'/%3E%3Ccircle cx='512' cy='560' r='350' fill='%23020822' fill-opacity='.45' stroke='url(%23e)' stroke-width='2.5'/%3E%3Cpath d='M-60 360C40 170 250 110 470 150' fill='none' stroke='url(%23e)' stroke-width='3'/%3E%3Cpath d='M690 190C900 210 1010 400 1090 720L1090 190Z' fill='%231b4fd8' fill-opacity='.14' stroke='url(%23e)' stroke-width='2.5'/%3E%3Cpath d='M-60 1290C140 1270 340 1400 430 1600L-60 1600Z' fill='%231b4fd8' fill-opacity='.22' stroke='url(%23e)' stroke-width='3'/%3E%3Cpath d='M-60 880C70 840 210 960 250 1130C280 1260 150 1300 -60 1260Z' fill='%230a1d6a' fill-opacity='.25' stroke='url(%23e)' stroke-width='2'/%3E%3C/svg%3E"),radial-gradient(110% 55% at 90% -5%,rgba(40,110,255,.30),transparent 62%),radial-gradient(90% 50% at 5% 105%,rgba(110,70,255,.26),transparent 62%);background-size:100% 100%,auto,auto;background-position:center,0 0,0 0}
+html body .top .hdock{background:linear-gradient(160deg,#143a86,#0b2160);border:1.5px solid rgba(70,150,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 22px -8px rgba(40,140,255,.7)}
+html body .top .hdock button{background:transparent!important;border:0!important;box-shadow:none!important;color:#EAF3FF}
+html body #thBtn{font-size:0!important;position:relative}
+html body #thBtn::before{content:"";position:absolute;inset:0;margin:auto;width:19px;height:19px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2c.6 5.2 4.8 9.4 10 10-5.2.6-9.4 4.8-10 10-.6-5.2-4.8-9.4-10-10 5.2-.6 9.4-4.8 10-10z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2c.6 5.2 4.8 9.4 10 10-5.2.6-9.4 4.8-10 10-.6-5.2-4.8-9.4-10-10 5.2-.6 9.4-4.8 10-10z'/%3E%3C/svg%3E") center/contain no-repeat}
+html body #globeBtn{width:44px;height:44px;border-radius:15px;background:linear-gradient(160deg,#17408F,#0C2468);border:1.5px solid rgba(80,150,255,.55);color:#EAF3FF;box-shadow:0 0 16px -6px rgba(40,140,255,.75)}
+html body .top .brand b{padding-inline-end:12px;margin-inline-end:2px;border-inline-end:1px solid rgba(130,170,255,.35)}
+/* المصباح */
+html body #asgBtn{font-size:0!important;position:relative;overflow:visible;border:1.5px solid rgba(255,196,60,.7);background:linear-gradient(160deg,#17408F,#0C2468);box-shadow:0 0 18px -6px rgba(255,190,60,.7)}
+html body #asgBtn::before{content:"";position:absolute;inset:6px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='38%25' r='62%25'%3E%3Cstop offset='0' stop-color='%23FFF6B0'/%3E%3Cstop offset='.55' stop-color='%23FFC531'/%3E%3Cstop offset='1' stop-color='%23F28A00'/%3E%3C/radialGradient%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23B4C4E6'/%3E%3Cstop offset='1' stop-color='%2352669A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 5c-8 0-14 6-14 13.5 0 5 2.6 8.2 5 10.7 1.3 1.4 2 2.6 2 4.3V35h14v-1.5c0-1.7.7-2.9 2-4.3 2.4-2.5 5-5.7 5-10.7C38 11 32 5 24 5z' fill='url(%23g)'/%3E%3Cpath d='M17 38h14v3.2c0 1.3-1 2.3-2.3 2.3h-9.4c-1.3 0-2.3-1-2.3-2.3z' fill='url(%23b)'/%3E%3Cpath d='M18.5 35.5h11M19 38.2h10' stroke='%232b3b66' stroke-width='1.3' stroke-linecap='round'/%3E%3Cpath d='M20 19c0-2.5 1.6-4.4 4-4.4' stroke='%23fff' stroke-opacity='.9' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M21 27.5l3-5 3 5' stroke='%23C77700' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 5px rgba(255,200,60,.7));animation:asgIdle 3.4s ease-in-out infinite}
+html body #asgBtn::after{content:"";position:absolute;inset:-12px;border-radius:50%;pointer-events:none;opacity:0;background:repeating-conic-gradient(rgba(255,214,90,.95) 0 5deg,transparent 5deg 30deg);-webkit-mask:radial-gradient(circle,transparent 46%,#000 48%,#000 68%,transparent 70%);mask:radial-gradient(circle,transparent 46%,#000 48%,#000 68%,transparent 70%)}
+html body #asgBtn.off::before{filter:grayscale(1) brightness(.8);animation:none}
+html body #asgBtn.ignite{animation:asgBtn .75s cubic-bezier(.2,.8,.2,1)}
+html body #asgBtn.ignite::before{animation:asgBulb .75s cubic-bezier(.2,.8,.2,1)}
+html body #asgBtn.ignite::after{animation:asgRays .8s ease-out}
+@keyframes asgIdle{0%,100%{filter:drop-shadow(0 0 4px rgba(255,200,60,.55))}50%{filter:drop-shadow(0 0 9px rgba(255,210,80,.95))}}
+@keyframes asgBulb{0%{transform:scale(1)}14%{transform:scale(.78);filter:brightness(.6) drop-shadow(0 0 2px rgba(255,200,60,.3))}38%{transform:scale(1.32) rotate(-7deg);filter:brightness(1.7) drop-shadow(0 0 16px #FFD34D) drop-shadow(0 0 30px rgba(255,170,30,.9))}62%{transform:scale(.95) rotate(4deg)}82%{transform:scale(1.06) rotate(-2deg)}100%{transform:scale(1)}}
+@keyframes asgBtn{0%{box-shadow:0 0 0 0 rgba(255,200,60,.9)}40%{box-shadow:0 0 0 12px rgba(255,200,60,.0),0 0 34px 6px rgba(255,200,60,.85);background:linear-gradient(160deg,#3a5fc0,#1c3c96)}100%{box-shadow:0 0 18px -6px rgba(255,190,60,.7)}}
+@keyframes asgRays{0%{opacity:0;transform:scale(.55) rotate(0)}25%{opacity:1}100%{opacity:0;transform:scale(1.5) rotate(40deg)}}
+/* زرار AI */
+html body #aiBtn{width:46px;min-width:46px;height:46px;padding:0;display:grid;place-items:center;border-radius:16px;border:1.5px solid rgba(110,130,255,.7);color:#7FD0FF;background:linear-gradient(160deg,#17408F,#0C2468);box-shadow:0 0 18px -6px rgba(110,110,255,.8);position:relative}
+html body #aiBtn svg{width:28px;height:28px;filter:drop-shadow(0 0 4px rgba(80,190,255,.8))}
+html body #aiBtn.off{opacity:.45;filter:grayscale(.6)}
+html body #aiBtn.pop{animation:aiPop .55s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes aiPop{0%{transform:scale(1)}35%{transform:scale(1.22);box-shadow:0 0 30px 4px rgba(110,140,255,.9)}100%{transform:scale(1)}}
+/* تاب المستندات */
+html body #vHome #libBtn{top:64px;z-index:9;width:50px;padding:10px 0 14px;gap:8px}
+html body #vHome #libBtn svg{width:22px;height:22px;padding:5px;border-radius:50%;border:1.5px solid rgba(80,160,255,.65);box-sizing:content-box;background:rgba(20,60,150,.5)}
+html body #vHome #libBtn .libt{font:600 15px var(--fd);letter-spacing:0}
+/* العدسة */
+html body #vHome #scanBtn{width:92px;height:92px;background:none!important;box-shadow:none!important;border:0}
+html body #vHome #scanBtn::before{display:none}
+html body #vHome #scanBtn .lens{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 12px rgba(60,120,255,.85)) drop-shadow(0 0 26px rgba(130,80,255,.5));pointer-events:none;transition:transform .18s}
+html body #vHome #scanBtn:active .lens{transform:scale(.93)}
+html body #vHome #scanBtn .ic-plus{position:relative;z-index:1}
+html body .top{padding-inline:10px!important;gap:6px!important}
+html body .top .logo{width:42px;height:42px}
+html body .top .brand{gap:8px}
+html body .top .brand b{font-size:23px;padding-inline-end:8px}
+html body .top .brand b span{letter-spacing:.34em;font-size:10px}
+html body #asgBtn,html body #aiBtn,html body #globeBtn{width:40px!important;min-width:40px!important;height:40px!important;border-radius:14px}
+html body #aiBtn svg{width:25px;height:25px}
+html body #globeBtn{position:relative!important;display:grid;place-items:center}
+html body .top .hdock{padding:0 3px;gap:0}
+html body .top .hdock button{width:30px!important;min-width:30px!important;padding:0!important}
 </style></head><body>
 <title>Timaxo Scan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -992,7 +1039,7 @@ html body .tgl.on,html body .tcat.on{color:#fff}
       <button type="button" data-a="gal"></button>
       <button type="button" data-a="blank"></button>
     </div>
-    <button class="scanbtn" id="scanBtn" data-ta="scan" type="button"><svg class="i ic-cam"><use href="#i-cam"/></svg><svg class="i ic-plus"><use href="#i-plus"/></svg></button>
+    <button class="scanbtn" id="scanBtn" data-ta="scan" type="button"><svg class="i ic-cam"><use href="#i-cam"/></svg><svg class="i ic-plus"><use href="#i-plus"/></svg><svg class="lens" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="lr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2EE6FF"/><stop offset=".45" stop-color="#2F6BFF"/><stop offset="1" stop-color="#C05CFF"/></linearGradient><radialGradient id="lb" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0b1d63"/><stop offset="1" stop-color="#030720"/></radialGradient><radialGradient id="lg" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#5a9bff"/><stop offset=".45" stop-color="#1b44c4"/><stop offset="1" stop-color="#060f45"/></radialGradient><radialGradient id="lc" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#2a56d8"/><stop offset="1" stop-color="#040a30"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="#040a26" stroke="url(#lr)" stroke-width="4.5"/><circle cx="50" cy="50" r="41" fill="url(#lb)" stroke="#1d3a9a" stroke-width="1"/><circle cx="50" cy="50" r="35" fill="#050c34" stroke="#27479f" stroke-width="1.2"/><circle cx="50" cy="50" r="29" fill="url(#lg)" stroke="#3c66d8" stroke-width="1"/><circle cx="50" cy="50" r="19" fill="url(#lc)" stroke="#1a2f86" stroke-width="1.4"/><circle cx="50" cy="50" r="10.5" fill="#030828" stroke="#28489e" stroke-width="1"/><path d="M27 40a25 25 0 0 1 16-14" stroke="#fff" stroke-opacity=".5" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="42" cy="42" rx="3.4" ry="2.4" fill="#fff" fill-opacity=".85" transform="rotate(-35 42 42)"/><circle cx="47" cy="47.5" r="1.4" fill="#9fd0ff" fill-opacity=".9"/></svg></button>
     <button id="galFab" type="button" aria-label="استيراد من الجهاز"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg></button>
     <button class="dk" id="galBtn" hidden type="button"></button>
   </section>
@@ -2347,7 +2394,7 @@ async function loadRec(rec){state.pinnedId=rec.pinned?rec.id:null;state.tags=rec
   state.name=rec.name;state.id=rec.id;$('#docName').value=state.name;
   await tx('docs','readwrite',s=>s.delete(rec.id));await clearStore();for(const p of state.pages)await persist(p);await persistMeta();}
 async function startNew(){await snapDoc();state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();stagNext=true;renderHome();}
-async function updLib(){const el=$('#libB');if(!el)return;const n=(await allSaved()).length;el.textContent=n?String(n):'';$('#libBtn').setAttribute('aria-label',Lg('مستنداتي','My documents'));}
+async function updLib(){const el=$('#libB');if(!el)return;const n=(await allSaved()).length;el.textContent=n?String(n):'';$('#libBtn').setAttribute('aria-label',Lg('مستنداتي','My documents'));const lt=document.querySelector('#libBtn .libt');if(lt)lt.textContent=Lg('المستندات','Documents');}
 $('#newBtn').onclick=async()=>{if(!state.pages.length)return;await startNew();toast(Lg('بدأت مستند جديد — القديم محفوظ في "مستنداتي"','New document started — the previous one is saved in My documents'));};
 const libSheet=document.createElement('div');libSheet.className='sheet';libSheet.id='libSheet';libSheet.setAttribute('role','dialog');
 libSheet.innerHTML='<div class="grab"></div><h2 id="libT"></h2><input id="libQ" type="search" autocomplete="off"><div id="libList"></div><div id="libUse"></div><button class="libtr" id="libTr"></button><div class="libact"><button class="btn pri" id="libNew"><svg class="i"><use href="#i-plus"/></svg><span></span></button><button class="btn" id="libBk"><svg class="i"><use href="#i-bk"/></svg><span></span></button><button class="btn" id="libRs"><svg class="i"><use href="#i-rs"/></svg><span></span></button></div><input type="file" id="rsIn" accept=".json,application/json" hidden>';
@@ -4808,4 +4855,13 @@ html body .txc .txk.off{background:linear-gradient(135deg,transparent 44%,var(--
 html body #tfSk{display:flex;gap:10px;flex-wrap:wrap}
 html body #tfSk .tfc{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);padding:0;display:grid;place-items:center;color:var(--ink2);font-size:15px;background:var(--surface2)}
 html body #tfSk .tfc.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent,#1b63f0)}
-</style></body></html>
+</style><script>
+(function(){function go(){try{var lt=document.getElementById('libBtn'),vh=document.getElementById('vHome');if(lt&&vh&&lt.parentNode!==vh)vh.appendChild(lt);var gb=document.getElementById('globeBtn'),br=document.querySelector('#vHome .top .brand');if(gb&&br&&gb.parentNode===br)br.insertAdjacentElement('afterend',gb);var lb=document.getElementById('asgBtn');if(!lb)return setTimeout(go,300);
+if(!document.getElementById('aiBtn')){var b=document.createElement('button');b.id='aiBtn';b.type='button';b.className=lb.className.replace(/\bignite\b/,'');b.setAttribute('aria-label','AI');
+b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2.6"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/><text x="12" y="14.7" text-anchor="middle" font-size="7.6" font-weight="800" fill="currentColor" stroke="none" font-family="Outfit,Cairo,sans-serif">AI</text></svg>';
+var sync=function(){try{b.classList.toggle('off',!TXAI.on())}catch(e){}};sync();
+b.addEventListener('click',function(){try{var v=!TXAI.on();TXAI.set(v);sync();b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');try{navigator.vibrate&&navigator.vibrate(v?[10,30,14]:8)}catch(_){}if(typeof toast==='function')toast(TXAI.msg(v))}catch(e){}});
+lb.insertAdjacentElement('beforebegin',b)}
+lb.addEventListener('click',function(){lb.classList.remove('ignite');void lb.offsetWidth;lb.classList.add('ignite');try{navigator.vibrate&&navigator.vibrate([14,40,22])}catch(_){}},true)}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,400)});else setTimeout(go,400)})();
+</script></body></html>
