@@ -1724,7 +1724,7 @@ async function ingest(file){
       else{al.splice(0,0,cr0.map(p=>({x:p.x,y:p.y})));detectCorners.alts=al.slice(0,4).concat(al.slice(-1));}}}catch(e){}}
     else{cr0=(await detectAsync(canvas))||[{x:.05,y:.05},{x:.95,y:.05},{x:.95,y:.95},{x:.05,y:.95}];}
     window.__lastDet={src:canvas};
-    const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
+    const blob=await bp,p={id:newId(),blob,src:canvas,corners:cr0,rot:0,filter:'auto',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:'',ap:1};
     state.draft=p;busy(false);
     if(window.EdgeLearn&&detectCorners.e2tok){EdgeLearn.bind(p,detectCorners.e2tok);detectCorners.e2tok=null;}
     if(detectCorners.edge2&&detectCorners.best<reviewThr())setTimeout(()=>toast(lang==='ar'?'راجع الحواف — الثقة منخفضة':'Check the edges — low confidence'),900);
@@ -1888,6 +1888,8 @@ async function buildBases(){resetZ();
   if(pk<.9){const pc=mk(Math.round(small.width*pk),Math.round(small.height*pk)),px=pc.getContext('2d');px.imageSmoothingQuality='high';px.drawImage(small,0,0,pc.width,pc.height);E.pbase=makeBase(pc);}
   const k=170/Math.max(small.width,small.height),tiny=mk(small.width*k,small.height*k);tiny.getContext('2d').drawImage(small,0,0,tiny.width,tiny.height);
   E.tiny=makeBase(tiny);buildFilterThumbs();
+  /* الصفحة الجديدة: الفلتر الافتراضي = اختيار ✨ (مرة واحدة، والمستخدم يغيّره بعدها براحته) */
+  if(p.ap){p.ap=0;try{const r=smartPick(E.base);p.filter=r.f;p.br=r.br;p.ct=r.ct;p.sat=r.sat;setTimeout(()=>toast('✨ '+r.why),400);}catch(e){console.error(e);}}
   const cb=$('#cvBase'),ov=$('#ov');cb.width=ov.width=E.base.w;cb.height=ov.height=E.base.h;
 }
 function fitWrap(){
