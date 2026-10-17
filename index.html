@@ -854,7 +854,80 @@ html body .ox-chip{font-size:15px!important}
 </style><meta name="theme-color" content="#000515"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest?v=2"><link rel="icon" type="image/png" href="favicon.png?v=2"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=2"><style id="pre">html,body{background:#000515!important}html::before{content:"";position:fixed;inset:0;z-index:2147483647;background:#000515}</style><script>(function(){function r(){var p=document.getElementById("pre");if(p)p.remove()}document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(function(){requestAnimationFrame(r)})});setTimeout(r,3500)})()</script>
 
 
-</head><body>
+<style id="neon-ui">
+/* ===== Timaxo Neon UI (v104): ستايل التصميم الجديد ===== */
+:root{--neon:#22B8FF;--tipc:#1F5FD6;--grad:linear-gradient(135deg,#1F6BFF,#8A56FF);--bg:#EAF1FF;--surface:#FFFFFF;--surface2:#DCE8FF;--ink:#0A1B44;--ink2:#2F63C0;--line:rgba(43,107,255,.28);--accent:#2B6BFF;--accent-ink:#fff;--topg:transparent}
+:root[data-theme="dark"]{--neon:#22B8FF;--tipc:#4DA6FF;--bg:#040B1E;--surface:#0C1838;--surface2:#13244F;--ink:#F2F7FF;--ink2:#8FBEFF;--line:rgba(70,140,255,.34);--accent:#3B82FF;--accent-ink:#fff;--teal:#22D3F5;--stage:#030816;--shadow:rgba(0,10,40,.6);--topg:transparent}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--neon:#22B8FF;--tipc:#4DA6FF;--bg:#040B1E;--surface:#0C1838;--surface2:#13244F;--ink:#F2F7FF;--ink2:#8FBEFF;--line:rgba(70,140,255,.34);--accent:#3B82FF;--accent-ink:#fff;--teal:#22D3F5;--stage:#030816;--shadow:rgba(0,10,40,.6);--topg:transparent}}
+html body .view{background-image:radial-gradient(110% 55% at 90% -5%,rgba(40,110,255,.30),transparent 62%),radial-gradient(90% 50% at 5% 105%,rgba(110,70,255,.26),transparent 62%)}
+:root:not([data-theme="dark"]) body .view{background-image:radial-gradient(110% 55% at 90% -5%,rgba(40,110,255,.16),transparent 62%),radial-gradient(90% 50% at 5% 105%,rgba(130,90,255,.12),transparent 62%)}
+/* الهيدر */
+html body .top{background:transparent!important;box-shadow:none!important;border-radius:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:var(--ink);gap:8px}
+html body .top .brand{flex:none;margin-inline-end:auto;gap:12px}
+html body .top .logo{width:48px;height:48px;border-radius:15px;animation:none;box-shadow:0 0 0 1.5px rgba(60,180,255,.75),0 0 22px rgba(34,184,255,.6)}
+html body .top .brand b{display:flex;flex-direction:column;align-items:center;gap:5px;font:800 27px/1 var(--fd);color:var(--ink);letter-spacing:0}
+html body .top .brand b span{display:flex;align-items:center;gap:7px;font:600 11px/1 var(--fd);letter-spacing:.4em;color:var(--neon)}
+html body .top .brand b span::before,html body .top .brand b span::after{content:"";width:15px;height:1.5px;background:var(--neon);opacity:.85}
+html body .top .ib,html body .top .lang{width:46px;min-width:46px;height:46px;padding:0;border-radius:16px;border:1.5px solid rgba(80,150,255,.55);color:#fff;background:linear-gradient(160deg,#17408F,#0C2468);box-shadow:0 0 18px -6px rgba(40,140,255,.75)}
+/* صف اسم المستند + تاب المستندات */
+html body #vHome .docrow{justify-content:flex-start;padding:8px 16px 4px}
+html body #vHome .docname{flex:none;width:min(190px,54%);height:48px;border-radius:24px;border:1.5px solid rgba(70,150,255,.55);color:var(--ink);font:700 19px var(--fd);text-align:center;padding:0 40px 0 16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cfe3ff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") right 12px center/20px no-repeat,linear-gradient(160deg,#17408F,#0C2468);color:#fff;box-shadow:0 0 18px -8px rgba(40,140,255,.7)}
+html body #vHome .docname:focus{outline:2px solid var(--neon)}
+html body #vHome:has(.empty) #newBtn,html body #vHome:has(.empty) #exportBtn{display:none}
+html body #vHome #libBtn{position:absolute;left:0;top:118px;width:46px;height:auto;padding:14px 0 16px;border-radius:0 26px 26px 0;border:1.5px solid rgba(70,150,255,.55);border-left:0;background:linear-gradient(160deg,#17408F,#0C2468);color:#fff;display:flex;flex-direction:column;align-items:center;gap:12px;z-index:5;box-shadow:0 0 22px -8px rgba(40,140,255,.8)}
+html body #vHome #libBtn .libt{writing-mode:vertical-rl;transform:rotate(180deg);font:700 18px var(--fd);letter-spacing:.02em}
+html body #vHome #libBtn .libb{top:-8px;inset-inline-end:auto;left:6px;color:#fff}
+/* الحالة الفاضية */
+html body #vHome .empty{gap:12px}
+html body #vHome .empty .demo::after{content:"";position:absolute;left:50%;bottom:-30px;width:210px;height:46px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(70,160,255,.55),rgba(70,160,255,.12) 60%,transparent 72%);box-shadow:0 0 0 9px rgba(60,150,255,.14),0 0 0 20px rgba(60,150,255,.07),0 0 30px rgba(60,150,255,.5)}
+html body #vHome .sheet-d{inset:16px 22px;border-radius:14px;background-color:#CFE2FF;background-image:repeating-linear-gradient(#0000 0 21px,#2F7BFF 21px 25px),linear-gradient(160deg,#F4F9FF,#A9CBFF);background-size:70% 100%,100% 100%;background-repeat:no-repeat;background-position:18% 46px,0 0;box-shadow:0 0 44px 4px rgba(50,140,255,.6),0 18px 30px -10px rgba(0,0,0,.5)}
+html body #vHome .sheet-d::after{content:"";position:absolute;top:0;right:0;width:34px;height:34px;background:linear-gradient(225deg,#06102e 50%,#d6e6ff 50%);border-bottom-left-radius:10px}
+html body #vHome .sheet-d .beam{background:linear-gradient(90deg,transparent,#fff 18%,#fff 82%,transparent);box-shadow:0 0 26px 8px rgba(40,140,255,.95)}
+html body #vHome .corner{width:36px;height:36px;border-width:4px;border-color:#25C6FF;border-radius:9px;filter:drop-shadow(0 0 7px #1ab6ff)}
+html body #vHome .empty h1{font:800 34px/1.2 var(--fd);color:var(--ink);text-shadow:0 0 20px rgba(80,160,255,.4);margin-top:28px}
+html body #vHome .empty p{font:500 17px/1.7 var(--fb);color:var(--ink2);max-width:31ch}
+html body #vHome .emact{gap:16px;width:min(390px,100%);margin-top:8px}
+html body #vHome .emact .btn{height:64px;min-height:64px;border-radius:22px;font:800 21px var(--fd);color:#fff;border:1.5px solid rgba(40,190,255,.75);background:linear-gradient(160deg,#16418A,#0D2A66);box-shadow:0 0 22px -8px rgba(30,170,255,.75);padding:6px 14px 6px 18px}
+html body #vHome .emact .btn.pri{border-color:rgba(190,170,255,.75);background:linear-gradient(100deg,#1F6BFF 0%,#3B6BFF 50%,#8A56FF 100%);box-shadow:0 0 26px -4px rgba(90,100,255,.75),inset 0 1px 0 rgba(255,255,255,.35)}
+html body #vHome .emact .btn span{flex:1;text-align:center}
+html body #vHome .emact .btn::after{content:"";width:22px;height:22px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat}
+html body #vHome .emact .emi{width:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.38);box-shadow:none}
+html body #vHome .emact .emi.g{background:rgba(40,150,255,.3);border-color:rgba(60,190,255,.65)}
+html body #vHome .emtips{width:min(390px,100%);max-width:none;margin:14px 0 0;padding:0}
+html body #vHome .emtips li{display:flex;align-items:center;gap:14px;padding:0;margin:13px 0;color:var(--tipc);font:600 15.5px/1.55 var(--fb)}
+html body #vHome .emtips li::before{display:none}
+html body #vHome .tipi{width:48px;height:48px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-style:normal;background:linear-gradient(160deg,#16418A,#0D2A66);border:1.5px solid rgba(60,170,255,.65);box-shadow:0 0 16px -4px rgba(40,150,255,.8)}
+html body #vHome #sampleBtn{width:auto;height:56px;min-height:56px;border-radius:28px;padding:0 24px 0 10px;gap:12px;font:800 18px var(--fd)!important;color:#fff;border:1.5px solid rgba(130,110,255,.8);background:linear-gradient(160deg,#14214f,#0a1438);box-shadow:0 0 22px -8px rgba(120,100,255,.85);margin-top:6px}
+html body #vHome #sampleBtn::after{display:none}
+html body #vHome .crn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-style:normal;color:#FFC93C;background:linear-gradient(135deg,#7A4DFF,#3B6BFF)}
+/* زرار الكاميرا (عدسة) */
+html body #vHome #scanBtn{width:90px;height:90px;background:radial-gradient(circle at 50% 50%,#04071a 0 13%,#0b1c58 14% 21%,#050a24 22% 33%,#1a3a96 34% 37%,#060d2e 38% 60%,#102566 61% 72%,#050a24 73%);box-shadow:0 0 0 3px #3B7BFF,0 0 0 7px rgba(138,86,255,.65),0 0 36px 8px rgba(70,120,255,.6)}
+html body #vHome #scanBtn::before{content:"";position:absolute;top:16%;left:20%;width:26%;height:16%;border-radius:50%;background:rgba(255,255,255,.28);transform:rotate(-35deg);filter:blur(2px)}
+html body #vHome:not(.docsmode) #scanBtn .ic-cam{display:none}
+html body #vHome.docsmode #scanBtn .ic-plus{color:#fff;filter:drop-shadow(0 0 6px #22B8FF)}
+/* باقي التطبيق */
+html body .btn.pri,html body .chip.on{background:linear-gradient(100deg,#1F6BFF,#8A56FF);color:#fff;box-shadow:0 8px 22px -8px rgba(90,100,255,.8)}
+html body .libb{background:var(--grad);color:#fff}
+html body .sheet,html body .mdl{border:1px solid var(--line);box-shadow:0 -10px 50px -12px rgba(40,110,255,.45)}
+html body .pg{box-shadow:0 0 0 1px var(--line),0 0 22px -8px rgba(50,130,255,.5)}
+html body .tool,html body .chip,html body .ib{border-color:var(--line)}
+html body .toast{background:linear-gradient(100deg,#1F6BFF,#6B52FF);color:#fff}
+html body :focus-visible{outline-color:var(--neon)}
+html:root[data-theme="blue"]{--tipc:#4DA6FF;--neon:#22B8FF}
+html body #vHome .emact .btn::after{position:static;inset:auto;transform:none;transition:none;opacity:1;animation:none;width:22px;height:22px;pointer-events:none}
+html body #vHome .empty{gap:8px}
+html body #vHome .empty h1{margin-top:22px;font-size:32px}
+html body #vHome .empty p{font-size:16px;line-height:1.6}
+html body #vHome .emact{margin-top:4px;gap:14px}
+html body #vHome .emact .btn{height:60px;min-height:60px}
+html body #vHome .emact .emi{width:50px;height:50px}
+html body #vHome .emtips{margin-top:8px}
+html body #vHome .emtips li{margin:9px 0;font-size:15px}
+html body #vHome .tipi{width:44px;height:44px}
+html body #vHome .tipi svg{width:22px;height:22px}
+@media (orientation:portrait){html body #vHome .empty .demo{zoom:.74}html body #vHome .empty h1{margin-top:8px}}
+html body .tgl.on,html body .tcat.on{color:#fff}
+</style></head><body>
 <title>Timaxo Scan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -910,7 +983,7 @@ html body .ox-chip{font-size:15px!important}
       <input class="docname" id="docName" maxlength="60" data-tp="docName" autocomplete="off" spellcheck="false">
       <button class="btn sm" id="newBtn" data-t="newDoc"></button>
       <button class="btn sm" id="exportBtn" type="button"><svg class="i"><use href="#i-save"/></svg><span data-t="save"></span></button>
-      <button class="ib" id="libBtn" aria-label="Documents"><svg class="i"><use href="#i-docs"/></svg><span class="libb" id="libB"></span></button>
+      <button class="ib" id="libBtn" aria-label="Documents"><svg class="i"><use href="#i-docs"/></svg><span class="libt">Documents</span><span class="libb" id="libB"></span></button>
     </div>
     <div class="count" id="count"></div>
     <main class="shelf" id="shelf"></main>
@@ -1626,7 +1699,7 @@ function renderHome(fresh){
   try{ordBtnSync(n)}catch(e){}
   $('#exportBtn').disabled=!n;$('#newBtn').style.visibility=n?'visible':'hidden';
   if(!n){
-    sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><div class="emact"><button class="btn pri" id="emCam" type="button"><i class="emi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></i><span>${AR0?'صوّر أول مستند':'Scan your first document'}</span></button><button class="btn" id="emGal" type="button"><i class="emi g"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></i><span>${AR0?'من المعرض أو PDF':'Gallery or PDF'}</span></button></div><ul class="emtips"><li>${AR0?'صوّر الورقة على سطح غامق وإضاءة كويسة عشان القص التلقائي يظبط.':'Shoot the page on a dark surface in good light for cleaner auto-crop.'}</li><li>${AR0?'تقدر تضيف صفحات تانية لنفس المستند وتصدّره PDF واحد.':'Add more pages to the same document and export one PDF.'}</li><li>${AR0?'كل حاجة بتتحفظ على جهازك بس، فاعمل نسخة احتياطية من «مستنداتي» من وقت للتاني.':'Everything stays on your device only, so back up from My documents once in a while.'}</li></ul><button class="btn" id="sampleBtn">${t('sample')}</button></div>`;
+    sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><div class="emact"><button class="btn pri" id="emCam" type="button"><i class="emi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></i><span>${AR0?'صوّر أول مستند':'Scan your first document'}</span></button><button class="btn" id="emGal" type="button"><i class="emi g"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></i><span>${AR0?'من المعرض أو PDF':'Gallery or PDF'}</span></button></div><ul class="emtips"><li><i class="tipi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg></i><span>${AR0?'صوّر الورقة على سطح غامق وإضاءة كويسة عشان القص التلقائي يظبط.':'Shoot the page on a dark surface in good light for cleaner auto-crop.'}</span></li><li><i class="tipi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1.5"/></svg></i><span>${AR0?'تقدر تضيف صفحات تانية لنفس المستند وتصدّره PDF واحد.':'Add more pages to the same document and export one PDF.'}</span></li><li><i class="tipi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg></i><span>${AR0?'كل حاجة بتتحفظ على جهازك بس، فاعمل نسخة احتياطية من «مستنداتي» من وقت للتاني.':'Everything stays on your device only, so back up from My documents once in a while.'}</span></li></ul><button class="btn" id="sampleBtn"><i class="crn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="currentColor"/></svg></i><span>${t('sample')}</span></button></div>`;
     $('#sampleBtn').onclick=startSample;$('#emCam').onclick=()=>$('#camIn').click();$('#emGal').onclick=()=>$('#galIn').click();return;
   }
   sh.innerHTML='<div class="grid"></div>';const g=$('.grid',sh);
