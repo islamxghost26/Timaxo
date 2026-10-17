@@ -3780,6 +3780,7 @@ let pushed=0,syncing=0,sT=0,raf=0,act=0;
 const vcur=()=>{try{return V.cur}catch(e){return'vHome'}};
 const bodyDiv=z=>[...document.body.children].find(e=>e.tagName==='DIV'&&e.style.zIndex===z);
 function layers(){let n=0;
+ n+=document.querySelectorAll('#mrBg.in,#nwBg,.mdl-bd').length; /* قائمة المزيد + نوافذ منبثقة: الرجوع يقفلها بدل ما يخرّج التطبيق */
  if(q('#qrOv'))n++;
  if(bodyDiv('9500'))n++;
  if(bodyDiv('9000'))n++;
@@ -3789,6 +3790,7 @@ function layers(){let n=0;
  if(vcur()==='vHome'&&window.__txLayer&&window.__txLayer())n++;
  return n;}
 function back(){
+ {const ms=[...document.querySelectorAll('#mrBg.in,#nwBg,.mdl-bd')];if(ms.length){const top=document.querySelector('#mrBg.in')||ms[ms.length-1];top.click();return true}}
  let e=q('#qrOv .qx');if(e){e.click();return true}
  e=bodyDiv('9500');if(e){const b=e.querySelector('[data-a=x]');if(b){b.click();return true}}
  e=bodyDiv('9000');if(e){const b=e.querySelector('[data-a=x],[data-a=close]');if(b)b.click();else e.remove();return true}
