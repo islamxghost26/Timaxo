@@ -5024,4 +5024,105 @@ var v=$('vHome');if(v)new MutationObserver(lib).observe(v,{childList:true});
 function boot(){all();[300,900,1800,3200].forEach(function(t){setTimeout(all,t)});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
+</script><style id="tx109">
+/* ===== Timaxo v109 ===== */
+/* بدون سحب لتحت في الشاشة الفاضية */
+html,body{overscroll-behavior-y:none}
+#vHome{scrollbar-width:none}#vHome::-webkit-scrollbar{display:none}
+#vHome:has(.empty){overflow:hidden!important}
+#vHome:has(.empty) #shelf,#vHome:has(.empty) .shelf{overflow:hidden!important;padding-bottom:0!important}
+#vHome:has(.empty) #galFab{display:none!important}
+
+/* علامة + على العدسة: قرص أنيق بدل العلامة الخام */
+html body #vHome.docsmode #scanBtn::before{display:none!important}
+html body #vHome.docsmode #scanBtn .ic-plus{width:22px!important;height:22px!important;padding:11px;box-sizing:content-box;border-radius:50%;color:#fff!important;stroke-width:2.2;background:radial-gradient(circle at 50% 30%,rgba(130,205,255,.30),rgba(255,255,255,.05) 70%);border:1.5px solid rgba(255,255,255,.62);box-shadow:0 0 14px rgba(34,184,255,.55),inset 0 1px 0 rgba(255,255,255,.35);filter:none!important;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+html body #vHome.docsmode #scanBtn:active .ic-plus{transform:scale(.9) rotate(90deg)}
+
+/* أزرار جانبية بنفس الستايل ومترتبة */
+html:root body #qrFab,html:root body .fab2,html:root body #vHome #galFab{width:48px!important;height:48px!important;border-radius:50%!important;background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;color:var(--t-chipink)!important;box-shadow:var(--t-chipsh)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:grid;place-items:center}
+html:root body #qrFab:not(.on){display:grid!important}
+html:root body .fab2{left:14px!important;right:auto!important;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 14px + 48px + 12px)!important;display:none}
+html:root body .fab2.on{display:grid!important}
+html:root body #vHome #galFab{right:calc(20px + 92px + 10px)!important;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 22px)!important}
+#qrFab svg,.fab2 svg,#galFab svg{width:24px!important;height:24px!important;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* شعاع المسح: بيتحرك فوق وتحت بسلاسة */
+@keyframes txScan{0%{transform:translate(-50%,calc(var(--ds)*-.36));opacity:0}14%{opacity:1}86%{opacity:1}100%{transform:translate(-50%,calc(var(--ds)*.36));opacity:0}}
+html:root body #vHome .empty .demo::before{animation:txScan 3.2s cubic-bezier(.45,.05,.55,.95) infinite!important;will-change:transform,opacity}
+
+/* نعومة عامة */
+html body button,html body .chip,html body .tab,html body .pa,html body .btn{transition:transform .28s cubic-bezier(.2,.8,.2,1),background-color .25s,color .25s,border-color .25s,box-shadow .3s,opacity .25s}
+html body button:active{transform:scale(.95)}
+
+/* زر اللغة (كرة أرضية كبيرة) + قايمة الأعلام */
+html body #vHome .brand #globeBtn{width:var(--hb,42px)!important;height:var(--hb,42px)!important;padding:0!important;border-radius:50%!important;border:1px solid rgba(255,255,255,.28)!important;background:radial-gradient(circle at 34% 28%,rgba(130,205,255,.34),rgba(255,255,255,.07) 72%)!important;box-shadow:0 6px 16px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.3);display:grid;place-items:center;overflow:visible!important}
+html body #vHome .brand #globeBtn svg{width:68%!important;height:68%!important;margin:0!important;stroke-width:1.6}
+html body #vHome .brand #globeBtn i{display:none!important}
+html body #vHome .brand #globeBtn.open{background:radial-gradient(circle at 34% 28%,rgba(160,220,255,.5),rgba(255,255,255,.12) 72%)!important;box-shadow:0 0 0 3px rgba(255,255,255,.18),0 0 18px rgba(80,170,255,.5)}
+.txlang{position:fixed;z-index:10000;display:flex;gap:8px;padding:6px;border-radius:99px;background:rgba(14,18,34,.72);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);box-shadow:0 18px 40px -12px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.18)}
+.txlang button{position:relative;width:46px;height:46px;padding:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);display:grid;place-items:center;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.txlang button svg{width:100%;height:100%;display:block}
+.txlang button::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 24%,rgba(255,255,255,.4),transparent 55%);pointer-events:none}
+.txlang button.on{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.2),0 0 16px rgba(90,180,255,.6)}
+</style><script id="tx109js">
+(function(){
+var R=document.documentElement,NS='http://www.w3.org/2000/svg';
+function hap(n){try{if(localStorage.getItem('tx_hap')!=='0'&&navigator.vibrate)navigator.vibrate(n)}catch(e){}}
+function red(){return matchMedia('(prefers-reduced-motion:reduce)').matches}
+function cur(){return R.lang==='en'?'en':'ar'}
+var GLOBE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4.4" ry="10"/><path d="M2 12h20M3.8 7h16.4M3.8 17h16.4"/></svg>';
+var FL={
+ ar:'<svg viewBox="0 0 40 40"><defs><clipPath id="txcEG"><circle cx="20" cy="20" r="20"/></clipPath></defs><g clip-path="url(#txcEG)"><rect width="40" height="13.5" fill="#CE1126"/><rect y="13.3" width="40" height="13.5" fill="#fff"/><rect y="26.6" width="40" height="13.4" fill="#111"/><path d="M20 15.2l3.2 2.4v3.3c0 2.1-1.5 3.7-3.2 4.3-1.7-.6-3.2-2.2-3.2-4.3v-3.3z" fill="#C09300"/><path d="M20 17v6.6M17.8 19.4h4.4" stroke="#7a5c00" stroke-width="1"/></g></svg>',
+ en:'<svg viewBox="0 0 40 40"><defs><clipPath id="txcUK"><circle cx="20" cy="20" r="20"/></clipPath></defs><g clip-path="url(#txcUK)"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0v40M0 20h40" stroke="#fff" stroke-width="11"/><path d="M20 0v40M0 20h40" stroke="#C8102E" stroke-width="6.4"/></g></svg>'};
+var pop=null,busy=0;
+function closePop(fast){var p=pop,g=document.getElementById('globeBtn');if(!p)return;pop=null;if(g)g.classList.remove('open');
+ if(red()||!p.animate||fast){p.remove();return}
+ var a=p.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-6px) scale(.7)'}],{duration:170,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});a.onfinish=function(){p.remove()};}
+function openPop(g){
+ if(pop){closePop();return}
+ hap(8);g.classList.add('open');
+ var p=document.createElement('div');p.className='txlang';p.setAttribute('role','menu');
+ ['ar','en'].forEach(function(k){var b=document.createElement('button');b.type='button';b.innerHTML=FL[k];b.setAttribute('aria-label',k==='ar'?'العربية':'English');b.dataset.k=k;if(k===cur())b.classList.add('on');b.onclick=function(e){e.stopPropagation();choose(k)};p.appendChild(b)});
+ document.body.appendChild(p);
+ var r=g.getBoundingClientRect(),w=p.offsetWidth,left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));
+ p.style.left=left+'px';p.style.top=(r.bottom+10)+'px';p.style.transformOrigin=(r.left+r.width/2-left)+'px 0';
+ pop=p;
+ if(!red()&&p.animate){p.animate([{opacity:0,transform:'translateY(-10px) scale(.5)'},{opacity:1,transform:'none'}],{duration:380,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'both'});
+  [].forEach.call(p.children,function(b,i){b.animate([{opacity:0,transform:'scale(.3) rotate(-40deg)'},{opacity:1,transform:'none'}],{duration:420,delay:70+i*55,easing:'cubic-bezier(.34,1.7,.5,1)',fill:'both'})});}
+}
+function choose(k){
+ if(busy)return;
+ if(k===cur()){hap(6);closePop();return}
+ busy=1;hap([12,28,16]);closePop();
+ var lb=document.getElementById('langBtn');if(!lb){busy=0;return}
+ var b=document.body;
+ if(red()||!b.animate){lb.click();busy=0;return}
+ var toRight=k==='ar',a=toRight?86:-86,P='perspective(1500px) rotateY(';
+ b.style.transformOrigin=toRight?'100% 50%':'0% 50%';R.style.overflow='hidden';R.style.background='#000';b.style.willChange='transform,opacity,filter';
+ var out=b.animate([{transform:P+'0deg)',opacity:1,filter:'brightness(1)'},{transform:P+a+'deg)',opacity:0,filter:'brightness(.45)'}],{duration:300,easing:'cubic-bezier(.55,0,.8,.45)',fill:'forwards'});
+ out.onfinish=function(){
+  lb.click();
+  setTimeout(function(){
+   var inn=b.animate([{transform:P+(-a)+'deg)',opacity:0,filter:'brightness(.45)'},{transform:P+'0deg)',opacity:1,filter:'brightness(1)'}],{duration:460,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'});
+   out.cancel();
+   inn.onfinish=function(){inn.cancel();b.style.willChange='';b.style.transformOrigin='';R.style.overflow='';R.style.background='';busy=0;hap(10)};
+  },70);
+ };
+}
+function setup(){
+ var g=document.getElementById('globeBtn');if(!g)return false;if(g._t109)return true;
+ var n=g.cloneNode(false);n.innerHTML=GLOBE;n._t109=1;n.id='globeBtn';n.removeAttribute('style');
+ g.replaceWith(n);
+ var lab=function(){n.setAttribute('aria-label',cur()==='ar'?'اللغة':'Language')};lab();
+ new MutationObserver(lab).observe(R,{attributes:true,attributeFilter:['lang']});
+ n.addEventListener('click',function(e){e.stopPropagation();openPop(n)});
+ return true;
+}
+document.addEventListener('pointerdown',function(e){if(pop&&!e.target.closest('.txlang')&&!e.target.closest('#globeBtn'))closePop()},true);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePop()});
+addEventListener('scroll',function(){closePop(true)},true);
+var t=0,iv=setInterval(function(){var ok=setup();if(ok||++t>60)clearInterval(iv)},250);
+setTimeout(setup,1200);
+new MutationObserver(function(){var g=document.getElementById('globeBtn');if(g&&!g._t109)setup()}).observe(document.body,{childList:true,subtree:true});
+})();
 </script></body></html>
