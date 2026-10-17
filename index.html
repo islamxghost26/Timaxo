@@ -4962,4 +4962,66 @@ html body #tfSk .tfc.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg),0
 
 lb.addEventListener('click',function(){lb.classList.remove('ignite');void lb.offsetWidth;lb.classList.add('ignite');try{navigator.vibrate&&navigator.vibrate([14,40,22])}catch(_){}},true)}catch(e){}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,400)});else setTimeout(go,400)})();
+</script><style id="tx108">
+/* ===== Timaxo v108: إصلاح التغطية + دارك حقيقي + قوائم بنفس الستايل + سحب الثيم ===== */
+html:root[data-theme="dark"]{--bg:#050505;--surface:#121212;--surface2:#1c1c1e;--ink:#f2f2f2;--ink2:#a3a3a8;--line:rgba(255,255,255,.12);--accent:#4da3ff;--accent-ink:#fff;--neon:#d8d8dc;--tipc:#b8b8be;--stage:#000;--navy1:#1d1d20;--navy2:#0b0b0c;--topg:linear-gradient(160deg,#2a2a2e,#0e0e10);--bgfx:#050505;--shadow:rgba(0,0,0,.6);--t-ink:#f2f2f2;--t-ink2:#b4b4ba;--t-tip:#c8c8ce;--t-chip:rgba(255,255,255,.07);--t-chipbd:rgba(255,255,255,.16);--t-chipink:#f2f2f2;--t-chipsh:0 6px 18px -10px #000,inset 0 1px 0 rgba(255,255,255,.08);--t-btn2:rgba(255,255,255,.08);--t-btn2ink:#fff;--t-btn2bd:rgba(255,255,255,.22);--t-scan:#e6e6ea;--t-h1glow:none;--t-chev:%23f2f2f2;--bgimg:url(bg-black.jpg)}
+html[data-theme="dark"] #scanBtn .lens,html[data-theme="dark"] #vHome .scanbtn .lens{filter:grayscale(1) contrast(1.05)}
+
+/* زر المستندات: جوه صف الاسم بدل ما يطفو فوق الأيقونات */
+html:root body #vHome #libBtn,html:root[dir="ltr"] body #vHome #libBtn{position:relative!important;left:auto!important;right:auto!important;top:auto!important;width:44px!important;height:44px!important;min-width:44px!important;padding:0!important;margin:0!important;border-radius:14px!important;border:1px solid var(--t-chipbd)!important;background:var(--t-chip)!important;box-shadow:var(--t-chipsh)!important;display:grid!important;place-items:center;flex:none;z-index:1;overflow:visible!important}
+html:root body #vHome #libBtn::before,html:root body #vHome #libBtn::after{display:none!important;content:none!important;animation:none!important}
+html:root body #vHome #libBtn .libt{display:none!important}
+html:root body #vHome #libBtn svg{width:22px!important;height:22px!important;padding:0!important;border:0!important;background:none!important;color:var(--t-chipink)!important}
+html:root body #vHome #libBtn .libb{top:-7px!important;inset-inline-end:-7px!important;left:auto!important;right:auto!important}
+#vHome .docrow .docname{min-width:0;flex:1 1 auto}
+#vHome #shelf{padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))!important}
+
+/* الشريط العلوي وسحب الثيم: فوق كل حاجة */
+#vHome .top,#vHome .top .brand{overflow:visible!important}
+#vHome .top{position:relative;z-index:40!important}
+#vHome .hdock{position:relative;z-index:2;overflow:visible!important;gap:2px;padding:3px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#vHome .hdock>button,#vHome .brand #globeBtn{color:#fff}
+#vHome .hdock>button svg,#globeBtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#vHome .hdock>#thBtn.pull,#vHome .hdock>#thBtn.snap,#vHome .hdock>#thBtn.armed{z-index:60!important}
+#vHome .hdock>#thBtn.pull{background:rgba(255,255,255,.24)!important;box-shadow:0 12px 28px -6px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.4)!important}
+#vHome .hdock>#thBtn.armed{background:#fff!important;color:#0b1a3d!important;box-shadow:0 0 0 5px rgba(255,255,255,.28),0 14px 32px -6px rgba(0,0,0,.65)!important}
+#vHome .hdock>#thBtn svg{transition:transform .25s}
+#vHome .hdock>#thBtn.armed svg{transform:rotate(90deg) scale(1.1)}
+
+/* قايمة "المزيد/الإعدادات" ودليل التطبيق: نفس ستايل التطبيق */
+#tg,#mrBx,#mrBx button,#tg button,#tg input{font-family:var(--fb,system-ui)}
+#tg .bx,#mrBx{background:var(--surface)!important;border:1px solid var(--line);border-bottom:0;box-shadow:0 -22px 60px -22px rgba(0,0,0,.75)}
+#tg .hero{background:var(--topg)!important}
+#tg details{background:var(--surface2);border-radius:20px}
+#tg details[open]{background:var(--surface);border-color:var(--accent)}
+#tg .ti{width:44px;height:44px;border-radius:14px}#tg .ti svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#tg .tt{min-width:0}#tg .tt b{line-height:1.3}#tg .tt small{line-height:1.4}
+#mrBx .gr{grid-auto-rows:1fr}
+#mrBx .cd{min-width:0;justify-content:flex-start;border-radius:20px;box-shadow:none;padding:14px 6px 12px}
+#mrBx .cd>span:nth-child(2){display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+#mrBx .ic{width:46px;height:46px;border-radius:15px;flex:none}
+#mrBx .st{margin-top:auto;white-space:nowrap;font-size:10.5px}
+
+/* نصوص الأيقونات: ما تكبرش ولا تتداخل */
+.tab,.pa,.tool{min-width:0}
+.tab span,.pa span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;line-height:1.25}
+html body .fab2,html body #vHome #galFab{width:48px;height:48px;border-radius:50%;background:var(--surface);border:1px solid var(--t-chipbd,var(--line));color:var(--t-chipink,var(--ink));box-shadow:0 10px 24px -10px rgba(0,0,0,.6)}
+</style><script id="tx108js">
+(function(){
+var R=document.documentElement,$=function(i){return document.getElementById(i)};
+var A='<svg viewBox="0 0 24 24" aria-hidden="true">',Z='</svg>';
+var IC={light:A+'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/>'+Z,
+blue:A+'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>'+Z,
+dark:A+'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'+Z};
+var DOTS=A+'<circle cx="5.5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor" stroke="none"/>'+Z;
+function paint(){var th=$('thBtn');if(!th)return;var m=R.getAttribute('data-theme')||'blue';if(th.querySelector('svg')&&th.dataset.m===m)return;th.dataset.m=m;th.innerHTML=IC[m]||IC.blue;
+ var mt=document.querySelector('meta[name=theme-color]');if(mt)mt.setAttribute('content',m==='dark'?'#000000':m==='light'?'#1B63F0':'#000515');}
+function more(){var d=document.querySelector('#vHome .hdock');if(!d)return;[].forEach.call(d.children,function(b){if(b.tagName==='BUTTON'&&b.textContent.trim()==='\u22EF'){b.innerHTML=DOTS;}});}
+function lib(){var l=$('libBtn'),r=document.querySelector('#vHome .docrow');if(l&&r&&l.parentNode!==r)r.appendChild(l);}
+function all(){paint();more();lib();var th=$('thBtn');if(th&&!th._t108){th._t108=1;new MutationObserver(function(){if(!th.querySelector('svg'))paint();}).observe(th,{childList:true,characterData:true,subtree:true});}}
+new MutationObserver(function(){paint();}).observe(R,{attributes:true,attributeFilter:['data-theme']});
+var v=$('vHome');if(v)new MutationObserver(lib).observe(v,{childList:true});
+function boot(){all();[300,900,1800,3200].forEach(function(t){setTimeout(all,t)});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
 </script></body></html>
