@@ -355,7 +355,7 @@ $('#bIn').onclick = async () => {
 };
 $('#bCp').onclick = async () => { try { await navigator.clipboard.writeText(out.textContent); $('#bCp').textContent = 'اتنسخ ✓'; setTimeout(() => $('#bCp').textContent = 'انسخ النتيجة', 1500); } catch (e) { /* المتصفح منع النسخ — حدد النص بإيدك */ } };
 edgeStatus();
-$('#e2').checked = localStorage.getItem('tx_edge2') === '1';
+$('#e2').checked = localStorage.getItem('tx_edge2') !== '0';
 $('#e2').onchange = () => localStorage.setItem('tx_edge2', $('#e2').checked ? '1' : '0');
 summary();
 </script>

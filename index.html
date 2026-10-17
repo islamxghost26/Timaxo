@@ -1415,7 +1415,7 @@ function pageAspect(P,sw,sh){
   }
   // snap to standard paper (A4/A5 1.414, Letter 1.294; مع tx_edge2: وبطاقة ID-1 1.586) when close
   const lg=Math.max(r,1/r),sm=Math.min(r,1/r);void sm;
-  for(const s of(localStorage.getItem('tx_edge2')==='1'?[1.4142,1.2941,1.5857]:[1.4142,1.2941])){if(Math.abs(lg-s)/s<.045){r=r>=1?s:1/s;break;}}
+  for(const s of(localStorage.getItem('tx_edge2')!=='0'?[1.4142,1.2941,1.5857]:[1.4142,1.2941])){if(Math.abs(lg-s)/s<.045){r=r>=1?s:1/s;break;}}
   return r;
 }
 function warp(src,corners,maxEdge){
@@ -1677,7 +1677,7 @@ const loadEdge2=()=>_e2||(_e2=Promise.all(['edge-model.js','edge-hybrid.js','edg
 /* نموذج الوجه (3.4ب): تحميل كسول مرة واحدة بعد loadEdge2؛ لو فشل (الملف أو المحرك ناقص) المقدّر المؤقت يكمّل من غير أي رسالة */
 let _fc=null;const loadFace=()=>_fc||(_fc=loadEdge2().then(()=>new Promise((ok,no)=>{if(window.TXAFace)return ok();const e=document.createElement('script');e.src='assistant-face.js';e.onload=ok;e.onerror=()=>no(new Error('assistant-face.js'));document.head.appendChild(e);})).then(()=>window.TXAFace.install()).catch(()=>false));
 async function edge2Wrap(canvas,q0){
-  if(localStorage.getItem('tx_edge2')!=='1'){detectCorners.edge2=null;return q0;}
+  if(localStorage.getItem('tx_edge2')==='0'){detectCorners.edge2=null;return q0;}
   detectCorners.edge2=null;
   try{
     await loadEdge2();
@@ -1703,16 +1703,32 @@ async function edge2Wrap(canvas,q0){
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearTimeout(lp)));
   b.onclick=()=>{if(fired){fired=0;return;}const on=!TXA.enabled();TXA.setEnabled(on);paint();toast(on?(lang==='ar'?'مساعد الاقتراحات شغّال':'Suggestions assistant is ON'):(lang==='ar'?'مساعد الاقتراحات متوقف':'Suggestions assistant is OFF'));};
 })();
-/* زر "AI" جنب زر اللغة: يوقّف/يشغّل التعلم المحلي من تعديلاتك. بيظهر بس مع tx_edge2. التعلم شغّال افتراضيًا. */
-(function(){
-  if(localStorage.getItem('tx_edge2')!=='1')return;
-  const lb=document.getElementById('langBtn');if(!lb)return;
-  const b=document.createElement('button');b.className=lb.className;b.id='learnBtn';b.textContent='AI';b.setAttribute('aria-label','learning');lb.insertAdjacentElement('afterend',b);
-  const st=document.createElement('style');st.textContent='#learnBtn.off{opacity:.4;text-decoration:line-through}';document.head.appendChild(st);
-  const paint=()=>{const s=EdgeLearn.stats();b.classList.toggle('off',!s.on);b.title=(lang==='ar'?'التعلم من تعديلاتي: ':'Learning from my edits: ')+(s.on?(s.active?'ON ✓ ':'ON ')+s.n:'OFF');};
-  loadEdge2().then(paint).catch(()=>b.remove());
-  b.onclick=()=>{if(!window.EdgeLearn)return;const on=!EdgeLearn.enabled();EdgeLearn.setEnabled(on);paint();const n=EdgeLearn.stats().n;
-    toast(on?(lang==='ar'?'التعلم من تعديلاتي شغّال — اتعلّمت من '+n+' تعديل':'Learning from my edits is ON — '+n+' edits so far'):(lang==='ar'?'التعلم من تعديلاتي متوقف':'Learning from my edits is OFF'));};
+/* ===== AI (الكشف الذكي + التعلّم من تعديلاتك): شغّال افتراضيًا، مفتاح واحد (tx_edge2: '0' = متوقف). موجود جوه الكاميرا وجوه «المزيد» ===== */
+const TXAI=(function(){
+  const K='tx_edge2',subs=[];
+  const on=()=>{try{return localStorage.getItem(K)!=='0'}catch(e){return true}};
+  const cnt=()=>{try{return window.EdgeLearn?EdgeLearn.stats().n:0}catch(e){return 0}};
+  const apply=v=>{try{if(window.EdgeLearn)EdgeLearn.setEnabled(v)}catch(e){}};
+  const msg=v=>v?(lang==='ar'?'AI شغّال — كشف ذكي وتعلّم من تعديلاتك'+(cnt()?' ('+cnt()+' تعديل)':''):'AI is ON — smart detection & learning'+(cnt()?' ('+cnt()+' edits)':'')):(lang==='ar'?'AI متوقف — رجع الكشف العادي':'AI is OFF — standard detection');
+  function set(v){try{localStorage.setItem(K,v?'1':'0')}catch(e){}if(v)loadEdge2().then(()=>apply(true)).catch(()=>{});else apply(false);subs.slice().forEach(f=>{try{f(v)}catch(e){}});}
+  function css(){if(document.getElementById('txai-css'))return;const st=document.createElement('style');st.id='txai-css';
+    st.textContent='#lv .ib.ai{position:relative;transition:transform .15s,color .25s,background .3s,box-shadow .3s}#lv .ib.ai svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;transition:opacity .25s}'
+    +'#lv .ib.ai:not(.on) svg{opacity:.5}#lv .ib.ai:not(.on)::after{content:"";position:absolute;width:24px;height:2px;border-radius:1px;background:currentColor;opacity:.75;transform:rotate(-45deg)}'
+    +'#lv.v3 .ib.ai.on{background:rgba(34,211,245,.2);color:#22d3f5;animation:txaiglow 2.8s ease-in-out infinite}#lv .ib.ai.on .s2{transform-box:fill-box;transform-origin:center;animation:txaitw 2.8s ease-in-out infinite}'
+    +'#lv .ib.ai.pop,#lv.v3 .ib.ai.on.pop{animation:txaipop .38s cubic-bezier(.3,1.6,.5,1)}.cd.aipop .ic{animation:txaipop .38s cubic-bezier(.3,1.6,.5,1)}'
+    +'#lv .aitip{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:7;max-width:80%;padding:7px 14px;border-radius:999px;background:rgba(6,10,22,.78);color:#bdf3ff;border:1px solid rgba(34,211,245,.45);font:600 13px system-ui;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .2s,transform .2s;direction:rtl}#lv .aitip.off{color:#cfd6e6;border-color:rgba(255,255,255,.25)}#lv .aitip.on{opacity:1;transform:none}'
+    +'@keyframes txaiglow{0%,100%{box-shadow:0 0 0 0 rgba(34,211,245,0)}50%{box-shadow:0 0 0 5px rgba(34,211,245,.16),0 0 14px rgba(34,211,245,.35)}}@keyframes txaitw{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}@keyframes txaipop{0%{transform:scale(.8)}60%{transform:scale(1.2)}100%{transform:scale(1)}}'
+    +'@media (prefers-reduced-motion:reduce){#lv.v3 .ib.ai.on,#lv .ib.ai.on .s2,#lv .ib.ai.pop,.cd.aipop .ic{animation:none}#lv .aitip{transition:none}}';document.head.appendChild(st);}
+  const SPARK='<svg viewBox="0 0 24 24"><path d="M11 3l1.9 5.6 5.6 1.9-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z"/><path class="s2" d="M19 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>';
+  function camBtn(m){css();const b=document.createElement('button');b.type='button';b.className='ib ai'+(on()?' on':'');b.setAttribute('aria-label','AI');b.setAttribute('aria-pressed',on()?'true':'false');b.title='AI';b.innerHTML=SPARK;
+    const tip=document.createElement('div');tip.className='aitip';tip.setAttribute('role','status');m.appendChild(tip);let tm=0;
+    const paint=v=>{if(!b.isConnected){const i=subs.indexOf(paint);if(i>=0)subs.splice(i,1);return;}b.classList.toggle('on',v);b.setAttribute('aria-pressed',v?'true':'false');};subs.push(paint);
+    b.addEventListener('animationend',()=>b.classList.remove('pop'));
+    b.addEventListener('click',()=>{const v=!on();set(v);b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');
+      try{if(localStorage.getItem('tx_hap')!=='0'&&navigator.vibrate)navigator.vibrate(8)}catch(e){}
+      tip.textContent=msg(v);tip.classList.toggle('off',!v);tip.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>tip.classList.remove('on'),1800);});
+    return b;}
+  return{on,set,msg,camBtn,css,cnt};
 })();
 async function detectAsync(canvas){return edge2Wrap(canvas,await detectAsync0(canvas));}
 async function detectAsync0(canvas){
@@ -2516,6 +2532,7 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
 #mrBx .st.on{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);opacity:1}
 `;document.head.appendChild(s);}
   const P={
+    ai:'<path d="M11 3l1.9 5.6 5.6 1.9-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z"/><path d="M19 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/>',
    lock:'<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
    lib:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
    idc:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.2 3-2.2s2.4.6 3 2.2M14 10h4M14 13h3"/>',
@@ -2538,6 +2555,9 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
     x.innerHTML='<span class="ic"><svg viewBox="0 0 24 24">'+P[ic]+'</svg></span><span>'+label+'</span>'+(state?'<span class="st'+(state[1]?' on':'')+'">'+state[0]+'</span>':'');
     x.onclick=()=>{if(keep){fn(x);}else{close();setTimeout(fn,120);}};g.appendChild(x);return x;};
   const onOff=v=>[v?T('مفعّل','On'):T('غير مفعّل','Off'),v];
+  TXAI.css();const g0=sec(T('الذكاء الاصطناعي','AI'));
+  card(g0,'ai','#22b8e0',T('الكشف الذكي والتعلّم من تعديلاتي','Smart detection & learning'),onOff(TXAI.on()),(x)=>{const v=!TXAI.on();TXAI.set(v);
+    const st=x.querySelector('.st');st.className='st'+(v?' on':'');st.textContent=v?T('مفعّل','On'):T('غير مفعّل','Off');x.classList.remove('aipop');void x.offsetWidth;x.classList.add('aipop');toast(TXAI.msg(v));},1);
   const g1=sec(T('الأمان','Security'));
   card(g1,'lock','#e0527a',T('قفل التطبيق','App lock'),onOff(locked()),openLock);
   const g2=sec(T('الأدوات','Tools'));
@@ -2654,7 +2674,7 @@ async function openLive(){
  const $q=s=>m.querySelector(s),v=$q('video'),cv=$q('canvas'),hintEl=$q('.hint'),hintT=$q('.hint span'),fl=$q('.fl2'),seg=$q('.seg b'),sh=$q('.sh'),ab=$q('[data-a=a]'),db=$q('[data-a=d]'),mb=$q('[data-a=mu]'),fb=$q('[data-a=f]'),snb=$q('[data-a=sn]');
  /* v15: collapsible side tools (sound / multi / lens) — flash stays visible; state remembered */
  {const grp=$q('.tb>div'),lb2=$q('[data-a=l]');if(grp&&lb2){const wrap=document.createElement('div');wrap.className='tgp';
-  [snb,mb,lb2].forEach(x=>wrap.appendChild(x));const tgl=document.createElement('button');tgl.className='ib';tgl.type='button';tgl.setAttribute('aria-label','tools');
+  [snb,mb,lb2].forEach(x=>wrap.appendChild(x));try{wrap.appendChild(TXAI.camBtn(m));}catch(e){}const tgl=document.createElement('button');tgl.className='ib';tgl.type='button';tgl.setAttribute('aria-label','tools');
   tgl.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';grp.prepend(wrap);grp.prepend(tgl);
   let col=localStorage.getItem('tx_tbc')==='1';const ap=()=>{wrap.style.display=col?'none':'flex';tgl.style.transform=col?'rotate(180deg)':'none';};ap();
   tgl.onclick=()=>{col=!col;try{localStorage.setItem('tx_tbc',col?'1':'0')}catch(e){}ap();};}}
@@ -2983,7 +3003,7 @@ async function openLive(){
     }catch(e){console.error('assistant',e);}finally{busy=0;}
   };
   const iv=setInterval(tick,250);
-  setTimeout(()=>{if(alive&&TXA.enabled())loadFace();},1500); /* في الخلفية بعد فتح الكاميرا، مش بيعطّل القياس */
+  setTimeout(()=>{if(alive&&TXA.enabled()&&TXAI.on())loadFace();},1500); /* في الخلفية بعد فتح الكاميرا، مش بيعطّل القياس */
  })();}
 
  wk=mkWorker();
