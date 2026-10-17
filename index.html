@@ -1033,6 +1033,7 @@ html body .ox-chip{font-size:15px!important}
 
 
 <script src="filters.js"></script>
+<script src="assistant.js"></script>
 <script>
 (()=>{
 'use strict';
@@ -1622,6 +1623,7 @@ function applyLang(){
 function renderHome(fresh){
   const sh=$('#shelf'),n=state.pages.length,AR0=(typeof lang==='undefined'||lang==='ar');
   $('#count').textContent=n?t('pages',n):'';updLib();
+  try{ordBtnSync(n)}catch(e){}
   $('#exportBtn').disabled=!n;$('#newBtn').style.visibility=n?'visible':'hidden';
   if(!n){
     sh.innerHTML=`<div class="empty"><div class="demo"><span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span><div class="sheet-d"><div class="beam"></div></div></div><h1>${t('emptyT')}</h1><p>${t('emptyP')}</p><div class="emact"><button class="btn pri" id="emCam" type="button"><i class="emi"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></i><span>${AR0?'صوّر أول مستند':'Scan your first document'}</span></button><button class="btn" id="emGal" type="button"><i class="emi g"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></i><span>${AR0?'من المعرض أو PDF':'Gallery or PDF'}</span></button></div><ul class="emtips"><li>${AR0?'صوّر الورقة على سطح غامق وإضاءة كويسة عشان القص التلقائي يظبط.':'Shoot the page on a dark surface in good light for cleaner auto-crop.'}</li><li>${AR0?'تقدر تضيف صفحات تانية لنفس المستند وتصدّره PDF واحد.':'Add more pages to the same document and export one PDF.'}</li><li>${AR0?'كل حاجة بتتحفظ على جهازك بس، فاعمل نسخة احتياطية من «مستنداتي» من وقت للتاني.':'Everything stays on your device only, so back up from My documents once in a while.'}</li></ul><button class="btn" id="sampleBtn">${t('sample')}</button></div>`;
@@ -1672,6 +1674,8 @@ function detWorker(){if(_dw!==null)return _dw||null;
 const EDGE2_REVIEW=.8,reviewThr=()=>(window.EdgeLearn&&EdgeLearn.enabled()&&EdgeLearn.params().thr)||EDGE2_REVIEW; // تحت الثقة دي بنقول للمستخدم يراجع الحواف (اتقاس على 18 صورة: كل الفاشلين تحتها وصورة ناجحة واحدة بس)
 let _e2=null;
 const loadEdge2=()=>_e2||(_e2=Promise.all(['edge-model.js','edge-hybrid.js','edge-learn.js'].map(f=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=f;e.onload=ok;e.onerror=()=>no(new Error(f));document.head.appendChild(e);}))).catch(e=>{_e2=null;throw e;}));
+/* نموذج الوجه (3.4ب): تحميل كسول مرة واحدة بعد loadEdge2؛ لو فشل (الملف أو المحرك ناقص) المقدّر المؤقت يكمّل من غير أي رسالة */
+let _fc=null;const loadFace=()=>_fc||(_fc=loadEdge2().then(()=>new Promise((ok,no)=>{if(window.TXAFace)return ok();const e=document.createElement('script');e.src='assistant-face.js';e.onload=ok;e.onerror=()=>no(new Error('assistant-face.js'));document.head.appendChild(e);})).then(()=>window.TXAFace.install()).catch(()=>false));
 async function edge2Wrap(canvas,q0){
   if(localStorage.getItem('tx_edge2')!=='1'){detectCorners.edge2=null;return q0;}
   detectCorners.edge2=null;
@@ -1688,6 +1692,17 @@ async function edge2Wrap(canvas,q0){
     return r[0].quad;
   }catch(e){console.warn('edge2 fallback',e);return q0;}
 }
+/* زر المساعد 💡 جنب زر اللغة: يوقّف/يشغّل مساعد الاقتراحات (المرحلة 3). شغّال افتراضيًا. ضغطة طويلة = مسح سجل الاقتراحات المرفوضة */
+(function(){
+  const lb=document.getElementById('langBtn');if(!lb||!window.TXA)return;
+  const b=document.createElement('button');b.className=lb.className;b.id='asgBtn';b.textContent='\u{1F4A1}';b.setAttribute('aria-label','suggestions');lb.insertAdjacentElement('afterend',b);
+  const st=document.createElement('style');st.textContent='#asgBtn.off{opacity:.4;text-decoration:line-through}';document.head.appendChild(st);
+  const paint=()=>{const on=TXA.enabled();b.classList.toggle('off',!on);b.title=(lang==='ar'?'مساعد الاقتراحات: ':'Suggestions assistant: ')+(on?'ON':'OFF');};paint();
+  let lp=0,fired=0;
+  b.addEventListener('pointerdown',()=>{fired=0;lp=setTimeout(()=>{fired=1;TXA.resetLog();toast(lang==='ar'?'اتمسح سجل الاقتراحات المرفوضة':'Dismissed-suggestions log cleared');},700);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearTimeout(lp)));
+  b.onclick=()=>{if(fired){fired=0;return;}const on=!TXA.enabled();TXA.setEnabled(on);paint();toast(on?(lang==='ar'?'مساعد الاقتراحات شغّال':'Suggestions assistant is ON'):(lang==='ar'?'مساعد الاقتراحات متوقف':'Suggestions assistant is OFF'));};
+})();
 /* زر "AI" جنب زر اللغة: يوقّف/يشغّل التعلم المحلي من تعديلاتك. بيظهر بس مع tx_edge2. التعلم شغّال افتراضيًا. */
 (function(){
   if(localStorage.getItem('tx_edge2')!=='1')return;
@@ -2792,7 +2807,7 @@ async function openLive(){
  const dupNow=()=>{if(!lastSig)return false;const g=sigOf();if(!g)return false;let a=0;for(let i=0;i<768;i++)a+=Math.abs(g[i]-lastSig[i]);return a/768<7;};
  const strip=document.createElement('div');strip.className='ts';m.querySelector('.st').appendChild(strip);
  const renderStrip=()=>{strip.innerHTML='';if(!multi)return;files.slice(-8).forEach(F=>{if(!F.__th)return;const b=document.createElement('button');b.type='button';b.style.backgroundImage='url('+F.__th+')';const x=document.createElement('b');x.textContent='×';x.onclick=e=>{e.stopPropagation();const i=files.indexOf(F);if(i>=0)files.splice(i,1);renderStrip();lab();toast(T('اتحذفت الصفحة','Page removed'));};b.appendChild(x);strip.appendChild(b);});strip.scrollLeft=strip.scrollWidth;};
- const grab=()=>{if(gb||!v.videoWidth)return;gb=1;lastSig=sigOf();lockT=0;sfx.shut();fl.classList.remove('go');sh.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');sh.classList.add('go');
+ const grab=()=>{if(gb||!v.videoWidth)return;gb=1;lastSig=sigOf();try{window.TXA&&TXA.noteShot(lastSig)}catch(e){}lockT=0;sfx.shut();fl.classList.remove('go');sh.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');sh.classList.add('go');
   const vw=v.videoWidth,vh=v.videoHeight,md=mode,q=md==='doc'?(dtg||null):guideQ();
   const c=document.createElement('canvas');c.width=vw;c.height=vh;c.getContext('2d',{alpha:false}).drawImage(v,0,0);
   const F={__cv:c,__q:q,__x:(md!=='doc'&&q)?1:0};files.push(F);
@@ -2927,6 +2942,49 @@ async function openLive(){
  sugFn=st=>{if(auto){if(sug.classList.contains('on'))sugOff();return;}
   if(!st||sugN>=1||gb||Date.now()-sugT<1500)return;let n=0;try{n=+localStorage.getItem('tx_sg')||0}catch(x){}if(n>=5)return;
   sugN++;sugT=Date.now();try{localStorage.setItem('tx_sg',String(n+1))}catch(x){}sug.classList.add('on');sugHide=setTimeout(sugOff,6500);};
+
+ /* ---- مساعد الاقتراحات (المرحلة 3، assistant.js): شريط صغير بزر قبول وزر تجاهل. القبول بس هو اللي بيبدّل الوضع؛ مفيش حاجة بتحصل تلقائي.
+    الفحص كل 250ms، والقياس بس لما الكادر يقفل (stable≥2، قبل التصوير التلقائي بـ0.8 ثانية) ومرة كل 1.5 ثانية على الأكتر. الشريط بيوقّف التصوير التلقائي (armed=false) لحد ما المستخدم يرد. الصفحات المتعددة بتتبني على لقطات الجلسة (TXA.recentShots). ---- */
+ if(window.TXA&&window.__edges&&window.__edges.warp){(function(){
+  if(!document.getElementById('lvcss8')){const s8=document.createElement('style');s8.id='lvcss8';s8.textContent=`
+#lv .asg{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 140px);transform:translateX(-50%) translateY(-4px);z-index:6;max-width:94%;display:flex;align-items:center;gap:8px;border:1px solid rgba(34,211,245,.55);background:rgba(6,10,22,.8);color:#e6faff;border-radius:16px;padding:7px 8px 7px 12px;font:500 12.5px/1.35 system-ui;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+#lv .asg.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+#lv .asg span{flex:1;min-width:0}
+#lv .asg button{border:0;border-radius:999px;padding:6px 12px;font:600 12px system-ui;cursor:pointer;white-space:nowrap}
+#lv .asg .y{background:#22d3f5;color:#04222a}
+#lv .asg .n{background:rgba(255,255,255,.14);color:#e6faff}
+`;document.head.appendChild(s8);}
+  const bar=document.createElement('div');bar.className='asg';bar.setAttribute('role','status');
+  const tx=document.createElement('span'),by=document.createElement('button'),bn=document.createElement('button');
+  by.type=bn.type='button';by.className='y';bn.className='n';bar.append(tx,by,bn);m.querySelector('.st').appendChild(bar);
+  let cur=null,busy=0,hT=0,lm=0;const shown={};
+  const hide=()=>{clearTimeout(hT);bar.classList.remove('on');if(cur)armed=true;cur=null;}; /* armed: التصوير التلقائي واقف طول ما الشريط ظاهر */
+  const show=s=>{cur=s;shown[s.kind]=Date.now();tx.textContent=T(s.ar,s.en);by.textContent=T('قبول','Accept');bn.textContent=T('تجاهل','Dismiss');bar.classList.add('on');armed=false;hT=setTimeout(hide,9000);};
+  const TO={id:'id',table:'tb',multi:'pg'},NM={id:['وضع البطاقة','ID mode'],table:['وضع الجدول','Table mode'],multi:['وضع الصفحات','Pages mode']};
+  by.onclick=e=>{e.stopPropagation();const s=cur;if(!s)return;TXA.accept(s);hide();setUi(TO[s.kind]);let nm=0;
+    if(s.kind==='multi'){try{if(typeof XO!=='undefined'&&!XO.num){XO.num=true;nm=1;const nb=document.getElementById('xNumB');if(nb)nb.classList.add('on');}}catch(x){}} /* 3.5: قبول الصفحات المتعددة بيفعّل ترقيم التصدير الموجود (XO.num)؛ الترتيب = ترتيب التصوير */
+    toast(T('اتفعّل '+NM[s.kind][0]+(nm?' + ترقيم الصفحات':''),NM[s.kind][1]+' on'+(nm?' + page numbers':'')));};
+  bn.onclick=e=>{e.stopPropagation();if(cur)TXA.dismiss(cur);hide();};
+  const tick=async()=>{
+    if(!alive){clearInterval(iv);bar.remove();return;}
+    if(cur||busy||gb||cnt||!TXA.enabled()||document.hidden)return;
+    busy=1;
+    try{
+      const now=Date.now(),sig={},ctx={mode:uiM,multi,shots:TXA.recentShots(now),now};
+      if(last&&stable>=2&&v.videoWidth&&now-lm>1500){lm=now;
+        const c=document.createElement('canvas'),W=480,H=Math.round(W*v.videoHeight/v.videoWidth);c.width=W;c.height=H;c.getContext('2d').drawImage(v,0,0,W,H);
+        const w=window.__edges.warp(c,last,420),d=w.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w.width,w.height);
+        Object.assign(sig,TXA.measure(d.data,w.width,w.height));
+        if(sig.aspect>1.3&&sig.aspect<1.95)sig.face=await TXA.face(d.data,w.width,w.height);
+      }
+      if(!alive||cur)return;
+      const s=TXA.suggest(sig,ctx);
+      if(s&&now-(shown[s.kind]||0)>60000)show(s);
+    }catch(e){console.error('assistant',e);}finally{busy=0;}
+  };
+  const iv=setInterval(tick,250);
+  setTimeout(()=>{if(alive&&TXA.enabled())loadFace();},1500); /* في الخلفية بعد فتح الكاميرا، مش بيعطّل القياس */
+ })();}
 
  wk=mkWorker();
   let s0;try{s0=await sp;}catch(e){alive=false;try{wk&&wk.terminate()}catch(x){}wk=null;m.remove();toast(T('الكاميرا غير متاحة، هنفتح كاميرا الجهاز','Camera unavailable, using device camera'));nat=1;$('#camIn').click();nat=0;return;}
@@ -3525,6 +3583,43 @@ function bgPill(on){let b=document.getElementById('bgPill');
  b.firstChild.textContent=Lg('جاري فهرسة النص…','Indexing text…');b.lastChild.textContent=Lg('إيقاف','Stop');b.hidden=false;}
 {const _snap=snapDoc;snapDoc=async function(){const r=await _snap.apply(this,arguments);setTimeout(bgOcr,1500);return r;};}
 setTimeout(bgOcr,6000);
+
+window.__ord={pages:()=>state.pages,home:()=>renderHome(),run:()=>ordPages()}; /* خطاف للاختبار بس (tools/order-ui-test.js) */
+/* ===== 3.5ب: ترتيب الصفحات بالأرقام. بيستخدم فهرس النص الموجود (OI) ويقرا بس الصفحات اللي لسه ما اتفهرستش؛ بيطبّق بس لو كل الصفحات مرقّمة وبدون تكرار، وفيه تراجع ===== */
+let ordBusy=0;
+function ordBtnSync(n){let b=document.getElementById('ordBtn');
+  if(n<2||!window.TXA||!TXA.pageNum){if(b)b.hidden=true;return;}
+  if(!b){b=document.createElement('button');b.id='ordBtn';b.type='button';b.className='btn sm';b.onclick=ordPages;document.getElementById('count').insertAdjacentElement('afterend',b);}
+  b.hidden=false;if(!ordBusy)b.textContent=Lg('رتّب بالأرقام','Sort by page numbers');}
+async function ordPages(){
+  if(ordBusy||!window.TXA)return;const b=document.getElementById('ordBtn'),pages=state.pages.slice();if(pages.length<2)return;
+  ordBusy=1;if(b)b.disabled=true;
+  try{
+    const todo=pages.filter(p=>OI()[p.id]===undefined);let k=0;
+    for(const p of todo){
+      if(b)b.textContent=Lg('قراءة '+(++k)+'/'+todo.length+'…','Reading '+k+'/'+todo.length+'…');
+      bgTried.add(p.id);
+      const cv=await renderFinal(p,1600);if(!cv)continue;
+      const wk=await getW('ara+eng');await wk.setParameters({tessedit_pageseg_mode:'3'});
+      const r=await wk.recognize(cv);const Ls=r.data.lines;let T=(r.data.text||'').trim();
+      if(Ls&&Ls.length)T=Ls.map(l=>(l.words||[]).filter(w=>w.confidence>=50).map(w=>w.text).join(' ').trim()).filter(Boolean).join('\n');
+      if(T)ocrIdx(p,T,null);
+    }
+    const o=OI(),res=TXA.orderPlan(pages.map(p=>TXA.pageNum(o[p.id])));
+    if(!res.ok){
+      toast(res.reason==='missing'?Lg('مش لاقي رقم صفحة في: '+res.idx.map(i=>i+1).join('، ')+' — رتّب يدويًا','No page number found on: '+res.idx.map(i=>i+1).join(', ')+' — sort manually'):
+            res.reason==='dup'?Lg('في رقمين متكررين — ما رتّبتش','Duplicate numbers — not sorted'):Lg('إجمالي الصفحات مش متطابق — ما رتّبتش','Page totals disagree — not sorted'));
+      return;}
+    if(res.sorted){toast(Lg('الصفحات مترتبة بالأرقام بالفعل','Already in page-number order'));return;}
+    const prev=pages.slice();state.pages.splice(0,state.pages.length,...res.order.map(i=>pages[i]));persistMeta();renderHome();
+    toast(Lg('اترتبت بالأرقام','Sorted by page numbers'));
+    const u=document.createElement('div');u.className='txhint';u.innerHTML='<span></span><button type="button" style="min-height:44px;padding:0 14px;font-weight:800"></button>';u.firstChild.textContent=Lg('اترتبت بالأرقام','Sorted by page numbers');u.lastChild.textContent=Lg('تراجع','Undo');
+    const sh=document.getElementById('shelf');if(sh)sh.insertAdjacentElement('beforebegin',u);
+    const gone=()=>{try{u.remove()}catch(e){}};setTimeout(gone,10000);
+    u.lastChild.onclick=()=>{const cur=state.pages.slice(),back=prev.filter(x=>cur.includes(x));state.pages.splice(0,state.pages.length,...back);persistMeta();renderHome();gone();};
+  }catch(e){console.warn('ordPages',e);toast(Lg('ما قدرتش أقرا الصفحات: ','Could not read pages: ')+(e&&e.message||e));}
+  finally{ordBusy=0;if(b){b.disabled=false;b.textContent=Lg('رتّب بالأرقام','Sort by page numbers');}}
+}
 /* ===== v22: tags (work as folders) + automatic category / name ===== */
 var libTag='';
 function getTags(){return state.tagsFor===state.id&&Array.isArray(state.tags)?state.tags:[];}

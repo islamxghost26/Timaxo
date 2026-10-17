@@ -48,6 +48,13 @@
     });
   }
 
+  /* المحرك لوحده (من غير تحميل نموذج الأركان): بيستخدمه assistant-face.js لنموذج الوجه */
+  EdgeModel.runtime = async function () {
+    const ort = await loadRuntime();
+    ort.env.wasm.wasmPaths = url('ort/'); ort.env.wasm.numThreads = 1; ort.env.wasm.proxy = false;
+    EdgeModel._ort = ort; return ort;
+  };
+
   EdgeModel.load = function () {
     if (EdgeModel._s) return Promise.resolve(EdgeModel._s);
     return EdgeModel._loading || (EdgeModel._loading = (async () => {

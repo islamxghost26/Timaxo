@@ -18,4 +18,6 @@
 
 > `edge-model.js` و`edge-hybrid.js` و`edge-learn.js`: كود أصلي للمشروع (من غير مكتبات خارجية)؛ بيستخدموا onnxruntime-web (MIT) ونموذج DocAligner (Apache-2.0) المذكورين فوق.
 
+> `assistant.js` (مساعد الاقتراحات، المرحلة 3): كود أصلي للمشروع، قواعد وقياسات فقط، بدون مكتبات أو نماذج خارجية. كشف الوجه فيه مقدّر مؤقت أصلي (كتلة جلد + شكل + ملامح، بدون نموذج). نموذج الوجه `vendor/edge/blaze_face_short_range.onnx` (BlazeFace short-range، 418,465 بايت، sha256 `587fa34c93de9a523e691669d2405671d67faad86e595e9a63c6d3db401f18f4`): المصدر https://huggingface.co/unity/inference-engine-blaze-face (ملف `models/blaze_face_short_range.onnx`)، **ترخيص Apache-2.0 معلن على صفحة الريبو نفسها** (اتأكدت 17 أكتوبر 2026). الأصل: Google MediaPipe BlazeFace (Apache-2.0)، محوّل من TFLite لـONNX بواسطة Unity بـtf2onnx. التحميل اتعمل بإيد المستخدم من الرابط ده، وحجم الملف (418 kB) بيطابق اللي في صفحة الريبو؛ ما قدرتش أقارن البصمة بالمصدر (مفيش نت عندي). نص Apache-2.0 موجود في `vendor/edge/MODEL-LICENSE.txt`. تم استبدال ملف `garavv/blazeface-onnx` (بلا ترخيص معلن) وحذفه من المشروع. المحرك: onnxruntime-web (MIT) نفس اللي بيستخدمه edge-model.js. ملفات Haar بتاعة OpenCV (`haarcascade_frontalface*.xml`) **ما استخدمتهاش**: ترخيصها Intel/BSD مش Apache/MIT.
+
 > `filters.js` (فلاتر المرحلة 2 والاختيار التلقائي): كود أصلي للمشروع، بدون مكتبات أو نماذج خارجية.
