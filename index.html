@@ -1075,6 +1075,126 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 @media (max-width:350px){html:root{--hb:34px}html:root body #vHome>header.top{padding-inline:8px!important;gap:4px!important}html:root body #vHome .top .brand{gap:6px!important;overflow:hidden}html:root body #vHome .top .brand b{font-size:17px!important;padding-inline-end:0!important;border-inline-end:0!important}html:root body #vHome .top .brand b span{display:none}html:root body #vHome .top .hdock{padding:0 2px!important}html:root body #vHome .top .hdock>button{width:24px!important}html:root body #vHome .top .hdock>button svg{width:18px!important;height:18px!important}html:root body #vHome #sampleBtn{left:64px!important;right:104px!important}html:root body #vHome .emact .btn.btn,html:root body #vHome .emact .btn.btn span{font-size:14.5px!important;letter-spacing:0!important;white-space:nowrap}html:root body #vHome .emact .btn span{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 @media (max-height:790px){html:root body #vHome .emtips{display:none}html:root body #vHome .empty{--ds:clamp(100px,19vh,150px)}}
 @media (prefers-reduced-motion:reduce){html:root body #vHome #libBtn::before,html:root body #vHome #libBtn::after,html:root body #vHome .empty .demo::before{animation:none!important}}
+</style><style id="timaxo-v108">
+/* ===== Timaxo v108: دارك مود حقيقي + قايمة المستندات من غير تغطية + قوايم موحّدة + أيقونات ===== */
+/* ألوان القوايم والأيقونات لكل ثيم */
+html:root{--t-sheet:#FFFFFF;--t-row:#F1F5FD;--t-rowbd:rgba(43,107,255,.2);--t-icon:#1C4FD8}
+html:root[data-theme="blue"]{--t-sheet:linear-gradient(180deg,#0B1B4F,#071242);--t-row:rgba(255,255,255,.05);--t-rowbd:rgba(110,160,255,.24);--t-icon:#5AC8FF}
+/* دارك مود: أسود ودرجات رمادي (من غير أي لون أزرق في الخلفيات) */
+html:root[data-theme="dark"]{--bg:#000;--surface:#121214;--surface2:#1C1C1F;--line:#2C2C30;--ink:#F5F5F7;--ink2:#A1A1A8;--stage:#000;--shadow:rgba(0,0,0,.75);--accent:#4C8DFF;--neon:#8AB8FF;--tipc:#A1A1A8;--teal:#5AC8FA;--topg:transparent;
+ --t-ink:#F5F5F7;--t-ink2:#A1A1A8;--t-tip:#A1A1A8;--t-chip:linear-gradient(160deg,#1E1E21,#121214);--t-chipbd:rgba(255,255,255,.16);--t-chipink:#F2F2F5;--t-chipsh:inset 0 1px 0 rgba(255,255,255,.07),0 8px 20px -12px #000;
+ --t-btn2:linear-gradient(160deg,#1F1F22,#141416);--t-btn2ink:#F5F5F7;--t-btn2bd:rgba(255,255,255,.18);--t-scan:#7DB0FF;--t-h1glow:none;
+ --t-sheet:#111113;--t-row:rgba(255,255,255,.045);--t-rowbd:rgba(255,255,255,.1);--t-icon:#E6E6EB;
+ --bgimg:linear-gradient(180deg,#0C0C0E 0%,#000 60%);color-scheme:dark}
+html:root[data-theme="dark"] body .top .logo{box-shadow:0 0 0 1.5px rgba(255,255,255,.2),0 8px 18px -8px #000!important}
+html:root[data-theme="dark"] body #vHome #scanBtn .lens{filter:grayscale(.75) brightness(1.05) drop-shadow(0 8px 16px rgba(0,0,0,.7))}
+html:root[data-theme="dark"] body #vHome #libBtn::before{background:linear-gradient(180deg,transparent 0,#fff 25%,#8E8E93 65%,transparent 100%);box-shadow:0 0 8px 1px rgba(255,255,255,.3)}
+html:root[data-theme="dark"] body #vHome #libBtn::after{display:none}
+html:root[data-theme="dark"] body #vHome #sampleBtn{border:1.5px solid var(--t-btn2bd)!important;box-shadow:none!important}
+html:root[data-theme="dark"] body #vHome .empty .demo{filter:drop-shadow(0 0 14px rgba(255,255,255,.12))}
+html:root[data-theme="dark"] body .pg{box-shadow:0 0 0 1px var(--line),0 10px 24px -12px #000}
+html:root[data-theme="dark"] body .sheet,html:root[data-theme="dark"] body .mdl{box-shadow:0 -14px 44px -16px #000}
+html:root[data-theme="dark"] body .toast{background:#2A2A2E;color:#F5F5F7}
+html:root[data-theme="dark"] body #vHome::before{background:radial-gradient(40% 30% at 20% 20%,rgba(255,255,255,.05),transparent 70%)}
+html:root[data-theme="dark"] body #vHome .corner{border-color:rgba(255,255,255,.85);filter:drop-shadow(0 0 5px rgba(255,255,255,.22))}
+html:root[data-theme="dark"] body #vHome .empty .demo::before{background:radial-gradient(ellipse 40% 34% at 50% 50%,rgba(255,255,255,.26),transparent 72%),linear-gradient(90deg,transparent,rgba(255,255,255,.55) 22%,#fff 50%,rgba(255,255,255,.55) 78%,transparent) center/100% 3px no-repeat;filter:drop-shadow(0 0 5px rgba(255,255,255,.45))}
+html:root[data-theme="dark"] body #vHome .empty .demo::after{background:radial-gradient(ellipse,rgba(255,255,255,.2),rgba(255,255,255,.05) 60%,transparent 72%);box-shadow:0 0 0 9px rgba(255,255,255,.05),0 0 0 20px rgba(255,255,255,.025),0 0 24px rgba(255,255,255,.14)}
+html:root[data-theme="dark"] body #vHome>header.top::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)!important}
+html:root[data-theme="dark"] body #vHome #scanBtn .lens{filter:grayscale(.92) brightness(1.05) drop-shadow(0 8px 16px rgba(0,0,0,.7))}
+
+/* ---- الشاشة الرئيسية بعد وجود صفحات: قايمة المستندات زر صغير جوه الصف (مفيش تغطية) ---- */
+html:root body #vHome:not(:has(.empty)) .docrow{box-sizing:border-box;width:100%;margin:0!important;inset-inline:0!important;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;padding:6px 14px 6px!important}
+html:root body #vHome:not(:has(.empty)) .docname{flex:1 1 0!important;width:auto!important;min-width:0!important}
+html:root body #vHome:not(:has(.empty)) #newBtn,html:root body #vHome:not(:has(.empty)) #exportBtn{flex:none!important;height:46px!important;width:46px!important;min-width:46px;padding:0!important;border-radius:16px!important;background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;color:var(--t-chipink)!important;box-shadow:var(--t-chipsh)!important;font-size:0!important;display:inline-flex;align-items:center;justify-content:center;gap:0;white-space:nowrap}
+html:root body #vHome:not(:has(.empty)) #newBtn::before{width:20px;height:20px}
+html:root body #vHome .docrow #docsBack{flex:none;width:40px;min-width:40px;height:46px;padding:0;border-radius:14px;background:var(--t-chip);border:1.5px solid var(--t-chipbd);color:var(--t-chipink);box-shadow:none}
+html:root body #vHome:not(:has(.empty)) .docname{padding:0 34px 0 10px!important;min-width:0!important}
+html:root body #vHome:not(:has(.empty)) #exportBtn{padding:0!important;width:46px}
+html:root body #vHome:not(:has(.empty)) #exportBtn span{display:none}
+html:root body #vHome:not(:has(.empty)) #exportBtn svg{width:22px;height:22px}
+html:root body #vHome:not(:has(.empty)) #newBtn::before{content:"";width:16px;height:16px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E") center/contain no-repeat}
+html:root:root body #vHome .docrow #libBtn.inrow{position:relative!important;left:auto!important;right:auto!important;top:auto!important;flex:none!important;width:46px!important;min-width:46px!important;height:46px!important;padding:0!important;gap:0!important;border-radius:16px!important;border:1.5px solid var(--t-chipbd)!important;display:grid!important;place-items:center;z-index:1!important}
+html:root:root body #vHome .docrow #libBtn.inrow::before,html:root:root body #vHome .docrow #libBtn.inrow::after{display:none!important}
+html:root:root body #vHome .docrow #libBtn.inrow .libt{display:none!important}
+html:root:root body #vHome .docrow #libBtn.inrow svg{width:24px!important;height:24px!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important}
+html:root:root body #vHome .docrow #libBtn.inrow .libb{top:-7px!important;left:auto!important;right:-7px!important;inset-inline-end:auto!important;border:2px solid var(--bg)}
+html:root body #vHome:not(:has(.empty)) .shelf{padding-inline:14px!important}
+
+html:root body #app{overflow:hidden;overflow:clip}
+/* ---- الصف السفلي: كل الأزرار العايمة على خط واحد ومن غير تداخل ---- */
+html:root body #qrFab,html:root body .fab2,html:root body #vHome #galFab{width:46px!important;height:46px!important;border-radius:50%!important;background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;color:var(--t-chipink)!important;box-shadow:var(--t-chipsh)!important;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 24px)!important;z-index:8}
+html:root body #qrFab{left:14px!important;right:auto!important}
+html:root body .fab2{left:68px!important;right:auto!important}
+html:root body #vHome #galFab{right:118px!important;left:auto!important}
+html:root body #qrFab svg,html:root body .fab2 svg,html:root body #vHome #galFab svg{width:22px!important;height:22px!important;stroke-width:1.9}
+html:root body #vHome #sampleBtn{bottom:calc(max(16px,env(safe-area-inset-bottom)) + 23px)!important}
+html:root body #vHome #scanBtn{z-index:9}
+/* طمس خفيف تحت الأزرار العايمة بدل ما الكروت تبان تحتها */
+html:root body #vHome:not(.docsmode):not(:has(.empty))::after{content:"";display:block!important;position:absolute;inset:auto 0 0 0;height:calc(118px + env(safe-area-inset-bottom,0px));background:none;animation:none;will-change:auto;pointer-events:none;z-index:4;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(to top,#000 52%,transparent);mask-image:linear-gradient(to top,#000 52%,transparent)}
+
+/* ---- أيقونات الهيدر: نفس السمك والحجم والأسلوب ---- */
+html:root[data-theme="light"] body #thBtn::before{width:20px;height:20px;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2.5v2M12 19.5v2M4.6 4.6L6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2.5v2M12 19.5v2M4.6 4.6L6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4'/%3E%3C/svg%3E")}
+html:root[data-theme="blue"] body #thBtn::before{width:20px;height:20px;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 3.5a8.5 8.5 0 010 17z' fill='%23000'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 3.5a8.5 8.5 0 010 17z' fill='%23000'/%3E%3C/svg%3E")}
+html:root[data-theme="dark"] body #thBtn::before{width:20px;height:20px;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 14A8.5 8.5 0 0110 3.5a8.5 8.5 0 1010.5 10.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 14A8.5 8.5 0 0110 3.5a8.5 8.5 0 1010.5 10.5z'/%3E%3C/svg%3E")}
+html:root body #vHome #asgBtn::before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFC93C' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 21.5h4'/%3E%3Cpath d='M8.6 14.2C7.3 13.1 6.5 11.6 6.5 9.8a5.5 5.5 0 0111 0c0 1.8-.8 3.3-2.1 4.4-.6.5-.9 1.2-.9 2v.3H9.5v-.3c0-.8-.3-1.5-.9-2z' fill='%23FFC93C' fill-opacity='.18'/%3E%3C/svg%3E") center/contain no-repeat!important}
+html:root body #vHome #globeBtn i{inset:auto -4px -4px auto!important;width:16px!important;height:16px!important;border:1.5px solid var(--bg);font-size:9px!important;box-sizing:border-box}
+html:root body #vHome #globeBtn{overflow:visible!important}
+
+/* ---- قوايم موحّدة بالستايل الجديد: الإعدادات (المزيد) + دليل التطبيق + إنشاء جديد + الحفظ ---- */
+html body #mrBg.in,html body #tg,html body #nwBg{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+html body #mrBg.in{background:rgba(2,6,20,.62)}
+html body #tg{background:rgba(2,6,20,.62)}
+html body #mrBg #mrBx,html body #tg .bx,html body #nwBx,html body .sheet,html body .mdl{background:var(--t-sheet);color:var(--t-ink,var(--ink));border:1px solid var(--t-chipbd);border-bottom:0;border-radius:30px 30px 0 0;box-shadow:0 -18px 50px -20px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08)}
+html body #mrBg #mrBx .hd,html body #tg .hd{width:40px;height:4px;border-radius:2px;background:var(--t-chipbd);margin:6px auto 14px}
+html body #mrBg #mrBx{padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 20px)}
+html body #mrBg #mrBx h3{margin:0 4px 6px;font:800 20px/1.25 var(--fd,system-ui);color:var(--t-ink,var(--ink))}
+html body #mrBg #mrBx .sec{margin:16px 6px 8px;font:700 12px var(--fd,system-ui);letter-spacing:.04em;color:var(--t-ink2,var(--ink2));opacity:1}
+html body #mrBg #mrBx .gr{background:var(--t-row);border:1px solid var(--t-rowbd);border-radius:20px;overflow:hidden}
+html body #mrBg #mrBx .cd{--c:var(--t-icon)!important;min-height:60px;padding:10px 14px;gap:12px;border:0;border-bottom:1px solid var(--t-rowbd);border-radius:0;background:transparent;box-shadow:none;color:var(--t-ink,var(--ink));font:700 14.5px/1.35 var(--fb,system-ui)}
+html body #mrBg #mrBx .gr .cd:last-child{border-bottom:0}
+html body #mrBg #mrBx .cd:active{background:color-mix(in srgb,var(--t-icon) 12%,transparent)}
+html body #mrBg #mrBx .cd>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+html body #mrBg #mrBx .ic{width:40px;height:40px;border-radius:13px;flex:none;color:var(--t-icon);background:color-mix(in srgb,var(--t-icon) 15%,transparent);border:1px solid color-mix(in srgb,var(--t-icon) 36%,transparent);box-shadow:none}
+html body #mrBg #mrBx .ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html body #mrBg #mrBx .st{flex:none;white-space:nowrap;padding:4px 11px;border-radius:999px;font:700 11px var(--fd,system-ui);background:var(--t-row);border:1px solid var(--t-rowbd);color:var(--t-ink2,var(--ink2));opacity:1}
+html body #mrBg #mrBx .st.on{background:color-mix(in srgb,var(--t-icon) 16%,transparent);border-color:color-mix(in srgb,var(--t-icon) 40%,transparent);color:var(--t-icon)}
+html body #mrBg #mrBx .cd:not(:has(.st))::after{color:var(--t-ink2,var(--ink2));opacity:.7}
+/* دليل التطبيق: التطبيق يقدر يعمل إيه */
+html body #tg .hero{background:transparent;color:var(--t-ink,var(--ink));padding:10px 18px 14px;border-bottom:1px solid var(--t-rowbd)}
+html body #tg .hero h2{font:800 21px/1.25 var(--fd,system-ui);color:var(--t-ink,var(--ink));padding-inline-end:48px}
+html body #tg .hero p{color:var(--t-ink2,var(--ink2));opacity:1}
+html body #tg .x{top:16px;width:38px;height:38px;border-radius:13px;padding:0;display:grid;place-items:center;font-size:0;background:var(--t-chip);border:1.5px solid var(--t-chipbd);color:var(--t-chipink)}
+html body #tg .x svg{width:18px;height:18px}
+html body #tg .sr{background:var(--t-row);border:1px solid var(--t-rowbd);color:var(--t-ink2,var(--ink2))}
+html body #tg .sr svg{flex:none}
+html body #tg .sr input{color:var(--t-ink,var(--ink))}
+html body #tg .sr input::placeholder{color:var(--t-ink2,var(--ink2));opacity:.8}
+html body #tg details{background:var(--t-row);border:1px solid var(--t-rowbd)}
+html body #tg details[open]{background:var(--t-row);border-color:var(--t-chipbd)}
+html body #tg summary{min-width:0}
+html body #tg .ti{width:44px;height:44px;border-radius:14px;background:color-mix(in srgb,var(--t-icon) 15%,transparent)!important;color:var(--t-icon);border:1px solid color-mix(in srgb,var(--t-icon) 36%,transparent);box-shadow:none}
+html body #tg .tt{min-width:0}
+html body #tg .tt b{color:var(--t-ink,var(--ink));overflow-wrap:anywhere}
+html body #tg .tt small{color:var(--t-ink2,var(--ink2));opacity:1;overflow-wrap:anywhere}
+html body #tg .wh{display:inline-flex;align-items:flex-start;gap:6px;white-space:normal;line-height:1.45;border-radius:12px;padding:6px 11px;background:color-mix(in srgb,var(--t-icon) 13%,transparent);color:var(--t-icon)}
+html body #tg .wh svg{flex:none;margin-top:1px}
+html body #tg li{color:var(--t-ink,var(--ink))}
+html body #tg li::before{background:color-mix(in srgb,var(--t-icon) 18%,transparent);color:var(--t-icon);border:1px solid color-mix(in srgb,var(--t-icon) 34%,transparent)}
+html body #tg .ft{border-top:1px solid var(--t-rowbd)}
+html body #tg .go{background:linear-gradient(100deg,#1F6BFF,#8A56FF);box-shadow:0 8px 22px -8px rgba(90,100,255,.8)}
+/* إنشاء جديد + قايمة الكاميرا العايمة */
+html body #nwBx h3{color:var(--t-ink,var(--ink))}
+html body #nwBx button.o,html body #fabMenu button{background:var(--t-row);border:1px solid var(--t-rowbd);color:var(--t-ink,var(--ink));box-shadow:none}
+html body #fabMenu button{background:var(--t-sheet);border-color:var(--t-chipbd);box-shadow:0 12px 28px -12px rgba(0,0,0,.6)}
+html body #nwBx .o i,html body #fabMenu .mi{background:color-mix(in srgb,var(--t-icon) 15%,transparent)!important;color:var(--t-icon)!important;border:1px solid color-mix(in srgb,var(--t-icon) 36%,transparent);box-shadow:none!important}
+html body #nwBx .o i{width:46px;height:46px;border-radius:15px}
+html body #nwBx .o svg{width:24px;height:24px}
+html body #nwBx .o b,html body #nwBx .o small{min-width:0;overflow-wrap:anywhere}
+html body #nwBx .x{color:var(--t-ink2,var(--ink2))}
+/* نافذة الحفظ */
+html body .sheet .grab{background:var(--t-chipbd)}
+html body .chip{background:var(--t-row);border:1px solid var(--t-rowbd);color:var(--t-ink,var(--ink))}
+html body .chip.on{border-color:transparent}
 </style>
 </head><body>
 <title>Timaxo Scan</title>
@@ -1131,7 +1251,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
     <div class="docrow">
       <input class="docname" id="docName" maxlength="60" data-tp="docName" autocomplete="off" spellcheck="false">
       <button class="btn sm" id="newBtn" data-t="newDoc"></button>
-      <button class="btn sm" id="exportBtn" type="button"><svg class="i"><use href="#i-save"/></svg><span data-t="save"></span></button>
+      <button class="btn sm" id="exportBtn" type="button" title="Save" aria-label="Save"><svg class="i"><use href="#i-save"/></svg><span data-t="save"></span></button>
       <button class="ib" id="libBtn" aria-label="Documents"><svg class="i"><use href="#i-docs"/></svg><span class="libt">Documents</span><span class="libb" id="libB"></span></button>
     </div>
     <div class="count" id="count"></div>
@@ -4678,11 +4798,11 @@ function open(){
  if(ov)return;try{localStorage.setItem(SEEN,'1')}catch(e){}const d0=document.querySelector('#tgBtn i');if(d0)d0.remove();
  const o=document.createElement('div');o.id='tg';o.style.zIndex='9000';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
  const k=A()?0:1;
- o.innerHTML='<div class="bx"><div class="hero"><div class="hd"></div><button class="x" type="button" data-a="x" aria-label="close">✕</button><h2>'+L('التطبيق يقدر يعمل إيه؟','What can Timaxo do?')+'</h2><p>'+L('دليل سريع بكل الأدوات وأماكنها وطريقة استخدامها','A quick tour of every tool, where it lives and how to use it')+'</p><label class="sr">'+ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>').replace('width="22" height="22"','width="18" height="18"')+'<input type="search" id="tgQ" autocomplete="off" placeholder="'+L('ابحث: قفل، PDF، بطاقة، نسخ احتياطي…','Search: lock, PDF, card, backup…')+'"></label></div><div class="ls" id="tgL"></div><div class="ft"><button class="go" type="button" id="tgGo">'+L('ابدأ التصوير','Start scanning')+'</button></div></div>';
+ o.innerHTML='<div class="bx"><div class="hero"><div class="hd"></div><button class="x" type="button" data-a="x" aria-label="close">'+ic('<path d="M6 6l12 12M18 6L6 18"/>').replace('width="22" height="22"','width="18" height="18"')+'</button><h2>'+L('التطبيق يقدر يعمل إيه؟','What can Timaxo do?')+'</h2><p>'+L('دليل سريع بكل الأدوات وأماكنها وطريقة استخدامها','A quick tour of every tool, where it lives and how to use it')+'</p><label class="sr">'+ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>').replace('width="22" height="22"','width="18" height="18"')+'<input type="search" id="tgQ" autocomplete="off" placeholder="'+L('ابحث: قفل، PDF، بطاقة، نسخ احتياطي…','Search: lock, PDF, card, backup…')+'"></label></div><div class="ls" id="tgL"></div><div class="ft"><button class="go" type="button" id="tgGo">'+L('ابدأ التصوير','Start scanning')+'</button></div></div>';
  const ls=o.querySelector('#tgL');
  D.forEach((x,n)=>{const dt=document.createElement('details');if(n===0)dt.open=true;
   dt.dataset.s=(x.t[k]+' '+x.s[k]+' '+x.w[k]+' '+x.p.map(a=>a[k]).join(' ')).toLowerCase();
-  dt.innerHTML='<summary><span class="ti" style="background:linear-gradient(135deg,'+x.c[0]+','+x.c[1]+')">'+x.i+'</span><span class="tt"><b>'+x.t[k]+'</b><small>'+x.s[k]+'</small></span>'+ic('<path d="M6 9l6 6 6-6"/>').replace('width="22" height="22"','class="ch" width="18" height="18"')+'</summary><div class="bd"><span class="wh">📍 '+x.w[k]+'</span><ol>'+x.p.map(a=>'<li>'+a[k]+'</li>').join('')+'</ol></div>';
+  dt.innerHTML='<summary><span class="ti" style="background:linear-gradient(135deg,'+x.c[0]+','+x.c[1]+')">'+x.i+'</span><span class="tt"><b>'+x.t[k]+'</b><small>'+x.s[k]+'</small></span>'+ic('<path d="M6 9l6 6 6-6"/>').replace('width="22" height="22"','class="ch" width="18" height="18"')+'</summary><div class="bd"><span class="wh">'+ic('<path d="M12 21s7-5.2 7-11a7 7 0 10-14 0c0 5.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>').replace('width="22" height="22"','width="15" height="15"')+'<span>'+x.w[k]+'</span></span><ol>'+x.p.map(a=>'<li>'+a[k]+'</li>').join('')+'</ol></div>';
   dt.addEventListener('toggle',()=>{if(dt.open&&!o.querySelector('#tgQ').value)ls.querySelectorAll('details[open]').forEach(e=>{if(e!==dt)e.open=false;});});
   ls.appendChild(dt);});
  const em=document.createElement('div');em.className='em';em.hidden=true;em.textContent=L('مفيش نتايج. جرّب كلمة تانية.','No results. Try another word.');ls.appendChild(em);
@@ -4696,7 +4816,7 @@ function mount(){
  const lb=document.getElementById('langBtn');if(!lb||document.getElementById('tgBtn'))return;
  const b=document.createElement('button');b.id='tgBtn';b.type='button';b.className=lb.className;b.setAttribute('aria-label',L('دليل التطبيق','App guide'));
  let seen=0;try{seen=localStorage.getItem(SEEN)}catch(e){}
- b.innerHTML=ic('<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.8 1.9 1.9.8-1.9.8L19 20.4l-.8-1.9-1.9-.8 1.9-.8z"/>')+(seen?'':'<i></i>');
+ b.innerHTML=ic('<path d="M12 6.7C10.4 5.5 8.3 4.9 6 4.9c-1.3 0-2.5.2-3.5.6V19c1-.4 2.2-.6 3.5-.6 2.3 0 4.4.6 6 1.8 1.6-1.2 3.7-1.8 6-1.8 1.3 0 2.5.2 3.5.6V5.5c-1-.4-2.2-.6-3.5-.6-2.3 0-4.4.6-6 1.8zM12 6.7v13.5"/>')+(seen?'':'<i></i>');
  b.onclick=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));open();};
  lb.parentNode.insertBefore(b,lb);
  const fix=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));const g=document.getElementById('galFab');if(g)g.setAttribute('aria-label',L('استيراد من الجهاز','Import from device'));};
@@ -4962,4 +5082,11 @@ html body #tfSk .tfc.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg),0
 
 lb.addEventListener('click',function(){lb.classList.remove('ignite');void lb.offsetWidth;lb.classList.add('ignite');try{navigator.vibrate&&navigator.vibrate([14,40,22])}catch(_){}},true)}catch(e){}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,400)});else setTimeout(go,400)})();
-</script></body></html>
+</script><script>/* v108: زر المستندات جوه صف اسم المستند لما فيه صفحات، وتاب جانبي في الحالة الفاضية */
+(function(){var vh=document.getElementById('vHome'),sh=document.getElementById('shelf');
+function sync(){try{var lt=document.getElementById('libBtn'),row=vh&&vh.querySelector('.docrow');if(!vh||!lt||!row||!sh)return;
+var inline=!vh.classList.contains('docsmode')&&!sh.querySelector('.empty');lt.classList.toggle('inrow',inline);var nb=document.getElementById('newBtn');if(nb&&nb.textContent.trim()){nb.setAttribute('aria-label',nb.textContent.trim());nb.title=nb.textContent.trim()}var want=inline?row:vh;if(lt.parentNode!==want)want.appendChild(lt)}catch(e){}}
+if(vh&&sh){new MutationObserver(sync).observe(sh,{childList:true,subtree:true});new MutationObserver(sync).observe(vh,{attributes:true,attributeFilter:['class']})}
+sync();setTimeout(sync,400);setTimeout(sync,1500);setTimeout(sync,3500)})();
+</script>
+</body></html>
