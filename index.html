@@ -991,7 +991,92 @@ html body #vHome #sampleBtn{margin:0 84px 0 0;padding:0 18px 0 8px;font-size:16.
 html body #qrFab{left:14px!important;right:auto!important;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 28px)!important;width:46px!important;height:46px!important;border-radius:50%!important;background:linear-gradient(160deg,#04245a,#021640)!important;border:1.5px solid rgba(60,170,255,.65)!important;color:#7FD0FF!important;box-shadow:0 0 16px -4px rgba(40,150,255,.8)!important}
 @media (max-height:820px){html body #vHome .empty .demo{zoom:.6}html body #vHome .empty h1{font-size:28px;margin-top:4px}html body #vHome .empty p{font-size:15px}html body #vHome .emact .btn{height:54px;min-height:54px}html body #vHome .emact .emi{width:44px;height:44px}html body #vHome .tipi{width:38px;height:38px}html body #vHome .emtips li{font-size:14px;margin:6px 0}html body #vHome .emtips{margin-top:2px}}
 @media (max-height:700px){html body #vHome .empty .demo{zoom:.46}html body #vHome .empty h1{font-size:24px}html body #vHome .empty p{font-size:13.5px}html body #vHome .emact .btn{height:48px;min-height:48px;font-size:18px}html body #vHome .emtips{display:none}html body #vHome #sampleBtn{height:46px;min-height:46px}}
-</style></head><body>
+</style><style id="timaxo-v107">
+/* ===== Timaxo v107: توحيد تصميم الشاشة الرئيسية (دارك/ليت/عربي/إنجليزي) ===== */
+html:root{--t-ink:#0A1B44;--t-ink2:#35589F;--t-tip:#27499A;--t-chip:rgba(255,255,255,.86);--t-chipbd:rgba(43,107,255,.45);--t-chipink:#1C4FD8;--t-chipsh:0 6px 18px -8px rgba(43,107,255,.55);--t-btn2:rgba(255,255,255,.9);--t-btn2ink:#0F2C6B;--t-btn2bd:rgba(43,107,255,.55);--t-scan:#1766D6;--t-h1glow:none;--t-chev:%231C4FD8;--bgimg:url(bg-light.jpg);--hb:clamp(36px,10.4vw,44px)}
+html:root[data-theme="blue"],html:root[data-theme="dark"]{--t-ink:#F2F7FF;--t-ink2:#B3CCF7;--t-tip:#93C4FF;--t-chip:linear-gradient(160deg,rgba(8,40,104,.8),rgba(2,16,52,.9));--t-chipbd:rgba(80,160,255,.58);--t-chipink:#EAF3FF;--t-chipsh:0 0 18px -6px rgba(40,140,255,.75),inset 0 1px 0 rgba(255,255,255,.12);--t-btn2:linear-gradient(160deg,rgba(3,48,95,.88),rgba(1,34,76,.92));--t-btn2ink:#fff;--t-btn2bd:rgba(40,190,255,.7);--t-scan:#22B8FF;--t-h1glow:0 0 22px rgba(80,160,255,.45);--t-chev:%23EAF3FF;--bgimg:url(bg-dark.jpg)}
+html:root[data-theme="dark"]{--bgimg:linear-gradient(rgba(0,4,16,.5),rgba(0,4,16,.5)),url(bg-dark.jpg)}
+
+/* الخلفية الموحّدة (نفس خلفية التصميم) */
+html:root body .view,html:root body #vHome{background-color:var(--bg)!important;background-image:var(--bgimg)!important;background-size:cover!important;background-position:center top!important;background-repeat:no-repeat!important}
+
+/* ---- الهيدر: صف واحد من غير تداخل ---- */
+html:root body #vHome>header.top{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:6px!important;padding:max(10px,env(safe-area-inset-top)) 12px 6px!important;min-height:0!important;border:0!important}
+html:root body #vHome .top .brand{flex:1 1 auto!important;min-width:0!important;order:0!important;gap:8px!important;margin:0!important}
+html:root body #vHome .top .logo{width:var(--hb)!important;height:var(--hb)!important;flex:none;border-radius:14px!important}
+html:root body #vHome .top .brand b{font-size:clamp(18px,5.6vw,23px)!important;padding-inline-end:8px!important;white-space:nowrap;color:var(--t-ink)!important;min-width:0}
+html:root body #vHome .top .brand b span{font-size:clamp(8px,2.5vw,10px)!important;letter-spacing:.3em!important;color:var(--t-scan)!important}
+html:root body #vHome .top .brand b span::before,html:root body #vHome .top .brand b span::after{background:var(--t-scan)!important;width:clamp(8px,3vw,14px)!important}
+html:root body #vHome .top>#globeBtn{order:1!important}
+html:root body #vHome .top>#asgBtn{order:2!important}
+html:root body #vHome .top>.hdock{order:3!important}
+html:root body #vHome .top>#langBtn,html:root body #vHome .top>.inst[hidden],html:root body #vHome .top>.utils{display:none!important}
+/* كل الأزرار نفس الستايل: زجاج + حد + أيقونة بنفس السمك */
+html:root body #vHome #globeBtn,html:root body #vHome #asgBtn,html:root body #vHome .top .hdock{background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;box-shadow:var(--t-chipsh)!important;color:var(--t-chipink)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+html:root body #vHome #globeBtn,html:root body #vHome #asgBtn{width:var(--hb)!important;min-width:var(--hb)!important;height:var(--hb)!important;border-radius:calc(var(--hb)*.36)!important;padding:0!important;display:grid!important;place-items:center;position:relative;flex:none}
+html:root body #vHome #globeBtn svg{width:calc(var(--hb)*.52);height:calc(var(--hb)*.52);stroke-width:1.9}
+html:root body #vHome #globeBtn i{position:absolute;inset:auto 3px 3px auto;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font:800 9px/1 var(--fd,system-ui);font-style:normal;background:var(--t-chipink);color:var(--bg);padding:0}
+html:root body #vHome #asgBtn::before{inset:calc(var(--hb)*.16)!important}
+html:root body #vHome .top .hdock{height:var(--hb)!important;padding:0 4px!important;gap:0!important;border-radius:calc(var(--hb)*.36)!important;display:flex!important;align-items:center;flex:none}
+html:root body #vHome .top .hdock>button{width:clamp(27px,8vw,32px)!important;min-width:0!important;height:calc(var(--hb) - 8px)!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important;color:var(--t-chipink)!important;border-radius:12px!important;display:grid!important;place-items:center;opacity:1!important}
+html:root body #vHome .top .hdock>button svg{width:20px!important;height:20px!important;stroke-width:1.9}
+html:root body #vHome .top .hdock>button[aria-label="المزيد"],html:root body #vHome .top .hdock>button[aria-label="More"]{font-size:0!important;position:relative}
+html:root body #vHome .top .hdock>button[aria-label="المزيد"]::before,html:root body #vHome .top .hdock>button[aria-label="More"]::before{content:"";position:absolute;inset:0;margin:auto;width:19px;height:5px;background:radial-gradient(circle at 2.5px 2.5px,currentColor 2.3px,transparent 2.8px) 0 0/8px 5px repeat-x}
+
+/* ---- صف اسم المستند + تاب المستندات ---- */
+html:root body #vHome .docrow{padding:6px 14px 4px!important;justify-content:flex-start!important;position:relative;z-index:6}
+html:root body #vHome .docname{width:min(200px,56%)!important;height:46px!important;border-radius:23px!important;border:1.5px solid var(--t-chipbd)!important;background:var(--t-chip)!important;color:var(--t-ink)!important;box-shadow:var(--t-chipsh)!important;font:700 clamp(16px,4.8vw,19px) var(--fd)!important;text-align:center!important;padding:0 36px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='var(--t-chev)' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-size:18px!important;background-position:right 12px center!important}
+html:root[data-theme="light"] body #vHome .docname{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231C4FD8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E")!important}
+html:root[data-theme="blue"] body #vHome .docname,html:root[data-theme="dark"] body #vHome .docname{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EAF3FF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E")!important}
+html:root body #vHome .docname:focus{outline:2px solid var(--t-scan)!important}
+/* التاب الجانبي + الوميض الحقيقي */
+html:root body #vHome #libBtn{top:calc(max(10px,env(safe-area-inset-top)) + var(--hb) + 14px)!important;width:46px!important;padding:12px 0 14px!important;gap:8px!important;overflow:visible!important;background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;box-shadow:var(--t-chipsh)!important;color:var(--t-chipink)!important;z-index:9!important}
+html:root body #vHome #libBtn svg{width:22px!important;height:22px!important;padding:5px!important;border-radius:50%!important;border:1.5px solid var(--t-chipbd)!important;background:transparent!important;box-sizing:content-box;color:var(--t-chipink)}
+html:root body #vHome #libBtn .libt{font:700 clamp(14px,4vw,16px) var(--fd)!important;color:var(--t-chipink)!important}
+html:root body #vHome #libBtn .libb{color:#fff!important}
+html:root body #vHome #libBtn::before{content:"";position:absolute;top:-34px;bottom:-34px;left:0;right:auto;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,transparent 0,#5AF0FF 20%,#3C8BFF 62%,transparent 100%);box-shadow:0 0 9px 2px rgba(70,190,255,.95),0 0 26px 8px rgba(40,130,255,.6);animation:txEdge 3.6s ease-in-out infinite;pointer-events:none}
+html:root body #vHome #libBtn::after{content:"";position:absolute;top:-50px;bottom:-50px;left:0;right:auto;width:64px;background:radial-gradient(ellipse 100% 50% at 0 50%,rgba(46,170,255,.42),transparent 72%);pointer-events:none;animation:txEdge 3.6s ease-in-out infinite;mix-blend-mode:screen}
+html:root[dir="ltr"] body #vHome #libBtn{left:auto!important;right:0!important;border-radius:26px 0 0 26px!important;border:1.5px solid var(--t-chipbd)!important;border-right:0!important}
+html:root[dir="ltr"] body #vHome #libBtn::before{left:auto;right:0;border-radius:4px 0 0 4px}
+html:root[dir="ltr"] body #vHome #libBtn::after{left:auto;right:0;background:radial-gradient(ellipse 100% 50% at 100% 50%,rgba(46,160,255,.5),transparent 70%)}
+@keyframes txEdge{0%,100%{opacity:.75}50%{opacity:1}}
+
+/* ---- الحالة الفاضية ---- */
+html:root body #vHome .shelf:has(.empty){overflow-y:auto!important;overflow-x:hidden!important;padding:0 16px!important;position:relative}
+html:root body #vHome .empty{--ds:clamp(104px,17vh,176px);display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start!important;gap:clamp(6px,1.2vh,12px)!important;height:auto!important;min-height:100%;padding:clamp(6px,1.4vh,16px) 0 calc(118px + env(safe-area-inset-bottom))!important;box-sizing:border-box}
+html:root body #vHome .empty .demo{zoom:1!important;width:calc(var(--ds)*.8)!important;height:var(--ds)!important;margin:0 0 clamp(12px,2.6vh,26px)!important;flex:none;filter:drop-shadow(0 0 16px rgba(50,150,255,.45))}
+html:root body #vHome .empty .demo::before{content:"";position:absolute;left:50%;top:calc(52% - 46px);width:min(96vw,380px);height:92px;transform:translateX(-50%);pointer-events:none;z-index:3;background:radial-gradient(ellipse 40% 34% at 50% 50%,rgba(120,210,255,.75),transparent 72%),linear-gradient(90deg,transparent,rgba(90,190,255,.95) 22%,#fff 50%,rgba(90,190,255,.95) 78%,transparent) center/100% 3px no-repeat;animation:txBeam 3.2s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(70,170,255,.95))}
+@keyframes txBeam{0%,100%{opacity:.72}50%{opacity:1}}
+html:root body #vHome .empty .demo .sheet-d{inset:9% 15%!important;border-radius:12px!important;transform:rotate(-4deg)!important;clip-path:polygon(0 0,calc(100% - 26px) 0,100% 26px,100% 100%,0 100%);box-shadow:none!important;background:linear-gradient(90deg,#4B93FF,#8CBBFF) 14% 22%/44% 4px no-repeat,linear-gradient(90deg,#4B93FF,#8CBBFF) 14% 33%/72% 4px no-repeat,linear-gradient(90deg,#4B93FF,#8CBBFF) 14% 44%/66% 4px no-repeat,linear-gradient(90deg,#4B93FF,#8CBBFF) 14% 61%/72% 4px no-repeat,linear-gradient(90deg,#4B93FF,#8CBBFF) 14% 72%/58% 4px no-repeat,linear-gradient(90deg,#4B93FF,#8CBBFF) 14% 83%/40% 4px no-repeat,linear-gradient(160deg,#F7FBFF,#BCD6FF)!important}
+html:root body #vHome .empty .demo .sheet-d::before{display:none!important}
+html:root body #vHome .empty .demo .sheet-d::after{content:"";position:absolute;top:0;right:0;width:26px;height:26px;background:linear-gradient(to top right,#8FB8F5 50%,transparent 50%)!important;border:0;border-radius:0 0 0 6px}
+html:root body #vHome .empty .demo .sheet-d .beam{display:none!important}
+html:root body #vHome .empty h1{font:800 clamp(24px,7.4vw,32px)/1.2 var(--fd)!important;color:var(--t-ink)!important;text-shadow:var(--t-h1glow)!important;margin:0!important;text-wrap:balance}
+html:root body #vHome .empty p{font:500 clamp(13.5px,3.9vw,15.5px)/1.55 var(--fb)!important;color:var(--t-ink2)!important;max-width:38ch!important;margin:0!important}
+html:root body #vHome .emact{width:min(390px,100%)!important;gap:clamp(8px,1.5vh,12px)!important;margin:2px 0 0!important}
+html:root body #vHome .emact .btn{height:clamp(48px,6.4vh,56px)!important;min-height:0!important;border-radius:20px!important;font:800 clamp(16px,4.9vw,20px) var(--fd)!important;padding:5px 12px!important}
+html:root body #vHome .emact .btn:not(.pri){background:var(--t-btn2)!important;color:var(--t-btn2ink)!important;border:1.5px solid var(--t-btn2bd)!important;box-shadow:var(--t-chipsh)!important}
+html:root body #vHome .emact .btn:not(.pri)::after{filter:none;opacity:.9;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231C4FD8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E")!important}
+html:root[data-theme="blue"] body #vHome .emact .btn:not(.pri)::after,html:root[data-theme="dark"] body #vHome .emact .btn:not(.pri)::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E")!important}
+html:root body #vHome .emact .emi{width:clamp(36px,4.9vh,44px)!important;height:clamp(36px,4.9vh,44px)!important;border-radius:13px!important}
+html:root body #vHome .emtips{width:min(390px,100%)!important;margin:2px 0 0!important}
+html:root body #vHome .emtips li{gap:12px!important;margin:clamp(4px,.8vh,8px) 0!important;color:var(--t-tip)!important;font:600 clamp(12.5px,3.5vw,14px)/1.4 var(--fb)!important}
+html:root body #vHome .tipi{width:clamp(34px,4.7vh,40px)!important;height:clamp(34px,4.7vh,40px)!important;background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;color:var(--t-chipink)!important;box-shadow:var(--t-chipsh)!important}
+html:root body #vHome .tipi svg{width:19px!important;height:19px!important}
+
+/* ---- صف الأسفل: QR + صفحة تجريبية + العدسة (من غير تزاحم) ---- */
+html:root body #vHome #sampleBtn{position:absolute!important;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 14px)!important;inset-inline:auto!important;left:66px!important;right:112px!important;width:auto!important;height:48px!important;min-height:0!important;margin:0!important;padding:0 10px 0 7px!important;gap:6px!important;border-radius:24px!important;font:800 clamp(12.5px,3.6vw,15px) var(--fd)!important;background:var(--t-btn2)!important;color:var(--t-btn2ink)!important;border:1.5px solid rgba(130,110,255,.75)!important;box-shadow:0 0 18px -8px rgba(120,100,255,.8)!important;justify-content:center;z-index:5}
+html:root body #vHome #sampleBtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+html:root body #vHome #sampleBtn .crn{width:32px!important;height:32px!important;border-radius:11px!important;flex:none}
+html:root body #qrFab{left:14px!important;right:auto!important;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 14px)!important;width:46px!important;height:46px!important;background:var(--t-chip)!important;border:1.5px solid var(--t-chipbd)!important;color:var(--t-chipink)!important;box-shadow:var(--t-chipsh)!important}
+html:root body #vHome #scanBtn{bottom:calc(max(16px,env(safe-area-inset-bottom)) + 4px)!important;width:86px!important;height:86px!important}
+
+html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!important}
+@media (max-width:350px){html:root{--hb:34px}html:root body #vHome>header.top{padding-inline:8px!important;gap:4px!important}html:root body #vHome .top .brand{gap:6px!important;overflow:hidden}html:root body #vHome .top .brand b{font-size:17px!important;padding-inline-end:0!important;border-inline-end:0!important}html:root body #vHome .top .brand b span{display:none}html:root body #vHome .top .hdock{padding:0 2px!important}html:root body #vHome .top .hdock>button{width:24px!important}html:root body #vHome .top .hdock>button svg{width:18px!important;height:18px!important}html:root body #vHome #sampleBtn{left:64px!important;right:104px!important}html:root body #vHome .emact .btn.btn,html:root body #vHome .emact .btn.btn span{font-size:14.5px!important;letter-spacing:0!important;white-space:nowrap}html:root body #vHome .emact .btn span{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+@media (max-height:790px){html:root body #vHome .emtips{display:none}html:root body #vHome .empty{--ds:clamp(100px,19vh,150px)}}
+@media (prefers-reduced-motion:reduce){html:root body #vHome #libBtn::before,html:root body #vHome #libBtn::after,html:root body #vHome .empty .demo::before{animation:none!important}}
+</style>
+</head><body>
 <title>Timaxo Scan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
