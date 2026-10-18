@@ -5169,4 +5169,64 @@ var t=0,iv=setInterval(function(){var ok=setup();if(ok||++t>60)clearInterval(iv)
 setTimeout(setup,1200);
 new MutationObserver(function(){var g=document.getElementById('globeBtn');if(g&&!g._t110)setup()}).observe(document.body,{childList:true,subtree:true});
 })();
+</script><style id="tx111">
+/* ===== Timaxo v111: علامة + زي المرجع + قايمة أيقونات بتطلع من العدسة ===== */
+html body #vHome.docsmode #scanBtn .ic-plus{width:36px!important;height:36px!important;padding:0!important;border:0!important;background:none!important;border-radius:0!important;box-shadow:none!important;color:#fff!important;stroke-width:3!important;stroke-linecap:butt!important;filter:drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 0 10px #22B8FF)!important;transition:transform .42s cubic-bezier(.34,1.56,.64,1)!important}
+html body #vHome.docsmode #scanBtn:active .ic-plus{transform:scale(.92)!important}
+html.txfan-open body #vHome.docsmode #scanBtn .ic-plus{transform:rotate(135deg)!important}
+html.txfan-open body #vHome #scanBtn{z-index:12!important}
+.txfs{position:fixed;inset:0;z-index:10;background:rgba(2,6,20,.5);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.txfan{position:fixed;z-index:11;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.txfan .row{direction:ltr;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 96px);padding:0;border:0;background:none;color:#fff;font-family:var(--fb,system-ui);-webkit-tap-highlight-color:transparent}
+.txfan .lb{min-width:0;display:flex;flex-direction:column;gap:2px;padding:9px 16px;border-radius:18px;background:rgba(14,20,44,.78);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 14px 30px -14px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.16);unicode-bidi:plaintext;text-align:start}
+.txfan .lb b{font:800 14.5px/1.25 var(--fb,system-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txfan .lb small{font:500 11.5px/1.3 var(--fb,system-ui);opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txfan .ic{position:relative;flex:none;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;color:#fff;background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.55),transparent 46%),linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 45%,#050a24));border:1.5px solid rgba(255,255,255,.55);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 22%,transparent),0 12px 26px -8px var(--c),inset 0 -6px 12px rgba(0,0,0,.28)}
+.txfan .ic svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+</style><script id="tx111js">
+(function(){
+var R=document.documentElement;
+function vib(p){try{if(localStorage.getItem('tx_hap')==='0')return;if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
+function red(){return matchMedia('(prefers-reduced-motion:reduce)').matches}
+var S='<svg viewBox="0 0 24 24">',E='</svg>';
+var IC={cam:S+'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.4"/>'+E,
+gal:S+'<rect width="18" height="18" x="3" y="3" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>'+E,
+blank:S+'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M9 13h6M9 17h4"/>'+E};
+var open=null;
+function close(fast,cb){var o=open;if(!o)return;open=null;R.classList.remove('txfan-open');
+ var done=function(){o.s.remove();o.f.remove();cb&&cb()};
+ if(fast||red()||!o.f.animate){done();return}
+ var rows=[].slice.call(o.f.children);
+ rows.forEach(function(r,i){r.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY('+(60+i*0)+'px) scale(.4)'}],{duration:200,delay:(rows.length-1-i)*30,easing:'cubic-bezier(.5,0,1,.6)',fill:'forwards'})});
+ var a=o.s.animate([{opacity:1},{opacity:0}],{duration:240,fill:'forwards'});a.onfinish=done;}
+window.__txNewChooser=function(){
+ if(open){vib(8);close();return}
+ var ar=(typeof lang!=='undefined'?lang:'ar')==='ar',T=function(a,e){return ar?a:e};
+ var host=document.getElementById('vHome')||document.body,fab=document.getElementById('scanBtn');if(!fab)return;
+ var O=[['blank','#f59e0b',T('صفحة A4 فاضية','Blank A4 page'),T('ابدأ بورقة بيضا','Start with a white page')],
+        ['gal','#8a5cf0',T('من المعرض أو PDF','Gallery or PDF'),T('صور أو ملف PDF','Photos or a PDF file')],
+        ['cam','#2f7bff',T('تصوير بالكاميرا','Scan with camera'),T('قص وتحسين تلقائي','Auto-crop and enhance')]];
+ var s=document.createElement('div');s.className='txfs';var f=document.createElement('div');f.className='txfan';f.setAttribute('role','menu');
+ O.forEach(function(o){var b=document.createElement('button');b.type='button';b.className='row';b.style.setProperty('--c',o[1]);
+  b.innerHTML='<span class="lb"><b></b><small></small></span><span class="ic">'+IC[o[0]]+'</span>';
+  b.querySelector('b').textContent=o[2];b.querySelector('small').textContent=o[3];
+  b.onclick=function(e){e.stopPropagation();vib(12);close(false,function(){var m=document.querySelector('#fabMenu [data-a="'+o[0]+'"]');if(m)m.click()})};f.appendChild(b)});
+ s.onclick=function(){close()};
+ host.appendChild(s);host.appendChild(f);
+ var r=fab.getBoundingClientRect();
+ f.style.right=Math.max(8,innerWidth-r.right+(r.width-54)/2)+'px';
+ f.style.bottom=(innerHeight-r.top+16)+'px';
+ open={s:s,f:f};R.classList.add('txfan-open');vib([14,24,10]);
+ if(!red()&&f.animate){
+  s.animate([{opacity:0},{opacity:1}],{duration:220,fill:'both'});
+  var rows=[].slice.call(f.children),n=rows.length;
+  rows.forEach(function(row,i){var k=n-1-i; /* الأقرب للعدسة يطلع الأول */
+   row.animate([{opacity:0,transform:'translateY('+(70+k*52)+'px) scale(.3)'},{opacity:1,transform:'none'}],{duration:460,delay:k*70,easing:'cubic-bezier(.34,1.45,.5,1)',fill:'both'});
+   var ic=row.querySelector('.ic');ic.animate([{transform:'rotate(-120deg) scale(.5)'},{transform:'none'}],{duration:520,delay:k*70,easing:'cubic-bezier(.34,1.6,.5,1)',fill:'both'});
+   row.querySelector('.lb').animate([{opacity:0,transform:'translateX(18px) scale(.9)'},{opacity:1,transform:'none'}],{duration:340,delay:k*70+140,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'});});
+ }
+};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+addEventListener('scroll',function(){close(true)},true);
+})();
 </script></body></html>
