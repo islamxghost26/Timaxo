@@ -5229,4 +5229,16 @@ window.__txNewChooser=function(){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
 addEventListener('scroll',function(){close(true)},true);
 })();
-</script></body></html>
+</script><style id="tx112">
+/* ===== Timaxo v112: إصلاح اتجاه القايمة + اللاج + علامة + مدمجة ===== */
+.txfan{direction:ltr!important;align-items:flex-end!important;left:auto!important}
+.txfan .row{will-change:transform,opacity}
+.txfs{background:rgba(2,6,22,.66)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.txfan .lb{background:rgba(16,24,52,.96)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 8px 18px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.14)!important}
+.txfan .ic{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 20%,transparent),0 8px 16px -8px var(--c),inset 0 -6px 10px rgba(0,0,0,.25)!important}
+.txfan .ic svg{filter:none!important}
+/* علامة +: حدقة زجاجية داخل العدسة بدل علامة ملصوقة فوقها */
+html body #vHome.docsmode #scanBtn .ic-plus{width:22px!important;height:22px!important;padding:10px!important;box-sizing:content-box!important;border-radius:50%!important;color:#eaf6ff!important;stroke-width:2.4!important;stroke-linecap:round!important;filter:none!important;background:radial-gradient(circle at 36% 26%,rgba(120,200,255,.55) 0 10%,transparent 28%),radial-gradient(circle at 50% 55%,#0d2a78 0,#061443 62%,#030a2a 100%)!important;border:1px solid rgba(70,175,255,.55)!important;box-shadow:0 0 12px rgba(34,150,255,.55),inset 0 0 10px rgba(30,120,255,.55),inset 0 -3px 6px rgba(0,0,0,.5)!important;transition:transform .4s cubic-bezier(.34,1.56,.64,1)!important}
+html body #vHome.docsmode #scanBtn:active .ic-plus{transform:scale(.92)!important}
+html.txfan-open body #vHome.docsmode #scanBtn .ic-plus{transform:rotate(135deg)!important}
+</style></body></html>
