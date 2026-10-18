@@ -1992,18 +1992,21 @@ async function importPdf(file){
   try{
     const lib=await import('./pdf.min.mjs');lib.GlobalWorkerOptions.workerSrc=new URL('./pdf.worker.min.mjs',location.href).href;
     const doc=await lib.getDocument({data:await file.arrayBuffer(),wasmUrl:new URL('./',location.href).href}).promise;
-    const MAXP=60,n=Math.min(doc.numPages,MAXP);
+    const MAXP=60,n=Math.min(doc.numPages,MAXP);let cv=null,chain=Promise.resolve();
     if(window.__txNew){window.__txNew=false;if(state.pages.length)await startNew();}
     for(let i=1;i<=n;i++){
-      toast(lang==='ar'?('بحوّل صفحة '+i+' من '+n+'…'):('Converting page '+i+' of '+n+'…'));
+      toast(lang==='ar'?('بحوّل صفحة '+i+' من '+n+'…'):('Converting page '+i+' of '+n+'…'));await sleep(16);
       const pg=await doc.getPage(i),v0=pg.getViewport({scale:1}),sc=Math.min(4,2200/Math.max(v0.width,v0.height)),vp=pg.getViewport({scale:sc});
-      const cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+      if(!cv)cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
       await pg.render({canvasContext:cx,viewport:vp,canvas:cv}).promise;pg.cleanup();
-      const blob=await toBlob(cv,'image/jpeg',.9);cv.width=cv.height=1;
-      const p={id:newId(),blob,src:null,corners:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],rot:0,filter:'original',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:''};
-      p.thumb=await makeThumb(p);state.pages.push(p);await persist(p);made++;if(!first)first=p;
+      /* v117: toBlob بياخد لقطة من الكانفس فورًا، فنقدر نرسم الصفحة اللي بعدها على نفس الكانفس والترميز والحفظ يكملوا في الخلفية بالترتيب */
+      const bp=toBlob(cv,'image/jpeg',.9),k=360/Math.max(cv.width,cv.height),tc=mk(Math.round(cv.width*k),Math.round(cv.height*k)),tx=tc.getContext('2d');tx.imageSmoothingQuality='high';tx.drawImage(cv,0,0,tc.width,tc.height);
+      const p={id:newId(),blob:null,src:null,corners:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],rot:0,filter:'original',br:0,ct:0,sat:0,ann:[],hist:[],fut:[],thumb:tc.toDataURL('image/jpeg',.82)};
+      chain=chain.then(async()=>{p.blob=await bp;state.pages.push(p);await persist(p);made++;if(!first)first=p;});
+      if(i%4===0)await chain;
     }
-    await persistMeta();try{doc.destroy();}catch(_){}
+    await chain;
+    if(cv)cv.width=cv.height=1;await persistMeta();try{doc.destroy();}catch(_){}
     if(doc.numPages>MAXP)toast(lang==='ar'?('اتحوّل أول '+MAXP+' صفحة بس'):('Only the first '+MAXP+' pages were imported'));
     else toast(lang==='ar'?('اتضاف '+made+' صفحة من الـPDF'):(made+' page(s) imported from PDF'));
   }catch(e){console.error(e);toast(lang==='ar'?'تعذّر فتح ملف الـPDF (ممكن يكون محمي بكلمة سر أو تالف)':'Could not open the PDF (it may be password-protected or damaged)');}
@@ -2019,7 +2022,7 @@ $('#scanBtn').onclick=()=>$('#camIn').click();
 $('#galBtn').onclick=()=>$('#galIn').click();
 
 async function startSample(){
-  busy(true);await sleep(30);
+  busy(true);await sleep(16);
   const W=1600,H=1200,c=mk(W,H),x=c.getContext('2d');
   let g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#4a4640');g.addColorStop(1,'#26231f');x.fillStyle=g;x.fillRect(0,0,W,H);
   x.globalAlpha=.07;for(let i=0;i<90;i++){x.fillStyle=i%2?'#fff':'#000';x.fillRect(0,(i*97)%H,W,1+(i%4));}x.globalAlpha=1;
@@ -2036,7 +2039,7 @@ async function startSample(){
   x.save();x.translate(pw-170,820);x.rotate(-.2);x.strokeStyle='#b53b2e';x.lineWidth=5;x.strokeRect(-90,-34,180,68);x.fillStyle='#b53b2e';x.font='700 40px Manrope, sans-serif';x.textAlign='center';x.fillText('PAID',0,14);x.restore();
   const sh=x.createLinearGradient(0,0,pw,ph);sh.addColorStop(0,'rgba(0,0,0,.34)');sh.addColorStop(.55,'rgba(0,0,0,.04)');sh.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=sh;x.fillRect(0,0,pw,ph);
   x.restore();
-  const blob=await toBlob(c,'image/jpeg',.9);busy(false);ingest(blob);
+  await ingest({__cv:c}); /* v115: نمرّر الكانفس مباشرة بدل ترميز JPEG وفك ترميزه تاني */
 }
 
 /* ---------- crop ---------- */
@@ -2818,7 +2821,7 @@ $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');
     if(!ok){s.className='st';s.textContent=T('مش متاح هنا','Not available');setTimeout(()=>{s.textContent=landOn()?T('مفعّل','On'):T('غير مفعّل','Off')},2500);toast(T('القفل مش متاح هنا. ثبّت التطبيق (إضافة للشاشة الرئيسية) وجرّبه من هناك، وعلى iPhone استخدم قفل الدوران من الجهاز','Not available here. Install the app to your home screen and try from there; on iPhone use the device rotation lock'));return;}
     s.className='st'+(landOn()?' on':'');s.textContent=landOn()?T('مفعّل','On'):T('غير مفعّل','Off');
     toast(landOn()?T('التدوير اتقفل على الوضع الحالي','Rotation locked in current orientation'):T('القفل اتفك','Rotation unlocked'));},1);
-  card(g4,'lng','#1b9fd0',T('اللغة','Language'),[ar?'العربية':'English',1],()=>{if(window.TXLANG)TXLANG.pick();else{const l=document.getElementById('langBtn');if(l)l.click();}});
+  card(g4,'lng','#1b9fd0',T('اللغة','Language'),[ar?(window.TXMSA&&TXMSA.on()?'العربية الفصحى':'العربية (مصر)'):'English',1],()=>{if(window.TXLANG)TXLANG.pick();else{const l=document.getElementById('langBtn');if(l)l.click();}});
   document.body.appendChild(bg);requestAnimationFrame(()=>requestAnimationFrame(()=>bg.classList.add('in')));});
  const lb=document.getElementById('langBtn');if(lb&&lb.parentNode)lb.parentNode.insertBefore(b,lb);if(locked())show();
  let hid=0;document.addEventListener('visibilitychange',()=>{if(document.hidden)hid=Date.now();else if(locked()&&hid&&Date.now()-hid>60000)show();});})();
@@ -5083,7 +5086,7 @@ html body #vHome .brand #globeBtn svg{width:94%!important;height:94%!important;s
 var R=document.documentElement;
 function vib(p){try{if(localStorage.getItem('tx_hap')==='0')return;if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
 function red(){return matchMedia('(prefers-reduced-motion:reduce)').matches}
-function cur(){return R.lang==='en'?'en':'ar'}
+function cur(){return R.lang==='en'?'en':(window.TXMSA&&TXMSA.on()?'sa':'ar')}
 function sndOn(){try{return localStorage.getItem('tx_snd')!=='0'}catch(e){return true}}
 /* ---- صوت الصفحة (مولّد بالكود، من غير ملفات) ---- */
 function ctx(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=window._txac||(window._txac=new C());if(a.state==='suspended')a.resume();return a}
@@ -5097,10 +5100,11 @@ var FL={
  ar:'<svg viewBox="0 0 40 40"><defs><clipPath id="txcEG"><circle cx="20" cy="20" r="20"/></clipPath></defs><g clip-path="url(#txcEG)"><rect width="40" height="13.5" fill="#CE1126"/><rect y="13.3" width="40" height="13.5" fill="#fff"/><rect y="26.6" width="40" height="13.4" fill="#111"/><path d="M20 15.2l3.2 2.4v3.3c0 2.1-1.5 3.7-3.2 4.3-1.7-.6-3.2-2.2-3.2-4.3v-3.3z" fill="#C09300"/><path d="M20 17v6.6M17.8 19.4h4.4" stroke="#7a5c00" stroke-width="1"/></g></svg>',
  en:'<svg viewBox="0 0 40 40"><defs><clipPath id="txcUK"><circle cx="20" cy="20" r="20"/></clipPath></defs><g clip-path="url(#txcUK)"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0v40M0 20h40" stroke="#fff" stroke-width="11"/><path d="M20 0v40M0 20h40" stroke="#C8102E" stroke-width="6.4"/></g></svg>'};
 /* سجل اللغات: أضف لغة جديدة هنا (key, اسمها، حرف الأيقونة، علمها، اتجاهها) */
-var LANGS=[{k:'ar',name:'العربية',code:'ع',flag:FL.ar,dir:'rtl'},{k:'en',name:'English',code:'EN',flag:FL.en,dir:'ltr'}];
+FL.sa='<svg viewBox="0 0 40 40"><defs><clipPath id="txcSA"><circle cx="20" cy="20" r="20"/></clipPath></defs><g clip-path="url(#txcSA)"><rect width="40" height="40" fill="#006C35"/><path d="M11 14.5h18M13 17.6h14M15.5 11.4h9" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M9.5 27.5h20" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 27.5l3-2v4z" fill="#fff"/></g></svg>';
+var LANGS=[{k:'ar',name:'العربية (مصر)',code:'ع',flag:FL.ar,dir:'rtl'},{k:'sa',name:'العربية الفصحى',code:'ف',flag:FL.sa,dir:'rtl'},{k:'en',name:'English',code:'EN',flag:FL.en,dir:'ltr'}];
 function L(k){for(var i=0;i<LANGS.length;i++)if(LANGS[i].k===k)return LANGS[i];return LANGS[0]}
 var pop=null,sheet=null,busy=0;
-function applyLang(k){var lb=document.getElementById('langBtn');if(lb&&k!==cur())lb.click();}  /* حالياً لغتين: الزر بيبدّل. عند إضافة لغات اربط هنا دالة ضبط اللغة مباشرة */
+function applyLang(k){var lb=document.getElementById('langBtn');if(window.TXMSA)TXMSA.set(k==='sa');if(lb&&(k==='en')!==(R.lang==='en'))lb.click();}  /* حالياً لغتين: الزر بيبدّل. عند إضافة لغات اربط هنا دالة ضبط اللغة مباشرة */
 function closePop(fast){var p=pop,g=document.getElementById('globeBtn');if(!p)return;pop=null;if(g)g.classList.remove('open');
  if(red()||!p.animate||fast){p.remove();return}
  var a=p.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-6px) scale(.7)'}],{duration:170,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});a.onfinish=function(){p.remove()};}
@@ -5108,7 +5112,7 @@ function openPop(g){
  if(pop){closePop();return}
  vib(10);g.classList.add('open');
  var p=document.createElement('div');p.className='txlang';p.setAttribute('role','menu');
- LANGS.forEach(function(l){var b=document.createElement('button');b.type='button';b.innerHTML=l.flag;b.setAttribute('aria-label',l.name);if(l.k===cur())b.classList.add('on');b.onclick=function(e){e.stopPropagation();choose(l.k)};p.appendChild(b)});
+ var QK=window.TXMSA?TXMSA.quick():['ar','en'];LANGS.filter(function(l){return QK.indexOf(l.k)>=0}).forEach(function(l){var b=document.createElement('button');b.type='button';b.innerHTML=l.flag;b.setAttribute('aria-label',l.name);if(l.k===cur())b.classList.add('on');b.onclick=function(e){e.stopPropagation();choose(l.k)};p.appendChild(b)});
  document.body.appendChild(p);
  var r=g.getBoundingClientRect(),w=p.offsetWidth,left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));
  p.style.left=left+'px';p.style.top=(r.bottom+10)+'px';p.style.transformOrigin=(r.left+r.width/2-left)+'px 0';pop=p;
@@ -5142,11 +5146,15 @@ function closeSheet(fast){var s=sheet;if(!s)return;sheet=null;if(fast||red()||!s
 function pick(){
  if(sheet)return;vib(10);
  var s=document.createElement('div');s.className='txls';
- var ar=cur()==='ar';
+ var ar=cur()!=='en';
  var h='<div class="bx" role="dialog" aria-modal="true"><div class="hd"></div><h3>'+(ar?'اللغة':'Language')+'</h3>';
  LANGS.forEach(function(l){h+='<button type="button" class="r'+(l.k===cur()?' on':'')+'" data-k="'+l.k+'"><span class="fg">'+l.flag+'</span><b>'+l.name+'</b><svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>'});
- s.innerHTML=h+'</div>';
+ var QK=window.TXMSA?TXMSA.quick():['ar','en'];
+ h+='<div class="qh">'+(ar?'تظهر في الاختصار (اختر لغتين)':'Shown in the shortcut (pick two)')+'</div><div class="qc">';
+ LANGS.forEach(function(l){h+='<button type="button" class="q'+(QK.indexOf(l.k)>=0?' on':'')+'" data-q="'+l.k+'" aria-label="'+l.name+'"><span class="fg">'+l.flag+'</span></button>'});
+ s.innerHTML=h+'</div></div>';
  s.addEventListener('click',function(e){if(e.target===s){closeSheet()}});
+ [].forEach.call(s.querySelectorAll('.q'),function(b){b.onclick=function(e){e.stopPropagation();var k=b.dataset.q,a=TXMSA.quick().slice();if(a.indexOf(k)>=0)return;a.shift();a.push(k);TXMSA.setQuick(a);vib(8);[].forEach.call(s.querySelectorAll('.q'),function(x){x.classList.toggle('on',a.indexOf(x.dataset.q)>=0)})}});
  [].forEach.call(s.querySelectorAll('.r'),function(r){r.onclick=function(){choose(r.dataset.k)}});
  document.body.appendChild(s);sheet=s;
  if(!red()&&s.animate){s.animate([{opacity:0},{opacity:1}],{duration:200,fill:'both'});s.firstChild.animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:380,easing:'cubic-bezier(.2,.9,.3,1.1)',fill:'both'});}
@@ -5157,8 +5165,8 @@ function setup(){
  var g=document.getElementById('globeBtn');if(!g)return false;if(g._t110)return true;
  var n=g.cloneNode(false);n.innerHTML=GLOBE+'<b class="gl"></b>';n._t110=1;n.id='globeBtn';n.removeAttribute('style');
  g.replaceWith(n);
- var upd=function(){n.setAttribute('aria-label',cur()==='ar'?'اللغة':'Language');var c=n.querySelector('.gl');if(c)c.textContent=L(cur()).code};upd();
- new MutationObserver(upd).observe(R,{attributes:true,attributeFilter:['lang']});
+ var upd=function(){n.setAttribute('aria-label',cur()!=='en'?'اللغة':'Language');var c=n.querySelector('.gl');if(c)c.textContent=L(cur()).code};upd();
+ new MutationObserver(upd).observe(R,{attributes:true,attributeFilter:['lang','data-msa']});
  n.addEventListener('click',function(e){e.stopPropagation();openPop(n)});
  return true;
 }
@@ -5322,4 +5330,96 @@ function hook(){var v=document.getElementById('vHome');if(!v)return false;if(v._
 var n=0,iv=setInterval(function(){if(hook()||++n>40)clearInterval(iv)},250);
 [300,1200,3000].forEach(function(d){setTimeout(function(){hook();sync()},d)});
 })();
-</script></body></html>
+</script><style id="tx116">.txls .qh{margin:14px 4px 8px;font:700 13px var(--fb,system-ui);opacity:.75}.txls .qc{display:flex;gap:12px;justify-content:center;padding:4px 0 12px}.txls .q{width:52px;height:52px;border-radius:50%;padding:0;border:2px solid transparent;background:rgba(255,255,255,.08);display:grid;place-items:center;opacity:.55;transition:opacity .2s,transform .2s,border-color .2s}.txls .q.on{opacity:1;border-color:#2a7bff;transform:scale(1.06)}.txls .q .fg{width:34px;height:34px;display:block}.txls .q .fg svg{width:100%;height:100%}@media (prefers-reduced-motion:reduce){.txls .q{transition:none}}</style>
+<script id="tx116js">
+/* ===== v116: الفصحى — طبقة تحويل من العامية المصرية للفصحى (بتشتغل على النص الظاهر بس، والأصل بيتحفظ ويرجع) ===== */
+var TOK={
+/* أدوات وضمائر */
+'ده':'هذا','دا':'هذا','دي':'هذه','دول':'هؤلاء','اللي':'الذي','الي':'الذي','عشان':'لكي','علشان':'لكي','دلوقتي':'الآن','دلوقت':'الآن','لسه':'ما زال','لسا':'ما زال',
+'كمان':'أيضًا','برضه':'أيضًا','برده':'أيضًا','ليه':'لماذا','إيه':'ماذا','ايه':'ماذا','إزاي':'كيف','ازاي':'كيف','فين':'أين','جوه':'داخل','جوا':'داخل','برا':'خارج','بره':'خارج',
+'تاني':'مجددًا','تانية':'أخرى','تانيه':'أخرى','التانية':'الأخرى','التاني':'الآخر','حاجة':'شيء','حاجات':'أشياء','شوية':'قليلًا','قوي':'جدًا','أوي':'جدًا','اوي':'جدًا','زي':'مثل','كده':'هكذا','كدا':'هكذا','بس':'فقط','لو':'إذا','ممكن':'يمكن','تقدر':'تستطيع','يقدر':'يستطيع','هتقدر':'ستستطيع','تقدرين':'تستطيعين','ياخد':'يأخذ','تاخد':'تأخذ','بحمل':'أحمّل','بنزل':'أنزّل','الاتنين':'الاثنين','اتنين':'اثنين','سيب':'اترك','سيبها':'اتركها','ويسيب':'ويترك','يسيب':'يترك','فاضية':'فارغة','فاضي':'فارغ','وينضف':'وينظّف','ينضف':'ينظّف','نضف':'نظّف','وبعدين':'ثم','مع بعض':'معًا','مفيش':'لا يوجد','فيه':'يوجد',
+'ليها':'لها','ليهم':'لهم','ليك':'لك','بتاع':'الخاص بـ','بتاعة':'الخاصة بـ','بتاعت':'الخاصة بـ','بيضا':'بيضاء','سودا':'سوداء','حلو':'جميل','كويس':'جيد','كويسة':'جيدة','مرة':'مرة',
+'يلا':'هيا','أهو':'ها هو','اهو':'ها هو','طب':'حسنًا','كلها':'جميعها','كلهم':'جميعهم','بعدين':'لاحقًا','قبل':'قبل','أول':'أول','مين':'من','امتى':'متى','إمتى':'متى','كام':'كم','عايز':'تريد','عاوز':'تريد','عايزة':'تريدين','عاوزة':'تريدين',
+/* أوامر */
+'اختار':'اختر','اختاري':'اختاري','دوس':'اضغط','خد':'خذ','هات':'أحضر','شوف':'انظر','حط':'ضع','حطّ':'ضع','خلي':'اجعل','خلّي':'اجعل','اقفل':'أغلق','ظبط':'اضبط','ارجع':'ارجع','اسحب':'اسحب','اتأكد':'تأكد','استنى':'انتظر','استني':'انتظر','جرب':'جرّب','ابعت':'أرسل','ابعتها':'أرسلها','اكتبها':'اكتبها','اعمل':'أنشئ','امسح':'احذف','اطبع':'اطبع','شيل':'أزل','ضيف':'أضف','لف':'أدر','كبّر':'كبّر','صغّر':'صغّر',
+/* ماضي مبني للمجهول */
+'اتحذفت':'حُذفت','اتحذف':'حُذف','اتنسخ':'نُسخ','اتنسخت':'نُسخت','اتنقل':'نُقل','اتنقلت':'نُقلت','اتفعل':'فُعِّل','اتفعلت':'فُعِّلت','اتضافت':'أُضيفت','اتضاف':'أُضيف','اتحفظ':'حُفظ','اتحفظت':'حُفظت','اتلغى':'أُلغي','اتلغت':'أُلغيت','اترتبت':'رُتِّبت','اترتب':'رُتِّب','اتصدر':'صُدِّر','اتصدرت':'صُدِّرت','اتمسح':'مُسح','اتمسحت':'مُسحت','اتحول':'حُوِّل','اتحولت':'حُوِّلت','اترجع':'أُعيد','اترجعت':'أُعيدت','اتقفل':'أُغلق','اتقفلت':'أُغلقت','اتفك':'فُكَّ','اتوقفت':'أُوقفت','اتوقف':'أُوقف','اتحدد':'حُدِّد','اتحددت':'حُدِّدت','اتغير':'تغيّر','اتغيرت':'تغيّرت','اتقسمت':'قُسِّمت','اتقسم':'قُسِّم','اتحرك':'تحرّك','اتفهرست':'فُهرست','اتفهرستش':'فُهرست','اتعمل':'أُنشئ','اتعملت':'أُنشئت','اتحمل':'حُمِّل','اتحملت':'حُمِّلت','اتطبع':'طُبع','اتبعت':'أُرسل','اتفتح':'فُتح','اتفتحت':'فُتحت','اتجمع':'جُمع','اتدمجت':'دُمجت','اتدمج':'دُمج','اتحسب':'حُسب','اتقاس':'قِيس','اتلقط':'التُقط','اتلقطت':'التُقطت','اتكتب':'كُتب','اتكتبت':'كُتبت','اتشفر':'شُفِّر','اتشفرت':'شُفِّرت','اتفرد':'فُرد','اتقص':'قُصّ','اتقصت':'قُصّت','اتبدل':'بُدِّل','اتبدلت':'بُدِّلت','اتأكد':'تأكد',
+/* مضارع */
+'بتتحفظ':'تُحفظ','بيتحفظ':'يُحفظ','بتتضاف':'تُضاف','بتتحدد':'تُحدَّد','بيتنسخ':'يُنسخ','بيتحط':'يوضع','بتتبني':'تُبنى','بيتحرك':'يتحرك','بتشتغل':'تعمل','بيشتغل':'يعمل','بيظبط':'يضبط','بظبط':'أضبط','بيدعم':'يدعم','بيحفظ':'يحفظ','بتفضل':'تبقى','بتكتبها':'تكتبها','بيحمي':'يحمي','بتلقط':'تلتقط','بتخليك':'تتيح لك','بيطلب':'يطلب','بيكشف':'يكشف','بنقول':'نقول','بيتبعها':'يتبعها','بتحصل':'تحدث','بيرجع':'يعود','بيستخدم':'يستخدم','بتطلع':'تظهر','بحوّل':'أحوّل','بحول':'أحوّل','بتحول':'تحوّل','بيحول':'يحوّل','بيقص':'يقصّ','بتقص':'تقصّ','بيفتح':'يفتح','بيعرض':'يعرض','بتعرض':'تعرض','بيقفل':'يغلق','بيحذف':'يحذف','بيمسح':'يمسح','بيشيل':'يزيل','بتشيل':'تزيل','بيحط':'يضع','بتحط':'تضع','بيعمل':'يقوم بـ','بتعمل':'تقوم بـ','بيقدر':'يستطيع','بتقدر':'تستطيع','بيقرأ':'يقرأ','بيقرا':'يقرأ','بتقرا':'تقرأ','بيكتب':'يكتب','بتكتب':'تكتب','بيطبع':'يطبع','بتطبع':'تطبع','بيبعت':'يرسل','بتبعت':'ترسل','بيحسن':'يحسّن','بيحسّن':'يحسّن','بيزود':'يزيد','بيقلل':'يقلّل','بيعدل':'يعدّل','بتعدل':'تعدّل','بيدوّر':'يبحث','بيدور':'يبحث','بتدور':'تبحث','بيلاقي':'يجد','بيلاقى':'يجد','بيفهم':'يفهم','بيعرف':'يعرف','بتعرف':'تعرف','بيتعلم':'يتعلّم','بيطلع':'يُخرج','بينزل':'ينزل','بتنزل':'تنزل','بيتغير':'يتغيّر','بيتقفل':'يُغلق','بيتفتح':'يُفتح','بيتحدد':'يُحدَّد','بيتحفظ':'يُحفظ','بيتمسح':'يُمسح','بتتمسح':'تُمسح','بيتضاف':'يُضاف','بيتحول':'يتحوّل','بتتحول':'تتحوّل','بيتعمل':'يُنشأ','بيتبدل':'يُستبدل','بيتحمل':'يُحمَّل','بتتحمل':'تُحمَّل','بيتقاس':'يُقاس',
+/* مستقبل */
+'هتقدر':'ستقدر','هتظهر':'ستظهر','هتصوّرها':'ستصوّرها','هتصورها':'ستصوّرها','هيتمسح':'سيُحذف','هيشتغل':'سيعمل','هنفتح':'سنفتح','هتتضاف':'ستُضاف','هيتحفظ':'سيُحفظ','هتتحفظ':'ستُحفظ','هتشتغل':'ستعمل','هتلاقي':'ستجد','هتلاقى':'ستجد','هتحتاج':'ستحتاج','هتختار':'ستختار','هتفضل':'ستبقى','هيظهر':'سيظهر','هيفضل':'سيبقى','هيتقفل':'سيُغلق','هيتفتح':'سيُفتح','هيحتاج':'سيحتاج','هيتغير':'سيتغيّر','هيرجع':'سيعود','هنحفظ':'سنحفظ','هنعرض':'سنعرض','هنطلب':'سنطلب','هيبدأ':'سيبدأ','هتبدأ':'ستبدأ','هنبدأ':'سنبدأ','هيتم':'سيتم','هتتم':'ستتم',
+};
+var NOUNS={'بيانات':1,'بياناتي':1,'بيانك':1,'بيان':1,'بيت':1,'بيئة':1,'بيكسل':1,'بتر':1,'بيتا':1,'بيروت':1,'بيئات':1,'بيانية':1,'بيانا':1,'بيضاء':1,'هيكل':1,'هيئة':1,'هيدر':1,'هتاف':1,'هندسة':1,'هندسي':1,'هنا':1,'هناك':1,'هنالك':1,'هيمنة':1,'هتلر':1,'بينهما':1,'بينهم':1,'بينها':1,'بينه':1,'بيننا':1,'بينك':1,'بين':1,'بتاريخ':1,'بتوقيت':1,'بتدريج':1,'بتفاصيل':1,'بتنسيق':1,'بتعديل':1,'بتحليل':1,'بتقنية':1,'بتحديد':1,'بتحسين':1,'بتصحيح':1,'بتغيير':1,'بتكبير':1,'بتصغير':1,'بتدوير':1,'بتجميع':1,'بتحويل':1,'بتنظيم':1,'بتشغيل':1,'بتفعيل':1,'بتصدير':1,'بتوثيق':1,'بتخزين':1,'بتسجيل':1,'بتأكيد':1,'بتمكين':1,'بتركيز':1};
+var NA='(^|[^\u0621-\u064A])';
+var PH=[
+ [/زي\s+ما(?![\u0621-\u064A])/g,'كما'],
+ [new RegExp(NA+'مش\\s+ه([تين])(\\S{2,})','g'),'$1لن $2$3'],
+ [new RegExp(NA+'مش\\s+عا[يو]ز\\S*','g'),'$1لا تريد'],
+ [new RegExp(NA+'مش\\s+(?=م\\S)','g'),'$1غير '],
+ [new RegExp(NA+'مش\\s+(?=ب[يتن]\\S{2})','g'),'$1لا '],
+ [new RegExp(NA+'مش(?![\\u0621-\\u064A])','g'),'$1ليس'],
+ [new RegExp(NA+'مفيش(?![\\u0621-\\u064A])\\s*','g'),'$1لا يوجد '],
+ [new RegExp(NA+'من\\s+غير(?![\\u0621-\\u064A])','g'),'$1دون'],
+ [new RegExp(NA+'لسه\\s+(?:ما|مش)\\s+','g'),'$1لم '],
+ [/لسه(?=\s*[.،؟!:)…]|\s*$)/g,'بعد'],
+ [new RegExp(NA+'عشان\\s+(?=[تنيأا])','g'),'$1لكي '],
+ [new RegExp(NA+'ممكن\\s+(?=ت)','g'),'$1يمكنك أن '],
+ [new RegExp(NA+'ممكن\\s+(?=[ينأا])','g'),'$1يمكن أن '],
+ [new RegExp(NA+'لو\\s+عا[يو]ز\\S*','g'),'$1إذا أردت'],
+ [new RegExp(NA+'(ال[\\u0621-\\u064A]+)\\s+ده(?![\\u0621-\\u064A])','g'),'$1هذا $2'],
+ [new RegExp(NA+'(ال[\\u0621-\\u064A]+)\\s+دي(?![\\u0621-\\u064A])','g'),'$1هذه $2'],
+ [/مع\s+بعض(?![\u0621-\u064A])/g,'معًا'],[/من\s+وقت\s+للتاني/g,'من وقت لآخر'],[/بعد\s+ما\s/g,'بعد أن '],[/قبل\s+ما\s/g,'قبل أن '],[/كل\s+ما\s/g,'كلما ']
+];
+var DIA=/[\u064B-\u0652\u0640]/g,AR=/[\u0621-\u0652\u0670-\u06D3]+/g,HAS=/[\u0600-\u06FF]/;
+function tokFn(w){
+ var k=w.replace(DIA,'');
+ if(TOK.hasOwnProperty(k))return TOK[k];
+ if(k.length>3&&k.charAt(0)==='و'&&TOK.hasOwnProperty(k.slice(1)))return 'و'+TOK[k.slice(1)];
+ if(NOUNS.hasOwnProperty(k))return w;
+ var m;
+ if(k.length>=5&&(m=/^ب([يتن])(.{3,})$/.exec(k))&&!/^ب[يتن]ا[ن]?$/.test(k)){ /* مضارع عامي: بيـ/بتـ/بنـ */
+   return m[1]+m[2];}
+ if(k.length>=5&&(m=/^ه([يتن])(.{3,})$/.exec(k))){return 'س'+m[1]+m[2];}
+ return w;}
+function msa(s){
+ if(typeof s!=='string'||!HAS.test(s))return s;
+ var o=s;
+ for(var i=0;i<PH.length;i++)s=s.replace(PH[i][0],PH[i][1]);
+ s=s.replace(AR,tokFn);
+ s=s.replace(/(^|[^\u0621-\u064A])(تستطيع|يستطيع|ستستطيع)\s+(?=[تيأن]\S{2})/g,'$1$2 أن ');
+ return s;}
+TOK['بإيدك']='بيدك';TOK['يظبط']='يضبط';TOK['تظبط']='تضبط';TOK['بيظبط']='يضبط';TOK['إيدك']='يدك';TOK['بالنت']='بالإنترنت';TOK['النت']='الإنترنت';TOK['الموبايل']='الهاتف';TOK['موبايلك']='هاتفك';
+
+(function(){
+var R=document.documentElement,LS=window.localStorage,flag=false,active=false,mo=null,q=new Set(),raf=0,tr=new WeakMap(),live=new Set(),ta=new WeakMap(),la=new Set();
+var ATTR=['placeholder','aria-label','title','alt'],SKIP='textarea,input,script,style,[contenteditable],.tbx,.ox-live,#docName,[data-notr]';
+try{flag=LS.getItem('tx-msa')==='1'}catch(e){}
+function skip(p){return !p||(p.closest&&p.closest(SKIP))}
+function node(n){
+ if(n.nodeType===3){var p=n.parentNode;if(skip(p))return;var v=n.data,rec=tr.get(n);if(rec&&v===rec.t)return;var t=msa(v);
+  if(t!==v){tr.set(n,{o:v,t:t});live.add(n);n.data=t}else if(rec){tr.delete(n);live.delete(n)}return}
+ if(n.nodeType!==1||skip(n))return;
+ for(var i=0;i<ATTR.length;i++){var a=ATTR[i];if(!n.hasAttribute(a))continue;var v=n.getAttribute(a),m=ta.get(n)||{},r=m[a];if(r&&v===r.t)continue;var t=msa(v);
+  if(t!==v){m[a]={o:v,t:t};ta.set(n,m);la.add(n);n.setAttribute(a,t)}else if(r){delete m[a]}}
+ var w=document.createTreeWalker(n,5),c=w.nextNode();
+ while(c){if(c.nodeType===3)node(c);else if(c!==n&&c.nodeType===1&&!skip(c)){for(var j=0;j<ATTR.length;j++)if(c.hasAttribute(ATTR[j])){node(c);break}}c=w.nextNode()}}
+function flush(){raf=0;var a=Array.from(q);q.clear();if(!active)return;for(var i=0;i<a.length;i++){if(a[i].isConnected)node(a[i])}}
+function plan(n){q.add(n);if(!raf)raf=requestAnimationFrame(flush)}
+function restore(){
+ live.forEach(function(n){var r=tr.get(n);if(r&&n.data===r.t)n.data=r.o});live.clear();
+ la.forEach(function(e){var m=ta.get(e);if(!m)return;for(var a in m){if(e.getAttribute(a)===m[a].t)e.setAttribute(a,m[a].o)}});la.clear();tr=new WeakMap();ta=new WeakMap()}
+function sync(){
+ var want=flag&&R.lang!=='en';
+ if(want&&!active){active=true;mo=new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var m=ms[i];if(m.type==='childList'){for(var j=0;j<m.addedNodes.length;j++)plan(m.addedNodes[j])}else if(m.type==='characterData')plan(m.target);else plan(m.target)}});
+  mo.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:ATTR});node(document.body)}
+ else if(!want&&active){active=false;if(mo)mo.disconnect();mo=null;q.clear();restore()}}
+new MutationObserver(sync).observe(R,{attributes:true,attributeFilter:['lang']});
+function set(v){flag=!!v;try{LS.setItem('tx-msa',flag?'1':'0')}catch(e){}R.setAttribute('data-msa',flag?'1':'0');sync()}
+function quick(){var d=['ar','en'];try{var v=JSON.parse(LS.getItem('tx-ql')||'null');if(Array.isArray(v)&&v.length===2&&v.every(function(k){return k==='ar'||k==='sa'||k==='en'}))return v}catch(e){}return d}
+function setQuick(a){try{LS.setItem('tx-ql',JSON.stringify(a))}catch(e){}}
+window.TXMSA={msa:msa,on:function(){return flag&&R.lang!=='en'},set:set,quick:quick,setQuick:setQuick};
+function boot(){R.setAttribute('data-msa',flag?'1':'0');sync()}
+if(document.body)boot();else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
+</body></html>
