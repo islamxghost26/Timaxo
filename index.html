@@ -1255,6 +1255,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 
 
 <script src="filters.js"></script>
+<script src="fields.js"></script>
 <script src="assistant.js"></script>
 <script>
 (()=>{
@@ -3864,6 +3865,36 @@ async function liveText(p){
   const tick=()=>{if(S.dead)return;const R=o.getBoundingClientRect(),k=[R.left,R.top,R.width,R.height].map(Math.round).join();if(k!==S.k){S.k=k;place();}S.raf=requestAnimationFrame(tick);};tick();
  }catch(e){console.error('liveText',e);ltExit();}}
 
+/* المرحلة 4.2: شرائح الحقول المستخرجة (تواريخ، أرقام، هواتف، بريد…) فوق نص الـOCR — fields.js */
+function ocrFields(res,T,ar){
+ const old=res.querySelector('.fx');if(old)old.remove();
+ if(!window.TXFields||!T)return;
+ const fs=TXFields.suggest(TXFields.extract(T),ar);if(!fs.length)return;
+ if(!document.getElementById('fxcss')){const st=document.createElement('style');st.id='fxcss';
+  st.textContent='.fx{margin-top:12px}.fx-t{font-size:12px;opacity:.7;margin:0 2px 6px}.fx-l{display:flex;flex-wrap:wrap;gap:6px}.fx-c{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:7px 11px;border-radius:12px;border:1px solid var(--bd,rgba(127,127,127,.3));background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}.fx-c small{opacity:.65;font-size:11px}.fx-c b{font-weight:600;direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fx-c.ok{border-color:#22a45d}.fx-a{text-decoration:none;color:inherit;padding:7px 10px;border-radius:12px;border:1px solid var(--bd,rgba(127,127,127,.3));font-size:12px}.fx-i{font-size:11px;opacity:.7;margin:4px 2px 0}';
+  document.head.appendChild(st);}
+ const NM={email:['بريد','Email'],url:['رابط','Link'],phone:['هاتف','Phone'],date:['تاريخ','Date'],national_id:['رقم قومي','National ID'],amount:['مبلغ','Amount']};
+ const box=document.createElement('div');box.className='fx';
+ box.innerHTML='<div class="fx-t">'+(ar?'حقول لقيتها في النص':'Fields found in the text')+'</div><div class="fx-l"></div>';
+ const list=box.querySelector('.fx-l'),esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const copy=async v=>{try{await navigator.clipboard.writeText(v)}catch(_){const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(__){}t.remove();}};
+ const ics=d=>{const ymd=d.replace(/-/g,''),nx=new Date(Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10)+1)).toISOString().slice(0,10).replace(/-/g,'');
+  const b=new Blob(['BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Timaxo//AR\r\nBEGIN:VEVENT\r\nUID:'+ymd+'-'+Date.now()+'@timaxo\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:]|\.\d+/g,'')+'\r\nDTSTART;VALUE=DATE:'+ymd+'\r\nDTEND;VALUE=DATE:'+nx+'\r\nSUMMARY:Timaxo\r\nEND:VEVENT\r\nEND:VCALENDAR'],{type:'text/calendar'});
+  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='event-'+ymd+'.ics';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
+ fs.forEach(f=>{
+  const c=document.createElement('button');c.type='button';c.className='fx-c';
+  c.innerHTML='<small>'+(NM[f.type]?NM[f.type][ar?0:1]:f.type)+'</small><b>'+esc(f.value)+'</b>';
+  c.title=ar?'اضغط للنسخ':'Tap to copy';
+  c.onclick=async()=>{await copy(f.value);c.classList.add('ok');setTimeout(()=>c.classList.remove('ok'),1200);};
+  list.appendChild(c);
+  if(f.action){
+   if(f.action.href){const a=document.createElement('a');a.className='fx-a';a.href=f.action.href;if(/^https?:/.test(f.action.href)){a.target='_blank';a.rel='noopener'}a.textContent=f.action.label;list.appendChild(a);}
+   else if(f.action.ics){const a=document.createElement('button');a.type='button';a.className='fx-a';a.textContent=f.action.label;a.onclick=()=>ics(f.action.ics);list.appendChild(a);}
+  }
+  if(f.type==='national_id'&&f.info){const i=document.createElement('div');i.className='fx-i';i.style.flexBasis='100%';i.textContent=(ar?'ميلاد ':'Born ')+f.info.birth+' · '+(f.info.governorate||'')+' · '+f.info.gender;list.appendChild(i);}
+ });
+ res.appendChild(box);
+}
 async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
  let sel=(localStorage.getItem('tx_ol')||(ar?'ara+eng':'eng+ara')).split('+').filter(x=>OCR_LANGS.some(l=>l.c===x));if(!sel.length)sel=['ara','eng'];
  const lname=l=>ar?l.ar:l.en,main=OCR_LANGS.slice(0,2),extra=OCR_LANGS.slice(2);
@@ -3890,7 +3921,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   const nw=T.split(/\s+/).filter(Boolean).length,nl=T.split('\n').filter(Boolean).length;
   meta.innerHTML=T?'<span class="ox-b q '+qc+'">'+ql+' · '+pct+'%</span><span class="ox-b">'+nw+' '+L2('كلمة','words')+'</span><span class="ox-b">'+nl+' '+L2('سطر','lines')+'</span>':'';
   note.textContent=T?(pct<70?L2('الثقة منخفضة. جرّب «قراءة أدق» أو غيّر اللغة، وراجع الأرقام والأسماء.','Low confidence. Try Deep read or another language, and check numbers and names.'):L2('راجع الأرقام والأسماء قبل الاستخدام.','Check numbers and names before using.')):L2('ما لقيتش نص واضح. جرّب لغة تانية أو «قراءة أدق».','No clear text. Try another language or Deep read.');
-  try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
+  try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}try{ocrFields(res,T,ar)}catch(e){console.warn('fx',e)}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
   if(!T)ta.hidden=true;else ta.hidden=false;deepNext=!deep;try{tblInit(best)}catch(e){console.warn('tbl',e)}};
  const tbx=document.createElement('div');tbx.className='tbx';tbx.hidden=true;res.appendChild(tbx);
  let TB=null,tbTok=0;
