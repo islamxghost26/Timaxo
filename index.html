@@ -2839,6 +2839,26 @@ document.addEventListener('pointerdown',e=>{try{if(nat||camP||document.getElemen
 $('#camIn').addEventListener('click',e=>{if(nat||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))return;e.preventDefault();e.stopImmediatePropagation();openLive();},true);
 async function openLive(){
  const ar=AR(),T=(a,b)=>ar?a:b;
+ document.documentElement.classList.add('txcam');
+ if(!document.getElementById('lvperf')){const sp2=document.createElement('style');sp2.id='lvperf';sp2.textContent=`
+html.txcam *,html.txcam *::before,html.txcam *::after{animation-play-state:paused!important}
+html.txcam #lv,html.txcam #lv *,html.txcam #lv *::before,html.txcam #lv *::after{animation-play-state:running!important}
+html.txcam #lv.v3 .ib.ai.on{animation:none!important;box-shadow:0 0 0 3px rgba(34,211,245,.16),0 0 12px rgba(34,211,245,.3)}
+html.txcam #lv .ib.ai.on .s2{animation:none!important}
+#lv{animation-duration:.14s!important}
+#lv.out{transition-duration:.1s!important}
+#lv .tgp{animation-duration:.12s!important}
+#lv.v3 .seg{-webkit-mask-image:none!important;mask-image:none!important;scroll-snap-type:none!important}
+#lv.v3 .seg button{transition-duration:.12s!important}
+#lv .txsw{transition:opacity .12s}
+#lv .txsw i{transition-duration:.14s!important}
+#lv .ops,#lv .opw{transition-duration:.14s!important}
+#lv .asg,#lv .sug,#lv .aitip{transition-duration:.14s!important}
+#lv.v3 .gw.e .dn{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#lv .qres{position:absolute;left:14px;right:14px;bottom:14px;z-index:8;background:var(--surface);color:var(--ink);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:lvin .14s ease-out}
+#lv .qres p{margin:0 0 10px;word-break:break-all;max-height:30vh;overflow:auto;-webkit-user-select:text;user-select:text}
+#lv .qres div{display:flex;gap:8px;flex-wrap:wrap}
+`;document.head.appendChild(sp2);}
  const ask=camAsk;
  let stream=null;const sp=camP||camOpen();camP=null;sp.catch(()=>{});
  if(!document.getElementById('lvcss')){const s=document.createElement('style');s.id='lvcss';s.textContent=`
@@ -2892,19 +2912,20 @@ async function openLive(){
   ph:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',au:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',ck:'<path d="M5 12l5 5 9-10"/>'};
  const S=k=>'<svg viewBox="0 0 24 24">'+I[k]+'</svg>';
  const m=document.createElement('div');m.id='lv';m.className='v3';m.style.zIndex='9500';
- m.innerHTML='<div class="st"><video playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" disablepictureinpicture></video><canvas></canvas><div class="tb"><button class="ib" data-a="x" aria-label="close">'+S('x')+'</button><div><button class="ib" data-a="sn" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('لقطة','Snap')+'">'+S('sn')+'</button><button class="ib" data-a="mu" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('كتم الصوت','Mute')+'">'+S('mu')+'</button><button class="ib" data-a="l" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('العدسة','Lens')+'">'+S('lens')+'</button><button class="ib fl" data-a="f" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('الفلاش','Flash')+'">'+S('fl')+'</button></div></div><div class="hint"><i></i><span></span></div><div class="fl2"></div></div>'
- +'<div class="bt"><div class="txsw" style="display:none"><i></i><span></span><span></span></div><div class="seg"><b></b><button data-m="doc">'+S('doc')+T('مستند','Doc')+'</button><button data-m="id">'+S('id')+T('بطاقة','Card')+'</button><button data-m="ph">'+T('صورة شخصية','ID photo')+'</button><button data-m="pg">'+T('صفحات','Pages')+'</button><button data-m="tb">'+T('جدول','Table')+'</button><button data-m="book">'+T('كتاب','Book')+'</button><button data-m="ocr">'+T('استخراج نص','Text')+'</button><button data-m="qr">QR</button></div>'
+ m.innerHTML='<div class="st"><video playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" disablepictureinpicture></video><canvas></canvas><div class="tb"><button class="ib" data-a="x" aria-label="close">'+S('x')+'</button><div><button class="ib" data-a="sn" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('لقطة','Snap')+'">'+S('sn')+'</button><button class="ib" data-a="l" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('العدسة','Lens')+'">'+S('lens')+'</button><button class="ib fl" data-a="f" aria-label="'+(typeof Lg==='function'?Lg:function(a,b){return b})('الفلاش','Flash')+'">'+S('fl')+'</button></div></div><div class="hint"><i></i><span></span></div><div class="fl2"></div></div>'
+ +'<div class="bt"><div class="txsw"><i></i><span></span><span></span></div><div class="seg"><b></b><button data-m="doc">'+S('doc')+T('مستند','Doc')+'</button><button data-m="id">'+S('id')+T('بطاقة','Card')+'</button><button data-m="ph">'+T('صورة شخصية','ID photo')+'</button><button data-m="tb">'+T('جدول','Table')+'</button><button data-m="book">'+T('كتاب','Book')+'</button><button data-m="ocr">'+T('استخراج نص','Text')+'</button><button data-m="qr">QR</button></div>'
  +'<div class="row"><div><button class="ob" data-a="o" aria-label="options"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button><button class="chip" data-a="a">'+S('au')+'<span></span></button></div><button class="sh" data-a="s" aria-label="capture"><span class="rp"></span><span class="in"></span></button><div><button class="dn" data-a="d">'+S('ck')+'<span></span></button></div></div></div>';
  document.body.appendChild(m);
- const $q=s=>m.querySelector(s),v=$q('video'),cv=$q('canvas'),hintEl=$q('.hint'),hintT=$q('.hint span'),fl=$q('.fl2'),seg=$q('.seg b'),sh=$q('.sh'),ab=$q('[data-a=a]'),db=$q('[data-a=d]'),mb=$q('[data-a=mu]'),fb=$q('[data-a=f]'),snb=$q('[data-a=sn]');
+ const $q=s=>m.querySelector(s),v=$q('video'),cv=$q('canvas'),hintEl=$q('.hint'),hintT=$q('.hint span'),fl=$q('.fl2'),seg=$q('.seg b'),sh=$q('.sh'),ab=$q('[data-a=a]'),db=$q('[data-a=d]'),fb=$q('[data-a=f]'),snb=$q('[data-a=sn]');
  /* v15: collapsible side tools (sound / multi / lens) — flash stays visible; state remembered */
  {const grp=$q('.tb>div'),lb2=$q('[data-a=l]');if(grp&&lb2){const wrap=document.createElement('div');wrap.className='tgp';
-  [snb,mb,lb2].forEach(x=>wrap.appendChild(x));try{wrap.appendChild(TXAI.camBtn(m));}catch(e){}const tgl=document.createElement('button');tgl.className='ib';tgl.type='button';tgl.setAttribute('aria-label','tools');
+  [snb,lb2].forEach(x=>wrap.appendChild(x));try{wrap.appendChild(TXAI.camBtn(m));}catch(e){}const tgl=document.createElement('button');tgl.className='ib';tgl.type='button';tgl.setAttribute('aria-label','tools');
   tgl.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';grp.prepend(wrap);grp.prepend(tgl);
   let col=localStorage.getItem('tx_tbc')==='1';const ap=()=>{wrap.style.display=col?'none':'flex';tgl.style.transform=col?'rotate(180deg)':'none';};ap();
   tgl.onclick=()=>{col=!col;try{localStorage.setItem('tx_tbc',col?'1':'0')}catch(e){}ap();};}}
- let tool=(window.__txTool&&window.__txTool.id&&window.__txTool.id!=='qr')?window.__txTool.id:'',xpaint=null;
- let uiM=(function(x){return ['doc','pg','tb'].indexOf(x)<0?'doc':x})(localStorage.getItem('tx_ui')||localStorage.getItem('tx_mode')||'doc'),amu=0,mode=(uiM==='id'?'id':'doc'),multi=localStorage.getItem('tx_multi')==='1',auto=localStorage.getItem('tx_auto')!=='0',snd=localStorage.getItem('tx_snd')!=='0';
+ let tool=(window.__txTool&&window.__txTool.id&&window.__txTool.id!=='qr')?window.__txTool.id:'',xpaint=null,qrOn=false,qrShown=0,qrQ=null,qrDet=null,lastOb=null,segA=0,cvDirty=false;
+ const segGo=(sg,to)=>{cancelAnimationFrame(segA);const a=sg.scrollLeft,d=to-a;if(Math.abs(d)<2)return;const t0=performance.now(),D=130,st=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sg.scrollLeft=a+d*e;if(k<1)segA=requestAnimationFrame(st);};segA=requestAnimationFrame(st);};
+ let uiM=(function(x){return ['doc','tb'].indexOf(x)<0?'doc':x})(localStorage.getItem('tx_ui')||localStorage.getItem('tx_mode')||'doc'),amu=0,mode=(uiM==='id'?'id':'doc'),multi=localStorage.getItem('tx_multi')==='1',auto=localStorage.getItem('tx_auto')!=='0',snd=localStorage.getItem('tx_snd')!=='0';
  let stable=0,last=null,lastGood=null,alive=true,gb=0,armed=true,torch=false,trk=null,files=[],bz=0,lockT=0,dtm=0,raf=0,backs=[],bi=0,hk='',fm=localStorage.getItem('tx_fm')||'off',tmv=0,cnt=0,cntI=0,fmTry=0,sugN=0,sugT=0,galFn=null,flyFn=null,sugFn=null;
  /* ---- feedback: haptics + synthesized sounds ---- */
  const buzz=n=>{try{if(localStorage.getItem('tx_hap')!=='0'&&navigator.vibrate)navigator.vibrate(n)}catch(e){}};
@@ -2946,7 +2967,7 @@ async function openLive(){
    if(fm.indexOf('single-shot')>=0||fm.indexOf('manual')>=0){const adv={focusMode:fm.indexOf('single-shot')>=0?'single-shot':'continuous'};if(px!=null&&'pointsOfInterest' in cp)adv.pointsOfInterest=[{x:clamp(px,0,1),y:clamp(py,0,1)}];
      await trk.applyConstraints({advanced:[adv]});await sleep(380);}
    if(fm.indexOf('continuous')>=0)await trk.applyConstraints({advanced:[{focusMode:'continuous'}]});shPk=shNow;return true;}catch(e){return false;}};
- const shoot=async()=>{if(gb||rfBusy)return;if(!fOk()&&trk){rfBusy=1;setHint(T('بيظبط الفوكس...','Focusing...'),false);try{await refocus();const t0=Date.now();while(!fOk()&&Date.now()-t0<600)await sleep(60);}catch(e){}rfBusy=0;}grab();};
+ const shoot=async()=>{if(gb||rfBusy||qrOn)return;if(!fOk()&&trk){rfBusy=1;setHint(T('بيظبط الفوكس...','Focusing...'),false);try{await refocus();const t0=Date.now();while(!fOk()&&Date.now()-t0<600)await sleep(60);}catch(e){}rfBusy=0;}grab();};
  if(!document.getElementById('lvcss2')){const s2=document.createElement('style');s2.id='lvcss2';s2.textContent='#lv .fr{position:absolute;width:72px;height:72px;margin:-36px 0 0 -36px;border:2px solid #ffd60a;border-radius:50%;pointer-events:none;animation:lvfr .9s ease-out forwards}@keyframes lvfr{0%{transform:scale(1.6);opacity:0}25%{opacity:1}60%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}#lv .gd{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;background:linear-gradient(to right,transparent calc(33.33% - .5px),rgba(255,255,255,.4) 33.33%,transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),rgba(255,255,255,.4) 66.66%,transparent calc(66.66% + .5px)),linear-gradient(to bottom,transparent calc(33.33% - .5px),rgba(255,255,255,.4) 33.33%,transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),rgba(255,255,255,.4) 66.66%,transparent calc(66.66% + .5px))}#lv .ts{position:absolute;left:0;right:0;bottom:10px;display:flex;gap:8px;justify-content:center;direction:ltr;padding:6px 14px;overflow-x:auto}#lv .ts button{position:relative;flex:0 0 auto;width:44px;height:58px;border-radius:8px;border:2px solid rgba(255,255,255,.75);background:#222 center/cover no-repeat;padding:0}#lv .ts button b{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ff453a;color:#fff;font:700 14px/22px system-ui;text-align:center}';document.head.appendChild(s2);}
  if(!document.getElementById('lvcss3')){const s3=document.createElement('style');s3.id='lvcss3';s3.textContent=`
 #lv.v3 .tb{top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px}
@@ -2983,23 +3004,25 @@ async function openLive(){
   try{const cp=trk.getCapabilities&&trk.getCapabilities()||{},adv=[];if(cp.focusMode&&cp.focusMode.indexOf('continuous')>=0)adv.push({focusMode:'continuous'});if(cp.zoom&&cp.zoom.min<1)adv.push({zoom:1});if(adv.length)trk.applyConstraints({advanced:adv}).catch(()=>{});}catch(e){}
   if(torch)setTorch(true);shPk=0;shNow=0;bad=false;blurSince=0;setTimeout(()=>{refocus();},450);};
  const setTorch=async on=>{torch=on;fb.classList.toggle('on',on);try{await trk.applyConstraints({advanced:[{torch:on}]});}catch(e){torch=false;fb.classList.remove('on');if(on)toast(T('الفلاش مش مدعوم على العدسة دي','Flash not supported on this lens'));}};
- const lab=()=>{ab.querySelector('span').textContent=T('تلقائي','Auto');ab.classList.toggle('on',auto);ab.style.opacity=mode==='doc'?1:0;ab.style.pointerEvents=mode==='doc'?'auto':'none';
-  mb.classList.toggle('on',multi);snb.classList.toggle('on',snd);snb.innerHTML=S(snd?'sn':'sm');
-  const ck=tool==='card'?'id':(tool||uiM);m.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===ck));const ob=m.querySelector('[data-m].on'),sg=ob&&ob.parentNode;if(sg&&sg.scrollTo)sg.scrollTo({left:ob.offsetLeft-(sg.clientWidth-ob.offsetWidth)/2,behavior:'smooth'});xpaint&&xpaint();
+ const lab=()=>{ab.querySelector('span').textContent=T('تلقائي','Auto');ab.classList.toggle('on',auto);ab.style.opacity=mode==='doc'?1:0;ab.style.pointerEvents=mode==='doc'?'auto':'none';sh.style.visibility=qrOn?'hidden':'';
+  snb.classList.toggle('on',snd);snb.innerHTML=S(snd?'sn':'sm');
+  const ck=qrOn?'qr':tool==='card'?'id':(tool||uiM);m.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===ck));const ob=m.querySelector('[data-m].on'),sg=ob&&ob.parentNode;if(sg&&ob!==lastOb){lastOb=ob;segGo(sg,ob.offsetLeft-(sg.clientWidth-ob.offsetWidth)/2);}xpaint&&xpaint();
   db.style.display='flex';db.querySelector('span').textContent=T('تم','Done')+' · '+files.length;db.setAttribute('aria-label',T('تم','Done')+' · '+files.length);galFn&&galFn();};
- const close=()=>{window.__txTool=null;alive=false;clearInterval(cntI);clearTimeout(dtm);cancelAnimationFrame(raf);try{wk&&wk.terminate()}catch(e){}wk=null;try{ac&&ac.close()}catch(e){}stream&&stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>m.remove(),160);};
+ const close=()=>{window.__txTool=null;alive=false;clearInterval(cntI);clearTimeout(dtm);cancelAnimationFrame(raf);try{wk&&wk.terminate()}catch(e){}wk=null;try{ac&&ac.close()}catch(e){}stream&&stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>{m.remove();document.documentElement.classList.remove('txcam');},110);};
  const finish=()=>{const tl=tool,mu=multi;close();if(!files.length)return;window.__txPend=tl?{id:tl,n:files.length,multi:!!mu,start:state.pages.length,f:{}}:null;state.queue=files.slice(1);ingest(files[0]);};
  const guideQ=()=>{const vw=v.videoWidth||4,vh=v.videoHeight||3;let gw,gh;
-  if(mode==='id'){gw=.88*vw;gh=gw/1.586;if(gh>.78*vh){gh=.78*vh;gw=gh*1.586;}}else{gh=.8*vh;gw=gh*.75;if(gw>.88*vw){gw=.88*vw;gh=gw/.75;}}
+  if(mode==='qr'){gw=gh=Math.min(.7*vw,.7*vh);}else if(mode==='id'){gw=.88*vw;gh=gw/1.586;if(gh>.78*vh){gh=.78*vh;gw=gh*1.586;}}else{gh=.8*vh;gw=gh*.75;if(gw>.88*vw){gw=.88*vw;gh=gw/.75;}}
   const x0=(vw-gw)/2/vw,y0=(vh-gh)/2/vh,x1=x0+gw/vw,y1=y0+gh/vh;return[{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}];};
  /* ---- smooth overlay (rAF + interpolation) ---- */
  const lp=(a,b,k)=>a+(b-a)*k;let cur=null,dq=null,dtg=null,dA=0,gA=0,rad=.07,pP='';
+ const prog=()=>{const pc=(auto&&mode==='doc'&&lockT)?Math.min(100,(performance.now()-lockT)/800*100):0;const pk=pc.toFixed(0);if(pk!==pP){pP=pk;sh.style.setProperty('--p',pk+'%');}if(pc>=100&&armed&&auto&&mode==='doc'&&fOk()&&!(multi&&dupNow()))grab();};
  const frame=()=>{if(!alive)return;raf=requestAnimationFrame(frame);if(!v.videoWidth)return;
   const gt=guideQ();if(!cur)cur=gt.map(p=>({x:p.x,y:p.y}));
-  cur=cur.map((p,i)=>({x:lp(p.x,gt[i].x,.3),y:lp(p.y,gt[i].y,.3)}));gA=lp(gA,mode==='doc'?0:1,.25);rad=lp(rad,mode==='id'?.07:.045,.25);
+  cur=cur.map((p,i)=>({x:lp(p.x,gt[i].x,.3),y:lp(p.y,gt[i].y,.3)}));gA=lp(gA,mode==='doc'?0:1,.25);rad=lp(rad,mode==='id'?.07:mode==='qr'?.09:.045,.25);
   if(dtg){if(!dq)dq=dtg.map(p=>({x:p.x,y:p.y}));dq=dq.map((p,i)=>({x:lp(p.x,dtg[i].x,.35),y:lp(p.y,dtg[i].y,.35)}));}
   dA=lp(dA,dtg&&mode==='doc'?1:0,.25);if(dA<.02&&!dtg)dq=null;
-  const dpr=Math.min(window.devicePixelRatio||1,2),cw=cv.clientWidth,ch=cv.clientHeight;if(cv.width!==Math.round(cw*dpr)||cv.height!==Math.round(ch*dpr)){cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);}
+  const need=gA>.02||(dA>.02&&!!dq)||(qrOn&&!!qrQ);if(!need&&!cvDirty){prog();return;}cvDirty=need;
+  const dpr=Math.min(window.devicePixelRatio||1,1.5),cw=cv.clientWidth,ch=cv.clientHeight;if(cv.width!==Math.round(cw*dpr)||cv.height!==Math.round(ch*dpr)){cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);}
   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,cw,ch);
   const sc=Math.min(cw/v.videoWidth,ch/v.videoHeight),ox=(cw-v.videoWidth*sc)/2,oy=(ch-v.videoHeight*sc)/2,X=p=>ox+p.x*v.videoWidth*sc,Y=p=>oy+p.y*v.videoHeight*sc;
   if(gA>.02){const x=X(cur[0]),y=Y(cur[0]),w=X(cur[1])-x,h=Y(cur[3])-y,r=Math.min(w,h)*rad;
@@ -3014,8 +3037,8 @@ async function openLive(){
    g.globalAlpha=1;}
   if(dA>.02&&dq){const lk=stable>=2;g.globalAlpha=dA;g.beginPath();dq.forEach((p,i)=>{i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p));});g.closePath();g.lineWidth=3;g.strokeStyle=lk?'#22e07a':'#ffd60a';g.fillStyle=lk?'rgba(34,224,122,.2)':'rgba(255,214,10,.12)';g.fill();g.stroke();
    g.fillStyle=lk?'#22e07a':'#ffd60a';dq.forEach(p=>{g.beginPath();g.arc(X(p),Y(p),5,0,7);g.fill();});g.globalAlpha=1;}
-  const pc=(auto&&mode==='doc'&&lockT)?Math.min(100,(performance.now()-lockT)/800*100):0;const pk=pc.toFixed(0);if(pk!==pP){pP=pk;sh.style.setProperty('--p',pk+'%');}
-  if(pc>=100&&armed&&auto&&mode==='doc'&&fOk()&&!(multi&&dupNow()))grab();};
+  if(qrOn&&qrQ){g.beginPath();qrQ.forEach((p,i)=>{i?g.lineTo(X(p),Y(p)):g.moveTo(X(p),Y(p));});g.closePath();g.lineWidth=3;g.strokeStyle='#22e07a';g.fillStyle='rgba(34,224,122,.22)';g.fill();g.stroke();}
+  prog();};
  const rr=(g,x,y,w,h,r)=>{g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();};
  /* ---- detection loop (adaptive: never starves the UI) ---- */
  const sm=document.createElement('canvas'),sx=sm.getContext('2d',{willReadFrequently:true});
@@ -3039,7 +3062,7 @@ async function openLive(){
   setHint(!ok?(uiM==='tb'?T('وجّه الكاميرا على الجدول','Point at the table'):T('وجّه الكاميرا على الورقة','Point at the document')):qm?qm:dp?T('نفس الصفحة — اقلب للصفحة التالية','Same page — turn to the next one'):stable>=2?(auto?T('ثبّت الجهاز...','Hold steady...'):T('جاهز للتصوير','Ready')):(!fo?T('بيظبط الفوكس...','Focusing...'):T('جاري التحديد','Detecting')),stable>=2&&!qm&&!dp,!!qm&&lumNow<52&&!torch&&fm==='off');sugFn&&sugFn(ok&&stable>=2);};
  const detect=()=>{const W=canWk?360:240,H=Math.round(W*v.videoHeight/v.videoWidth);sm.width=W;sm.height=H;sx.drawImage(v,0,0,W,H);let q=detectCorners(sm,2);const f=detectCorners.found,b=detectCorners.best;if(f){try{q=refineQuad(sm,q,{R:.03,passes:2});}catch(e){}}judge(q,f,b);};
  const loop=()=>{if(!alive)return;const nx=ms=>{dtm=setTimeout(loop,ms)};
-  if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
+  if(document.hidden||mode!=='doc'||!v.videoWidth||gb){if(mode!=='doc'){dtg=null;setHint(mode==='qr'?T('وجّه الكاميرا على كود QR','Point at a QR code'):mode==='id'?T('ضع البطاقة داخل المستطيل','Fit the card inside the frame'):T('ضع الوجه داخل الإطار','Fit the face inside the frame'),false);}nx(200);return;}
   /* v119: الكشف في الـworker بس. لو الـworker بطيء بنستنّاه (ونعيد تشغيله لو علّق)، ومبنرجعش للخيط الرئيسي عشان الشاشة ماتهنّجش */
   if(canWk){
    if(!wk){nx(500);return;}
@@ -3089,7 +3112,6 @@ async function openLive(){
   const a=b.dataset.a;
   if(a==='x'||a==='d'){buzz(8);finish();}else if(a==='s')shootT();
   else if(a==='a'){auto=!auto;localStorage.setItem('tx_auto',auto?'1':'0');stable=0;lockT=0;lab();auto?sfx.on():sfx.off();}
-  else if(a==='mu'){multi=!multi;localStorage.setItem('tx_multi',multi?'1':'0');lab();renderStrip();multi?sfx.on():sfx.off();}
   else if(a==='sn'){snd=!snd;localStorage.setItem('tx_snd',snd?'1':'0');lab();if(snd)sfx.on();buzz(8);}
   else if(a==='f'){cycleFm();}
   else if(a==='l'){if(backs.length<2){toast(T('مفيش عدسات تانية','No other lens'));return;}b.classList.remove('sp');void b.offsetWidth;b.classList.add('sp');sfx.sel();bi=(bi+1)%backs.length;fmTry=0;sw(backs[bi].deviceId);toast(T('عدسة ','Lens ')+(bi+1)+'/'+backs.length);}});
@@ -3122,10 +3144,10 @@ async function openLive(){
  const opw=document.createElement('div');opw.className='opw';
  opw.innerHTML='<div class="ops"><h4>'+T('الخيارات','Options')+'</h4>'
   +'<div class="r"><span>'+T('الفلاش','Flash')+'</span><div class="sg" data-g="fm"><button data-fm="off">'+T('إيقاف','Off')+'</button><button data-fm="auto">'+T('تلقائي','Auto')+'</button><button data-fm="on">'+T('تشغيل','On')+'</button></div></div>'
-  +'<div class="tgs"><button class="tg" data-a="a">'+T('تصوير تلقائي','Auto-capture')+'</button><button class="tg" data-a="mu">'+T('صفحات متعددة','Multi-page')+'</button><button class="tg" data-a="sn">'+T('الصوت','Sound')+'</button></div></div>';
+  +'<div class="tgs"><button class="tg" data-a="a">'+T('تصوير تلقائي','Auto-capture')+'</button><button class="tg" data-a="sn">'+T('الصوت','Sound')+'</button></div></div>';
  m.appendChild(opw);
  const optRef=()=>{opw.querySelectorAll('[data-fm]').forEach(b=>b.classList.toggle('on',b.dataset.fm===fm));opw.querySelectorAll('[data-tm]').forEach(b=>b.classList.toggle('on',+b.dataset.tm===tmv));
-  opw.querySelector('.tg[data-a=a]').classList.toggle('on',auto);opw.querySelector('.tg[data-a=mu]').classList.toggle('on',multi);opw.querySelector('.tg[data-a=sn]').classList.toggle('on',snd);fb.classList.toggle('au',fm==='auto');};
+  opw.querySelector('.tg[data-a=a]').classList.toggle('on',auto);opw.querySelector('.tg[data-a=sn]').classList.toggle('on',snd);fb.classList.toggle('au',fm==='auto');};
  const setFm=x=>{fm=x;fmTry=0;try{localStorage.setItem('tx_fm',fm)}catch(e){}if(fm==='off'||fm==='auto'){if(torch)setTorch(false);}optRef();};
  const cycleFm=()=>{if(fb.classList.contains('tr')){fb.classList.remove('tr');setTorch(true);sfx.on();return;}setFm(fm==='off'?'auto':fm==='auto'?'on':'off');sfx.sel();toast(T('الفلاش: ','Flash: ')+(fm==='off'?T('إيقاف','Off'):fm==='auto'?T('تلقائي','Auto'):T('تشغيل','On')));};
  const cdShow=()=>{cd.textContent=cnt;cd.style.opacity=1;cd.classList.remove('t');void cd.offsetWidth;cd.classList.add('t');sfx.sel();};
@@ -3142,8 +3164,8 @@ async function openLive(){
 #lv.v3 .dn .bg{position:absolute;top:-9px;left:-9px;min-width:22px;height:22px;border-radius:11px;background:#ff453a;color:#fff;font:700 13px/22px system-ui;text-align:center;padding:0 5px;box-sizing:border-box}
 #lv .fly{position:fixed;z-index:9600;width:48px;height:60px;border-radius:8px;border:2px solid #fff;background:center/cover no-repeat;pointer-events:none;will-change:transform,opacity}
 `;document.head.appendChild(s5);}
- const gw=document.createElement('div');gw.className='gw';db.parentNode.insertBefore(gw,db);gw.appendChild(db);const bg=document.createElement('b');bg.className='bg';gw.appendChild(bg);const ckb=document.createElement('i');ckb.className='ck';ckb.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';gw.appendChild(ckb);const phi=document.createElement('i');phi.className='phi';phi.innerHTML='<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 3.5 3L16 12l4.5 4.5"/></svg>';gw.appendChild(phi);db.addEventListener('click',e=>{if(!files.length){e.stopImmediatePropagation();toast(multi?T('الصفحات اللي هتصوّرها هتظهر هنا','Captured pages will appear here'):T('اختار وضع "صفحات" لتصوير أكتر من صفحة','Pick "Pages" mode to scan multiple pages'));}});
- galFn=()=>{const L=files.slice().reverse().find(F=>F.__th);db.style.backgroundImage=L?'url('+L.__th+')':'';bg.textContent=files.length;gw.style.display='block';gw.classList.toggle('m',files.length>1);gw.classList.toggle('e',!files.length);};
+ const gw=document.createElement('div');gw.className='gw';db.parentNode.insertBefore(gw,db);gw.appendChild(db);const bg=document.createElement('b');bg.className='bg';gw.appendChild(bg);const ckb=document.createElement('i');ckb.className='ck';ckb.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';gw.appendChild(ckb);const phi=document.createElement('i');phi.className='phi';phi.innerHTML='<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 3.5 3L16 12l4.5 4.5"/></svg>';gw.appendChild(phi);db.addEventListener('click',e=>{if(!files.length){e.stopImmediatePropagation();toast(multi?T('الصفحات اللي هتصوّرها هتظهر هنا','Captured pages will appear here'):T('فعّل "عدة صور" لتصوير أكتر من صفحة','Switch to "Multiple" to scan several pages'));}});
+ galFn=()=>{const L=files.slice().reverse().find(F=>F.__th);db.style.backgroundImage=L?'url('+L.__th+')':'';bg.textContent=files.length;gw.style.display='block';gw.style.visibility=qrOn?'hidden':'';gw.classList.toggle('m',files.length>1);gw.classList.toggle('e',!files.length);};
  flyFn=th=>{try{if(!th||matchMedia('(prefers-reduced-motion:reduce)').matches)return;const a=sh.getBoundingClientRect(),b=db.getBoundingClientRect();if(!b.width)return;const el=document.createElement('div');el.className='fly';el.style.backgroundImage='url('+th+')';el.style.left=(a.left+a.width/2-24)+'px';el.style.top=(a.top+a.height/2-30)+'px';m.appendChild(el);
   const dx=b.left+b.width/2-(a.left+a.width/2),dy=b.top+b.height/2-(a.top+a.height/2),an=el.animate([{transform:'translate(0,0) scale(1.5)',opacity:.9},{transform:'translate('+dx+'px,'+dy+'px) scale(1)',opacity:.35}],{duration:340,easing:'cubic-bezier(.4,0,.2,1)'});an.onfinish=()=>{el.remove();db.classList.remove('pop');void db.offsetWidth;db.classList.add('pop');};setTimeout(()=>el.remove(),600);}catch(e){}};
  galFn();
@@ -3171,27 +3193,51 @@ if(!document.getElementById('lvcss6')){const s6=document.createElement('style');
   stable=0;last=null;lastGood=null;dtg=null;lockT=0;hk='';lab();renderStrip();sfx.sel();};
  if(uiM==='pg'&&!multi){multi=true;amu=1;lab();renderStrip();}
  /* v122: tools live in the bottom slider; single/multi is a swipe switch */
- const KEYS=['doc','id','ph','pg','tb','book','ocr','qr'],swEl=$q('.txsw'),swI=swEl.querySelector('i'),swS=swEl.querySelectorAll('span');
+ const KEYS=['doc','id','ph','tb','book','ocr','qr'],swEl=$q('.txsw'),swI=swEl.querySelector('i'),swS=swEl.querySelectorAll('span');
  swS[0].textContent=T('صورة واحدة','Single');swS[1].textContent=T('عدة صور','Multiple');
- xpaint=()=>{const on=!!tool;swEl.style.display=on?'':'none';swI.style.transform='translateX('+(multi?100:0)+'%)';swS.forEach((x,i)=>x.classList.toggle('on',(i===1)===multi));};
- const setMulti=x=>{multi=x;amu=0;try{localStorage.setItem('tx_tmulti',x?'1':'0')}catch(e){}if(window.__txTool)window.__txTool.multi=x;lab();renderStrip();sfx.sel();};
+ xpaint=()=>{swEl.style.opacity=qrOn?'0':'1';swEl.style.pointerEvents=qrOn?'none':'';swI.style.transform='translateX('+(multi?100:0)+'%)';swS.forEach((x,i)=>x.classList.toggle('on',(i===1)===multi));};
+ const setMulti=x=>{multi=x;amu=0;try{localStorage.setItem('tx_tmulti',x?'1':'0');localStorage.setItem('tx_multi',x?'1':'0')}catch(e){}if(window.__txTool)window.__txTool.multi=x;lab();renderStrip();sfx.sel();};
  {let sx=null,mv=0;swEl.addEventListener('pointerdown',e=>{sx=e.clientX;mv=0;});
  swEl.addEventListener('pointermove',e=>{if(sx==null)return;const d=e.clientX-sx;if(Math.abs(d)>12){mv=1;const x=d>0;sx=e.clientX;if(x!==multi)setMulti(x);}});
  swEl.addEventListener('pointerup',e=>{if(sx==null)return;sx=null;if(mv)return;const r=swEl.getBoundingClientRect(),x=e.clientX>r.left+r.width/2;if(x!==multi)setMulti(x);});
  swEl.addEventListener('pointercancel',()=>{sx=null;});}
  const txReset=()=>{stable=0;last=null;lastGood=null;dtg=null;lockT=0;hk='';};
+ const qrBox=document.createElement('div');qrBox.className='qres';qrBox.style.display='none';m.querySelector('.st').appendChild(qrBox);
+ let qrT=0,qrBusy=0;
+ const qrShow=t=>{qrBox.textContent='';const p=document.createElement('p');p.textContent=t;qrBox.appendChild(p);const row=document.createElement('div');
+  const bt=(x,f)=>{const e=document.createElement('button');e.type='button';e.className='btn sm';e.textContent=x;e.onclick=ev=>{ev.stopPropagation();f();};row.appendChild(e);};
+  if(/^https?:\/\//i.test(t))bt(T('فتح','Open'),()=>window.open(t,'_blank','noopener'));
+  bt(T('نسخ','Copy'),()=>{navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast(T('اتنسخ','Copied')))});
+  bt(T('مسح تاني','Scan again'),()=>{qrBox.style.display='none';qrShown=0;qrQ=null;});
+  qrBox.appendChild(row);qrBox.style.display='block';sfx.lock();};
+ const qrStep=()=>{if(!alive||!qrOn)return;
+  if(qrShown||qrBusy||document.hidden||!v.videoWidth){qrT=setTimeout(qrStep,180);return;}
+  qrBusy=1;qrDet.detect(v).then(r=>{qrBusy=0;if(!qrOn||qrShown)return;
+   if(!r.length){qrQ=null;return;}
+   const o=r[0],w=v.videoWidth,h=v.videoHeight;qrQ=(o.cornerPoints&&o.cornerPoints.length>=4)?o.cornerPoints.map(p=>({x:p.x/w,y:p.y/h})):null;
+   qrShown=1;qrShow(o.rawValue||'');}).catch(()=>{qrBusy=0;}).then(()=>{if(qrOn)qrT=setTimeout(qrStep,qrShown?180:120);});};
+ const leaveQr=()=>{qrOn=false;qrShown=0;qrQ=null;clearTimeout(qrT);qrBox.style.display='none';qrBox.textContent='';if(mode==='qr')mode='doc';};
+ const enterQr=()=>{if(qrOn)return;
+  if(!('BarcodeDetector' in window)){toast(T('المتصفح ده مش بيدعم قراءة QR','QR scanning is not supported here'));return;}
+  try{qrDet=qrDet||new BarcodeDetector();}catch(e){toast(T('المتصفح ده مش بيدعم قراءة QR','QR scanning is not supported here'));return;}
+  tool='';window.__txTool=null;qrOn=true;qrShown=0;qrQ=null;mode='qr';txReset();lab();renderStrip();sfx.sel();clearTimeout(qrT);qrStep();};
  const applyTool=(id,mu)=>{
-  if(id==='qr'){if(!('BarcodeDetector' in window)||!window.__txQR){toast(T('المتصفح ده مش بيدعم قراءة QR','QR scanning is not supported here'));lab();return;}close();setTimeout(()=>window.__txQR(),120);return;}
-  tool=id;window.__txTool={id:id,multi:!!mu};mode=id==='card'?'id':id==='ph'?'ph':'doc';multi=!!mu;amu=0;txReset();lab();renderStrip();sfx.sel();};
+  if(qrOn)leaveQr();
+  if(mu!=null)multi=!!mu;
+  tool=id;window.__txTool={id:id,multi:multi};mode=id==='card'?'id':id==='ph'?'ph':'doc';amu=0;txReset();lab();renderStrip();sfx.sel();};
  const goKey=k=>{
-  if(k==='doc'||k==='pg'||k==='tb'){if(tool){tool='';window.__txTool=null;mode='doc';if(amu){multi=false;amu=0;}else multi=localStorage.getItem('tx_multi')==='1';txReset();if(uiM===k){lab();renderStrip();sfx.sel();return;}}setUi(k);return;}
-  let mu=false;try{mu=localStorage.getItem('tx_tmulti')==='1'}catch(e){}
-  applyTool(k==='id'?'card':k,mu);};
+  if(k==='qr'){enterQr();return;}
+  if(k==='doc'||k==='tb'){
+   if(qrOn)leaveQr();
+   if(tool){tool='';window.__txTool=null;mode='doc';txReset();if(uiM===k){lab();renderStrip();sfx.sel();return;}}
+   else if(uiM===k){lab();renderStrip();sfx.sel();return;}
+   setUi(k);return;}
+  applyTool(k==='id'?'card':k);};
  if(tool)applyTool(tool,window.__txTool.multi);else lab();
  let sw0=null;
- m.addEventListener('pointerdown',e=>{sw0=(e.target.closest('.st')&&!e.target.closest('.ops,.ts,.opw'))?{x:e.clientX,y:e.clientY}:null;});
+ m.addEventListener('pointerdown',e=>{sw0=(e.target.closest('.st')&&!e.target.closest('.ops,.ts,.opw,.qres'))?{x:e.clientX,y:e.clientY}:null;});
  m.addEventListener('pointercancel',()=>{sw0=null;});
- m.addEventListener('pointerup',e=>{if(!sw0)return;const dx=e.clientX-sw0.x,dy=e.clientY-sw0.y;sw0=null;if(Math.abs(dx)>70&&Math.abs(dy)<45){const ck=tool==='card'?'id':(tool||uiM),i=KEYS.indexOf(ck)+(dx<0?1:-1);if(i>=0&&i<KEYS.length)goKey(KEYS[i]);}});
+ m.addEventListener('pointerup',e=>{if(!sw0)return;const dx=e.clientX-sw0.x,dy=e.clientY-sw0.y;sw0=null;if(Math.abs(dx)>70&&Math.abs(dy)<45){const ck=qrOn?'qr':tool==='card'?'id':(tool||uiM),i=KEYS.indexOf(ck)+(dx<0?1:-1);if(i>=0&&i<KEYS.length)goKey(KEYS[i]);}});
 
  /* v76: flash suggestion tremble, press-state fix, clean page thumbnails, auto-capture suggestion */
  if(!document.getElementById('lvcss7')){const s7=document.createElement('style');s7.id='lvcss7';s7.textContent=`
@@ -3254,13 +3300,13 @@ if(!document.getElementById('lvcss6')){const s6=document.createElement('style');
   const hide=()=>{clearTimeout(hT);bar.classList.remove('on');if(cur)armed=true;cur=null;}; /* armed: التصوير التلقائي واقف طول ما الشريط ظاهر */
   const show=s=>{cur=s;shown[s.kind]=Date.now();tx.textContent=T(s.ar,s.en);by.textContent=T('قبول','Accept');bn.textContent=T('تجاهل','Dismiss');bar.classList.add('on');armed=false;hT=setTimeout(hide,9000);};
   const TO={id:'id',table:'tb',multi:'pg'},NM={id:['وضع البطاقة','ID mode'],table:['وضع الجدول','Table mode'],multi:['وضع الصفحات','Pages mode']};
-  by.onclick=e=>{e.stopPropagation();const s=cur;if(!s)return;TXA.accept(s);hide();setUi(TO[s.kind]);let nm=0;
+  by.onclick=e=>{e.stopPropagation();const s=cur;if(!s)return;TXA.accept(s);hide();if(s.kind==='multi'){if(!multi)setMulti(true);}else setUi(TO[s.kind]);let nm=0;
     if(s.kind==='multi'){try{if(typeof XO!=='undefined'&&!XO.num){XO.num=true;nm=1;const nb=document.getElementById('xNumB');if(nb)nb.classList.add('on');}}catch(x){}} /* 3.5: قبول الصفحات المتعددة بيفعّل ترقيم التصدير الموجود (XO.num)؛ الترتيب = ترتيب التصوير */
     toast(T('اتفعّل '+NM[s.kind][0]+(nm?' + ترقيم الصفحات':''),NM[s.kind][1]+' on'+(nm?' + page numbers':'')));};
   bn.onclick=e=>{e.stopPropagation();if(cur)TXA.dismiss(cur);hide();};
   const tick=async()=>{
     if(!alive){clearInterval(iv);bar.remove();return;}
-    if(cur||busy||gb||cnt||!TXA.enabled()||document.hidden)return;
+    if(cur||busy||gb||cnt||qrOn||tool||!TXA.enabled()||document.hidden)return;
     busy=1;
     try{
       const now=Date.now(),sig={},ctx={mode:uiM,multi,shots:TXA.recentShots(now),now};
@@ -3280,7 +3326,7 @@ if(!document.getElementById('lvcss6')){const s6=document.createElement('style');
  })();}
 
  wk=mkWorker();
-  let s0;try{s0=await sp;}catch(e){alive=false;try{wk&&wk.terminate()}catch(x){}wk=null;m.remove();toast(T('الكاميرا غير متاحة، هنفتح كاميرا الجهاز','Camera unavailable, using device camera'));nat=1;$('#camIn').click();nat=0;return;}
+  let s0;try{s0=await sp;}catch(e){alive=false;try{wk&&wk.terminate()}catch(x){}wk=null;m.remove();document.documentElement.classList.remove('txcam');toast(T('الكاميرا غير متاحة، هنفتح كاميرا الجهاز','Camera unavailable, using device camera'));nat=1;$('#camIn').click();nat=0;return;}
   if(!alive){s0.getTracks().forEach(t=>t.stop());return;}
   attach(s0);shLoop();lab();lenses();raf=requestAnimationFrame(frame);loop();
 }
