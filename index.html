@@ -3281,7 +3281,8 @@ if(!document.getElementById('lvcss6')){const s6=document.createElement('style');
   tool='';window.__txTool=null;qrOn=true;qrShown=0;qrQ=null;mode='qr';txReset();lab();renderStrip();sfx.sel();clearTimeout(qrT);qrStep();};
  const applyTool=(id,mu)=>{
   if(qrOn)leaveQr();
-  if(mu!=null){if(id==='card')fbk=!!mu;else mu0=!!mu;}
+  if(id==='card'){fbk=true;mu0=false;try{localStorage.setItem('tx_fb','1');localStorage.setItem('tx_multi','0');localStorage.setItem('tx_tmulti','0')}catch(e){}}
+  else if(mu!=null){mu0=!!mu;}
   tool=id;window.__txTool={id:id,multi:(id==='card'&&fbk)||mu0};mode=id==='card'?'id':id==='ph'?'ph':'doc';amu=0;txReset();lab();renderStrip();sfx.sel();};
  const goKey=k=>{calmT=performance.now()+300;
   if(k==='qr'){enterQr();return;}
