@@ -8,9 +8,13 @@
   const HF = 'https://huggingface.co/pitapo/rapidocr/resolve/main/';
   const HD = HF + 'paddle/PP-OCRv4/rec/';
   const PD = 'https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/release/2.7/ppocr/utils/dict/';
+  // مصدر jsDelivr (حزمة npm @gutenye/ocr-models، ترخيص MIT، نماذج PaddleOCR PP-OCRv4): نفس مكان مكتباتك فبيتحمّل من المتصفح. ⚠ المسارات من ذاكرتي (assets/) ومش متأكد منها.
+  const JD = 'https://cdn.jsdelivr.net/npm/@gutenye/ocr-models@1.4.2/assets/';
   // ممكن تتبدّل الروابط من localStorage (tx_ocr_urls) لو مصدر اتغيّر.
   const ITEMS = {
-    det: { role: 'det', script: 'any', urls: [HF + 'onnx/PP-OCRv4/det/ch_PP-OCRv4_det_infer.onnx'] },
+    det: { role: 'det', script: 'any', urls: [JD + 'ch_PP-OCRv4_det_infer.onnx', HF + 'onnx/PP-OCRv4/det/ch_PP-OCRv4_det_infer.onnx'] },
+    'rec-ch': { role: 'rec', script: 'ch', urls: [JD + 'ch_PP-OCRv4_rec_infer.onnx', HF + 'onnx/PP-OCRv4/rec/ch_PP-OCRv4_rec_infer.onnx'] },
+    'dict-ch': { role: 'dict', script: 'ch', urls: [JD + 'ppocr_keys_v1.txt', PD + 'ppocr_keys_v1.txt'] },
     'rec-latin': { role: 'rec', script: 'latin', urls: [HF + 'onnx/PP-OCRv4/rec/latin_PP-OCRv3_rec_infer.onnx'] },
     'rec-arabic': { role: 'rec', script: 'arabic', urls: [HF + 'onnx/PP-OCRv4/rec/arabic_PP-OCRv4_rec_infer.onnx'] },
     'rec-cyrillic': { role: 'rec', script: 'cyrillic', urls: [HF + 'onnx/PP-OCRv4/rec/cyrillic_PP-OCRv3_rec_infer.onnx'] },
@@ -20,7 +24,9 @@
   };
   const MAX = 40 * 1048576;
   const override = id => { try { return (JSON.parse(localStorage.getItem('tx_ocr_urls') || '{}'))[id] || null; } catch (e) { return null; } };
-  const candidates = id => { const o = override(id); return o ? [o] : ITEMS[id].urls; };
+  const fileOf = id => 'vendor/ocr/' + id + (ITEMS[id].role === 'dict' ? '.txt' : '.onnx'); // نفس أسماء ملفات tools/fetch-ocr-models.py
+  // الأولوية: ملفات المشروع نفسه (vendor/ocr) ← بعدين الروابط الخارجية. كده التنزيل ميعتمدش على وصول المتصفح لمواقع برّه.
+  const candidates = id => { const o = override(id); return o ? [o] : [fileOf(id)].concat(ITEMS[id].urls); };
   const urlOf = id => candidates(id)[0]; // مفتاح الكاش
   const idsFor = s => ['det', 'rec-' + s, 'dict-' + s];
   const cached = async id => { try { return !!(await (await caches.open(VCACHE)).match(urlOf(id))); } catch (e) { return false; } };
@@ -29,7 +35,12 @@
   async function fetchItem(id, onBytes) {
     let r = null, err = null;
     for (const u of candidates(id)) { // جرّب المصادر بالترتيب لحد ما واحد ينجح
-      try { const x = await fetch(u); if (x.ok) { r = x; break; } err = 'HTTP ' + x.status; } catch (e) { err = 'تعذّر الاتصال بالمصدر (شبكة أو حجب)'; }
+      try {
+        const x = await fetch(u);
+        const ct = x.headers.get('Content-Type') || '';
+        if (x.ok && !(ITEMS[id].role !== 'dict' && /text\/html/i.test(ct))) { r = x; break; } // السيرفر ساعات بيرجّع صفحة HTML بدل 404
+        err = 'HTTP ' + x.status + ' (' + new URL(u, location.href).host + ')';
+      } catch (e) { err = 'تعذّر الاتصال بـ ' + new URL(u, location.href).host + ' (' + ((e && e.message) || e) + ')'; }
     }
     if (!r) { const e = new Error(err + ' — ' + id); e.item = id; throw e; }
     const url = urlOf(id);
@@ -65,6 +76,26 @@
     onProgress && onProgress(1, 'done');
   }
 
+  /** يحدّد عنصر النموذج من اسم الملف (det / rec-… / dict-…) أو null */
+  function classify(name) {
+    const n = name.toLowerCase();
+    const sc = /(^|[^a-z])ch_|ppocr_keys|chinese/.test(n) ? 'ch' : /arab/.test(n) ? 'arabic' : /cyril|eslav|\bru\b/.test(n) ? 'cyrillic' : /latin|\ben\b|english|en_/.test(n) ? 'latin' : null;
+    if (/\.txt$/.test(n) || /dict/.test(n)) return sc ? 'dict-' + sc : null;
+    if (/\.onnx$/.test(n)) return /det/.test(n) ? 'det' : sc ? 'rec-' + sc : null;
+    return null;
+  }
+  /** يخزّن ملفات اختارها المستخدم (File[]) في الكاش. يرجّع {ok:[ids], skipped:[names]} */
+  async function importFiles(files) {
+    const c = await caches.open(VCACHE), ok = [], skipped = [];
+    for (const f of files) {
+      const id = classify(f.name);
+      if (!id || f.size > MAX) { skipped.push(f.name); continue; }
+      await c.put(urlOf(id), new Response(f, { headers: { 'Content-Type': id.startsWith('dict') ? 'text/plain' : 'application/octet-stream' } }));
+      ok.push(id);
+    }
+    return { ok, skipped };
+  }
+
   async function remove(script) {
     const c = await caches.open(VCACHE);
     for (const id of ['rec-' + script, 'dict-' + script]) await c.delete(urlOf(id));
@@ -75,5 +106,5 @@
     return m ? m.arrayBuffer() : null;
   }
 
-  g.TXOcrModels = { ITEMS, idsFor, has, install, remove, get, urlOf };
+  g.TXOcrModels = { ITEMS, idsFor, has, install, remove, get, urlOf, importFiles, classify };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1257,6 +1257,8 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 <script src="filters.js"></script>
 <script src="fields.js"></script>
 <script src="ocr-models.js"></script>
+<script src="ocr-onnx.js"></script>
+<script src="ui-polish.js"></script>
 <script src="assistant.js"></script>
 <script>
 (()=>{
@@ -3873,9 +3875,9 @@ function ocrModelsCard(res,ar){
  if(!document.getElementById('omcss')){const st=document.createElement('style');st.id='omcss';
   st.textContent='.om{margin-top:14px;padding:12px;border-radius:14px;border:1px dashed var(--bd,rgba(127,127,127,.4))}.om-t{font-size:13px;font-weight:600}.om-h{font-size:11px;opacity:.7;margin:3px 0 9px}.om-r{display:flex;flex-wrap:wrap;gap:6px}.om-b{padding:7px 12px;border-radius:12px;border:1px solid var(--bd,rgba(127,127,127,.35));background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}.om-b[disabled]{opacity:.6;cursor:default}.om-b.on{border-color:#22a45d}.om-p{height:4px;border-radius:4px;background:rgba(127,127,127,.25);margin-top:10px;overflow:hidden;display:none}.om-p i{display:block;height:100%;width:0;background:#22a45d;transition:width .15s}.om-m{font-size:11px;margin-top:6px;opacity:.8;min-height:14px}';
   document.head.appendChild(st);}
- const SC=[['arabic','عربي','Arabic'],['latin','لاتيني','Latin'],['cyrillic','سيريلي','Cyrillic']];
+ const SC=[['ch','إنجليزي وأرقام (الأسرع)','English + numbers (fastest)'],['arabic','عربي','Arabic'],['latin','لاتيني','Latin'],['cyrillic','سيريلي','Cyrillic']];
  const box=document.createElement('div');box.className='om';
- box.innerHTML='<div class="om-t">'+(ar?'محرك القراءة الحديث (اختياري)':'Modern reading engine (optional)')+'</div><div class="om-h">'+(ar?'بينزّل مرة واحدة ويتخزّن على جهازك، وبعدها يشتغل بدون نت. الأحسن تنزّله على واي فاي.':'Downloads once and stays on your device, then works offline. Best on Wi-Fi.')+'</div><div class="om-r"></div><div class="om-p"><i></i></div><div class="om-m"></div>';
+ box.innerHTML='<div class="om-t">'+(ar?'محرك القراءة الحديث (اختياري)':'Modern reading engine (optional)')+'<i class="om-cv"></i></div><div class="om-h">'+(ar?'بينزّل مرة واحدة ويتخزّن على جهازك، وبعدها يشتغل بدون نت. الأحسن تنزّله على واي فاي.':'Downloads once and stays on your device, then works offline. Best on Wi-Fi.')+'</div><div class="om-r"></div><div class="om-p"><i></i></div><div class="om-m"></div>';
  const row=box.querySelector('.om-r'),bar=box.querySelector('.om-p'),fill=bar.firstChild,msg=box.querySelector('.om-m'),btns=[];
  const lab=(b,s,on)=>{b.textContent=(on?'✓ ':'⬇ ')+(ar?s[1]:s[2]);b.classList.toggle('on',on);b.title=on?(ar?'متنزّل':'Installed'):(ar?'تنزيل':'Download');};
  SC.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='om-b';lab(b,s,false);row.appendChild(b);btns.push(b);
@@ -3888,6 +3890,15 @@ function ocrModelsCard(res,ar){
    catch(e){msg.textContent=(ar?'فشل التنزيل: ':'Download failed: ')+(e&&e.message||e);}
    finally{btns.forEach(x=>x.disabled=false);setTimeout(()=>{bar.style.display='none'},1500);}
   };});
+ const imp=document.createElement('button');imp.type='button';imp.className='om-b';imp.textContent='📂 '+(ar?'استيراد من ملف':'Import from file');row.appendChild(imp);
+ const fi=document.createElement('input');fi.type='file';fi.multiple=true;fi.accept='.onnx,.txt';fi.style.display='none';box.appendChild(fi);
+ imp.onclick=()=>fi.click();
+ fi.onchange=async()=>{const fs=[...fi.files];if(!fs.length)return;
+  try{const r=await M.importFiles(fs);msg.textContent=(ar?'اتخزّن: ':'Stored: ')+(r.ok.join('، ')||'—')+(r.skipped.length?(ar?' · اتجاهل: ':' · Skipped: ')+r.skipped.join('، '):'');
+   SC.forEach((s,i)=>M.has(s[0]).then(on=>lab(btns[i],s,on)));}
+  catch(e){msg.textContent=(ar?'فشل الاستيراد: ':'Import failed: ')+(e&&e.message||e);}
+  fi.value='';};
+ box.querySelector('.om-t').onclick=()=>box.classList.toggle('open');
  res.appendChild(box);
 }
 /* المرحلة 4.2: شرائح الحقول المستخرجة (تواريخ، أرقام، هواتف، بريد…) فوق نص الـOCR — fields.js */
@@ -3940,7 +3951,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   $m('#oM').innerHTML=extra.map(l=>chip(l,sel.includes(l.c)?'on':'')).join('');};paint();
  const lang=()=>{const o=OCR_LANGS.map(l=>l.c);return sel.slice().sort((a,b)=>o.indexOf(a)-o.indexOf(b)).join('+');};
  const stage=(i,n)=>{t1.textContent=n>1&&i>0?L2('بجرّب طريقة تانية للصورة…','Trying another image treatment…'):L2('بيظبط الصورة ويقرأ…','Tuning the image and reading…');};
- const finish=(best,deep)=>{const W=best.W,sc=best.sc;let T=best.T!=null?best.T:ocrText(best.r,35);
+ const finish=(best,deep)=>{const W=best.W,sc=best.sc;let T=best.T!=null?best.T:ocrText(best.r,35);try{if(window.TXFields)T=TXFields.fixDigits(T)}catch(_){}
   ta.value=T;res.hidden=false;acts.hidden=false;run.hidden=true;th.classList.add('done');
   const pct=Math.round(sc.mean),qc=pct>=85?'g':pct>=70?'m':'l',ql=pct>=85?L2('دقة عالية','High accuracy'):pct>=70?L2('دقة جيدة','Good accuracy'):L2('راجع النص','Please review');
   const nw=T.split(/\s+/).filter(Boolean).length,nl=T.split('\n').filter(Boolean).length;
@@ -3985,7 +3996,9 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
     const tc=document.createElement('canvas');tc.width=124;tc.height=164;const kk=Math.max(124/cv.width,164/cv.height);tc.getContext('2d').drawImage(cv,(124-cv.width*kk)/2,0,cv.width*kk,cv.height*kk);th.innerHTML='';th.appendChild(tc);}
    sg='worker';let passI=0,passN=1;logCb=x=>{if(id===rid&&!dead&&x.status==='recognizing text'){const base=passI/passN;pb.style.width=Math.round((base+x.progress/passN)*100)+'%';t2.textContent=L2('جاري القراءة ','Reading ')+Math.round(x.progress*100)+'%'+(passN>1&&passI>0?' · '+L2('محاولة ','try ')+(passI+1):'');}};
    sg='recognize';
-   const best=await ocrRun(cv,lang(),OQ(),box?'6':'3',!!deep,(i,n)=>{passI=i;passN=Math.max(n,2);stage(i,n);},()=>dead||id!==rid);
+   let best=null;
+   if(!deep){try{best=await TXOnnx.tryRun(cv,lang(),pr=>{if(id===rid&&!dead){pb.style.width=Math.round(8+pr*88)+'%';t1.textContent=L2('بالمحرك الحديث…','Modern engine…');t2.textContent=Math.round(pr*100)+'%';}},()=>dead||id!==rid);}catch(e){console.warn('onnx',e);}}
+   if(!best)best=await ocrRun(cv,lang(),OQ(),box?'6':'3',!!deep,(i,n)=>{passI=i;passN=Math.max(n,2);stage(i,n);},()=>dead||id!==rid);
    if(!best||dead||id!==rid)return;pb.style.width='100%';finish(best,!!deep);}
   catch(e){if(!dead&&id===rid){console.error(e);run.hidden=false;th.classList.add('done');t1.textContent=L2('تعذّر استخراج النص','Could not extract text');t2.textContent=sg+': '+String(e&&e.message||e).slice(0,140)+(navigator.onLine?'':' · '+L2('مفيش إنترنت. جهّز الأوفلاين من «المزيد».','Offline. Prepare offline from More.'));pb.style.width='0';}}};
  m.onclick=async e=>{if(e.target===m){dead=1;m.remove();return;}

@@ -25,3 +25,9 @@
 | نماذج PP-OCR ONNX (كشف + قراءة: عربي/لاتيني/سيريلي) وقواميس الحروف | Apache-2.0 (PaddleOCR / RapidOCR) | **لسه متنزّلتش.** بتتنزّل بـ `python3 tools/fetch-ocr-models.py --accept-license` وبعدها السكريبت بيطبع صفوف جاهزة (الرابط + sha256) تتلصق هنا، وبيحفظ نص الترخيص في `licenses/PaddleOCR-LICENSE.txt` |
 | ocr-models.js (منزّل النماذج) | كود داخلي للمشروع | بدون مكتبات؛ بيجيب ملفات النماذج الموثّقة فوق بطلبات GET وبيخزّنها في كاش vendor |
 | مصدر النماذج الفعلي: `huggingface.co/pitapo/rapidocr` (إعادة استضافة لـ RapidAI/RapidOCR) | Apache-2.0 (حسب بطاقة المستودع) + PaddleOCR Apache-2.0 للقواميس | مرفوض عمدًا: `ScienceSoft/scnsoft-ocr-rec-multilingual` (ترخيص proprietary) |
+| tesseract-main و Paddle-develop (مصدر C++ اتحمّل من GitHub) | Apache-2.0 | **مش مدمجين في التطبيق** (كود مصدر بيحتاج ترجمة، ومفيهمش نماذج). مسجّلين هنا للتوثيق بس |
+| DeepSeek-OCR-main (مصدر من GitHub) | MIT | **مش مدمج**: نموذج كبير بيحتاج CUDA، مش مناسب لتشغيل على الجهاز/المتصفح |
+| ocr-main (مصدر من GitHub) | MIT | **مرجع بس، مش مدمج.** بيستخدم `esearch-ocr` 8.5.0 (Apache-2.0) و`onnxruntime-web` (MIT). مستبعد منه: Bergamot (MPL-2.0) |
+| @gutenye/ocr-models 1.4.2 (نماذج ch_PP-OCRv4 كشف/قراءة + ppocr_keys_v1.txt) من jsDelivr | MIT (الحزمة) / Apache-2.0 (PaddleOCR الأصلي) | بتتنزّل وقت الحاجة بزرار "إنجليزي وأرقام" وبتتخزّن في كاش vendor |
+| ui-polish.js (تحسين الشكل) | كود داخلي للمشروع | CSS فقط، بدون مكتبات أو خطوط جديدة |
+| ocr-onnx.js (محرك الكشف والقراءة) | كود داخلي للمشروع | معالجة DB وفك CTC مكتوبين داخليًا؛ بيعتمد على onnxruntime-web (MIT) والنماذج الموثّقة فوق |

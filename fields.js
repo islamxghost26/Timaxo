@@ -151,6 +151,23 @@
     return fields.map(f => Object.assign({}, f, { action: (act[f.type] || (() => null))(f) }));
   }
 
-  g.TXFields = { extract, suggest, norm };
+  // تصحيح أخطاء الأرقام الشائعة في الـOCR (O→0، l→1، S→5…) داخل الكلمات اللي أغلبها أرقام فقط.
+  // متحفّظ: لازم رقمين حقيقيين على الأقل، وعدد الحروف المشبوهة ما يزيدش عن عدد الأرقام، وكل الحروف الباقية رموز أرقام (. , : / - + ()).
+  const CONF = { O: '0', o: '0', I: '1', l: '1', '|': '1', S: '5', B: '8', Z: '2' };
+  function fixDigits(text) {
+    if (!text) return text;
+    return String(text).replace(/\S+/g, tok => {
+      let d = 0, c = 0;
+      for (const ch of tok) {
+        if (/[0-9]/.test(ch)) d++;
+        else if (CONF[ch]) c++;
+        else if (!/[.,:\/\-+()]/.test(ch)) return tok; // حرف عادي: كلمة مش رقم
+      }
+      if (d < 2 || c === 0 || c > d) return tok;
+      return tok.replace(/[OolI|SBZ]/g, ch => CONF[ch]);
+    });
+  }
+
+  g.TXFields = { extract, suggest, norm, fixDigits };
   if (typeof module !== 'undefined') module.exports = g.TXFields;
 })(typeof window !== 'undefined' ? window : globalThis);
