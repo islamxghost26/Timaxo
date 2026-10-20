@@ -33,6 +33,8 @@ UA = {"User-Agent": "timaxo-fetch/1.0"}
 MAX_MB = 40
 HF = "https://huggingface.co/pitapo/rapidocr/resolve/main/"
 PD = "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/release/2.7/ppocr/utils/dict/"
+# jsDelivr (npm @gutenye/ocr-models, MIT) — ⚠ المسارات من الذاكرة ومش متجرّبة
+JD = "https://cdn.jsdelivr.net/npm/@gutenye/ocr-models@1.4.2/assets/"
 LICENSE_URL = "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/release/2.7/LICENSE"
 
 FORBIDDEN = re.compile(r"GNU (AFFERO )?GENERAL PUBLIC LICENSE|\bAGPL\b|\bGPL-?[23]", re.I)
@@ -41,7 +43,9 @@ MIT = re.compile(r"\bMIT License\b|Permission is hereby granted, free of charge"
 
 # id -> (الدور، الكتابة، الرابط، اسم الملف، ترخيص المصدر المتوقع)
 ITEMS = {
-    "det":        ("det",  "any",      HF + "onnx/PP-OCRv4/det/ch_PP-OCRv4_det_infer.onnx",        "det.onnx",            "Apache-2.0"),
+    "det":        ("det",  "any",      JD + "ch_PP-OCRv4_det_infer.onnx",        "det.onnx",            "Apache-2.0"),
+    "rec-ch":     ("rec",  "ch",       JD + "ch_PP-OCRv4_rec_infer.onnx",                 "rec-ch.onnx",         "Apache-2.0"),
+    "dict-ch":    ("dict", "ch",       JD + "ppocr_keys_v1.txt",                          "dict-ch.txt",         "Apache-2.0"),
     "rec-latin":  ("rec",  "latin",    HF + "onnx/PP-OCRv4/rec/latin_PP-OCRv3_rec_infer.onnx",     "rec-latin.onnx",      "Apache-2.0"),
     "rec-arabic": ("rec",  "arabic",   HF + "onnx/PP-OCRv4/rec/arabic_PP-OCRv4_rec_infer.onnx",    "rec-arabic.onnx",     "Apache-2.0"),
     "rec-cyrillic": ("rec", "cyrillic", HF + "onnx/PP-OCRv4/rec/cyrillic_PP-OCRv3_rec_infer.onnx", "rec-cyrillic.onnx",  "Apache-2.0"),
@@ -100,7 +104,7 @@ def download(url, dest):
 
 def main():
     ap = argparse.ArgumentParser(description="تنزيل نماذج OCR (PP-OCR ONNX)")
-    ap.add_argument("--scripts", nargs="+", default=["arabic", "latin", "cyrillic"], choices=["arabic", "latin", "cyrillic"])
+    ap.add_argument("--scripts", nargs="+", default=["ch", "arabic", "latin", "cyrillic"], choices=["ch", "arabic", "latin", "cyrillic"])
     ap.add_argument("--url", action="append", default=[], metavar="ID=URL")
     ap.add_argument("--license-url", default=LICENSE_URL)
     ap.add_argument("--accept-license", action="store_true")
