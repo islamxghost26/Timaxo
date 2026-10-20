@@ -48,6 +48,41 @@ html body #ltB button{height:34px;padding:0 13px;border-radius:999px;background:
 html body #ltB button.p{background:linear-gradient(135deg,#1B63F0,#22A8F5)}
 html body #ltB button[data-k=x]{width:34px;padding:0;flex:none}
 @media (prefers-reduced-motion:reduce){html body .ltm{animation:none}}
+
+/* ===== v141: قايمة استخراج النص — أنضف وأهدى ===== */
+html body .ox{position:relative;gap:12px}
+html body .ox .ox-live,html body .ox .ocx,html body .ox .om{display:none!important}
+html body .ox-langs{display:flex;gap:2px;padding:4px;margin:0;border-radius:16px;background:var(--surface2);overflow:visible}
+html body .ox-langs .ox-chip{flex:1 1 0;justify-content:center;min-height:38px;padding:0 6px;border:0;border-radius:12px;background:transparent;color:var(--ink2);font-weight:700;white-space:nowrap}
+html body .ox-langs .ox-chip.on,html body .ox-langs .ox-chip.auto.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 8px rgba(0,0,0,.16)}
+html body .ox-langs .ox-chip.more{flex:0 0 auto;border:0;color:var(--ink2)}
+html body .ox-more{padding:2px 0}
+html body .ox-meta{gap:10px;padding:0 2px;min-height:22px}
+html body .ox-b{height:auto;padding:0;background:transparent;font:700 12px system-ui;color:var(--ink2)}
+html body .ox-b.q{display:inline-flex;align-items:center;gap:6px}
+html body .ox-b.q i{width:8px;height:8px;border-radius:50%;background:currentColor}
+html body .ox-b.q.g{background:transparent;color:#16a34a}html body .ox-b.q.m{background:transparent;color:#d97706}html body .ox-b.q.l{background:transparent;color:#dc2626}
+html body .ox-b.mu{margin-inline-start:auto;font-weight:600}
+html body .ox-note{padding:8px 12px;border-radius:12px;background:color-mix(in srgb,#d97706 12%,transparent);color:var(--ink);font:600 12px/1.5 system-ui}
+html body .ox-note:empty{display:none}
+html body .ox-acts{display:flex;flex-wrap:nowrap;gap:8px}
+html body .ox-acts .ox-btn{flex:0 1 auto;height:50px;padding:0 16px}
+html body .ox-acts .ox-btn.pri{flex:1 1 auto}
+html body .ox-acts .ox-btn.ic{flex:0 0 50px;padding:0}
+html body .ox-btn.ic svg circle{fill:currentColor;stroke:none}
+html body .ox-menu{position:absolute;inset-inline:12px;bottom:84px;z-index:6;padding:6px;border-radius:20px;background:var(--surface);border:1px solid var(--line);box-shadow:0 22px 50px -14px rgba(0,0,0,.5);max-height:62%;overflow:auto;animation:oxmn .16s ease-out}
+html body .ox-menu[hidden]{display:none}
+@keyframes oxmn{from{opacity:0;transform:translateY(8px) scale(.98)}}
+html body .ox-mi{display:flex;align-items:center;gap:12px;width:100%;height:48px;padding:0 12px;border:0;border-radius:14px;background:transparent;color:var(--ink);font:700 14px system-ui;text-align:start}
+html body .ox-mi:active{background:var(--surface2)}
+html body .ox-mi svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--ink2);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+html body .ox-mi small{margin-inline-start:auto;color:var(--ink2);font:600 12px system-ui}
+html body .ox-ms{height:1px;margin:4px 10px;background:var(--line)}
+html body .fx-l{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+html body .fx-l::-webkit-scrollbar{display:none}
+html body .fx-c,html body .fx-a{flex:none}
+html body .fx-i{flex:none!important;flex-basis:auto!important;align-self:center;font-size:11px;opacity:.7;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){html body .ox-menu{animation:none}}
 `;
   const st = document.createElement('style');
   st.id = 'uipolish';
