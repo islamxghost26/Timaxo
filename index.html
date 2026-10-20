@@ -1256,6 +1256,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 
 <script src="filters.js"></script>
 <script src="fields.js"></script>
+<script src="ocr-models.js"></script>
 <script src="assistant.js"></script>
 <script>
 (()=>{
@@ -3865,6 +3866,30 @@ async function liveText(p){
   const tick=()=>{if(S.dead)return;const R=o.getBoundingClientRect(),k=[R.left,R.top,R.width,R.height].map(Math.round).join();if(k!==S.k){S.k=k;place();}S.raf=requestAnimationFrame(tick);};tick();
  }catch(e){console.error('liveText',e);ltExit();}}
 
+/* المرحلة 4.4أ: بطاقة تنزيل نماذج القراءة الحديثة (ocr-models.js) — بتتنزّل وقت الحاجة بس مع شريط تقدم */
+function ocrModelsCard(res,ar){
+ const old=res.querySelector('.om');if(old)old.remove();
+ const M=window.TXOcrModels;if(!M||!window.caches)return;
+ if(!document.getElementById('omcss')){const st=document.createElement('style');st.id='omcss';
+  st.textContent='.om{margin-top:14px;padding:12px;border-radius:14px;border:1px dashed var(--bd,rgba(127,127,127,.4))}.om-t{font-size:13px;font-weight:600}.om-h{font-size:11px;opacity:.7;margin:3px 0 9px}.om-r{display:flex;flex-wrap:wrap;gap:6px}.om-b{padding:7px 12px;border-radius:12px;border:1px solid var(--bd,rgba(127,127,127,.35));background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}.om-b[disabled]{opacity:.6;cursor:default}.om-b.on{border-color:#22a45d}.om-p{height:4px;border-radius:4px;background:rgba(127,127,127,.25);margin-top:10px;overflow:hidden;display:none}.om-p i{display:block;height:100%;width:0;background:#22a45d;transition:width .15s}.om-m{font-size:11px;margin-top:6px;opacity:.8;min-height:14px}';
+  document.head.appendChild(st);}
+ const SC=[['arabic','عربي','Arabic'],['latin','لاتيني','Latin'],['cyrillic','سيريلي','Cyrillic']];
+ const box=document.createElement('div');box.className='om';
+ box.innerHTML='<div class="om-t">'+(ar?'محرك القراءة الحديث (اختياري)':'Modern reading engine (optional)')+'</div><div class="om-h">'+(ar?'بينزّل مرة واحدة ويتخزّن على جهازك، وبعدها يشتغل بدون نت. الأحسن تنزّله على واي فاي.':'Downloads once and stays on your device, then works offline. Best on Wi-Fi.')+'</div><div class="om-r"></div><div class="om-p"><i></i></div><div class="om-m"></div>';
+ const row=box.querySelector('.om-r'),bar=box.querySelector('.om-p'),fill=bar.firstChild,msg=box.querySelector('.om-m'),btns=[];
+ const lab=(b,s,on)=>{b.textContent=(on?'✓ ':'⬇ ')+(ar?s[1]:s[2]);b.classList.toggle('on',on);b.title=on?(ar?'متنزّل':'Installed'):(ar?'تنزيل':'Download');};
+ SC.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='om-b';lab(b,s,false);row.appendChild(b);btns.push(b);
+  M.has(s[0]).then(on=>lab(b,s,on)).catch(()=>{});
+  b.onclick=async()=>{
+   if(b.classList.contains('on')){msg.textContent=ar?'النموذج ده متنزّل بالفعل.':'Already installed.';return;}
+   btns.forEach(x=>x.disabled=true);bar.style.display='block';fill.style.width='0';msg.textContent=ar?'بنجهّز التنزيل…':'Starting…';
+   try{await M.install(s[0],(f,id)=>{fill.style.width=Math.round(f*100)+'%';msg.textContent=(ar?'بنزّل ':'Downloading ')+(id==='done'?'':id)+' · '+Math.round(f*100)+'%';});
+    lab(b,s,true);msg.textContent=ar?'تمام، النموذج اتخزّن على جهازك.':'Done — stored on your device.';}
+   catch(e){msg.textContent=(ar?'فشل التنزيل: ':'Download failed: ')+(e&&e.message||e);}
+   finally{btns.forEach(x=>x.disabled=false);setTimeout(()=>{bar.style.display='none'},1500);}
+  };});
+ res.appendChild(box);
+}
 /* المرحلة 4.2: شرائح الحقول المستخرجة (تواريخ، أرقام، هواتف، بريد…) فوق نص الـOCR — fields.js */
 function ocrFields(res,T,ar){
  const old=res.querySelector('.fx');if(old)old.remove();
@@ -3921,7 +3946,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   const nw=T.split(/\s+/).filter(Boolean).length,nl=T.split('\n').filter(Boolean).length;
   meta.innerHTML=T?'<span class="ox-b q '+qc+'">'+ql+' · '+pct+'%</span><span class="ox-b">'+nw+' '+L2('كلمة','words')+'</span><span class="ox-b">'+nl+' '+L2('سطر','lines')+'</span>':'';
   note.textContent=T?(pct<70?L2('الثقة منخفضة. جرّب «قراءة أدق» أو غيّر اللغة، وراجع الأرقام والأسماء.','Low confidence. Try Deep read or another language, and check numbers and names.'):L2('راجع الأرقام والأسماء قبل الاستخدام.','Check numbers and names before using.')):L2('ما لقيتش نص واضح. جرّب لغة تانية أو «قراءة أدق».','No clear text. Try another language or Deep read.');
-  try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}try{ocrFields(res,T,ar)}catch(e){console.warn('fx',e)}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
+  try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}try{ocrFields(res,T,ar)}catch(e){console.warn('fx',e)}try{ocrModelsCard(res,ar)}catch(e){console.warn('om',e)}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
   if(!T)ta.hidden=true;else ta.hidden=false;deepNext=!deep;try{tblInit(best)}catch(e){console.warn('tbl',e)}};
  const tbx=document.createElement('div');tbx.className='tbx';tbx.hidden=true;res.appendChild(tbx);
  let TB=null,tbTok=0;
