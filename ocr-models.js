@@ -3,30 +3,36 @@
 (function (g) {
   'use strict';
   const VCACHE = 'timaxo-vendor-v1';
-  const HF = 'https://huggingface.co/SWHL/RapidOCR/resolve/main/';
+  // المصدر: مستودع pitapo/rapidocr على HuggingFace (ترخيص apache-2.0 حسب بطاقة المستودع، وهو إعادة استضافة لنماذج RapidAI/RapidOCR).
+  // المسارات مأخوذة من قايمة ملفات المستودع نفسه. القواميس ليها مصدر بديل من PaddleOCR (Apache-2.0).
+  const HF = 'https://huggingface.co/pitapo/rapidocr/resolve/main/';
+  const HD = HF + 'paddle/PP-OCRv4/rec/';
   const PD = 'https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/release/2.7/ppocr/utils/dict/';
-  // نفس العناصر في tools/fetch-ocr-models.py. الروابط من الذاكرة ومش متجرّبة: ممكن تتبدّل من localStorage (tx_ocr_urls).
+  // ممكن تتبدّل الروابط من localStorage (tx_ocr_urls) لو مصدر اتغيّر.
   const ITEMS = {
-    det: { role: 'det', script: 'any', url: HF + 'PP-OCRv4/ch_PP-OCRv4_det_infer.onnx' },
-    'rec-latin': { role: 'rec', script: 'latin', url: HF + 'PP-OCRv3/latin_PP-OCRv3_rec_infer.onnx' },
-    'rec-arabic': { role: 'rec', script: 'arabic', url: HF + 'PP-OCRv3/arabic_PP-OCRv3_rec_infer.onnx' },
-    'rec-cyrillic': { role: 'rec', script: 'cyrillic', url: HF + 'PP-OCRv3/cyrillic_PP-OCRv3_rec_infer.onnx' },
-    'dict-latin': { role: 'dict', script: 'latin', url: PD + 'latin_dict.txt' },
-    'dict-arabic': { role: 'dict', script: 'arabic', url: PD + 'arabic_dict.txt' },
-    'dict-cyrillic': { role: 'dict', script: 'cyrillic', url: PD + 'cyrillic_dict.txt' }
+    det: { role: 'det', script: 'any', urls: [HF + 'onnx/PP-OCRv4/det/ch_PP-OCRv4_det_infer.onnx'] },
+    'rec-latin': { role: 'rec', script: 'latin', urls: [HF + 'onnx/PP-OCRv4/rec/latin_PP-OCRv3_rec_infer.onnx'] },
+    'rec-arabic': { role: 'rec', script: 'arabic', urls: [HF + 'onnx/PP-OCRv4/rec/arabic_PP-OCRv4_rec_infer.onnx'] },
+    'rec-cyrillic': { role: 'rec', script: 'cyrillic', urls: [HF + 'onnx/PP-OCRv4/rec/cyrillic_PP-OCRv3_rec_infer.onnx'] },
+    'dict-latin': { role: 'dict', script: 'latin', urls: [HD + 'latin_PP-OCRv3_rec_infer/latin_dict.txt', PD + 'latin_dict.txt'] },
+    'dict-arabic': { role: 'dict', script: 'arabic', urls: [HD + 'arabic_PP-OCRv4_rec_infer/arabic_dict.txt', PD + 'arabic_dict.txt'] },
+    'dict-cyrillic': { role: 'dict', script: 'cyrillic', urls: [HD + 'cyrillic_PP-OCRv3_rec_infer/cyrillic_dict.txt', PD + 'cyrillic_dict.txt'] }
   };
   const MAX = 40 * 1048576;
-  const urlOf = id => {
-    try { const o = JSON.parse(localStorage.getItem('tx_ocr_urls') || '{}'); if (o[id]) return o[id]; } catch (e) { }
-    return ITEMS[id].url;
-  };
+  const override = id => { try { return (JSON.parse(localStorage.getItem('tx_ocr_urls') || '{}'))[id] || null; } catch (e) { return null; } };
+  const candidates = id => { const o = override(id); return o ? [o] : ITEMS[id].urls; };
+  const urlOf = id => candidates(id)[0]; // مفتاح الكاش
   const idsFor = s => ['det', 'rec-' + s, 'dict-' + s];
   const cached = async id => { try { return !!(await (await caches.open(VCACHE)).match(urlOf(id))); } catch (e) { return false; } };
   const has = async s => (await Promise.all(idsFor(s).map(cached))).every(Boolean);
 
   async function fetchItem(id, onBytes) {
-    const url = urlOf(id), r = await fetch(url);
-    if (!r.ok) { const e = new Error('HTTP ' + r.status + ' — ' + id); e.item = id; throw e; }
+    let r = null, err = null;
+    for (const u of candidates(id)) { // جرّب المصادر بالترتيب لحد ما واحد ينجح
+      try { const x = await fetch(u); if (x.ok) { r = x; break; } err = 'HTTP ' + x.status; } catch (e) { err = 'تعذّر الاتصال بالمصدر (شبكة أو حجب)'; }
+    }
+    if (!r) { const e = new Error(err + ' — ' + id); e.item = id; throw e; }
+    const url = urlOf(id);
     const total = +r.headers.get('Content-Length') || 0;
     if (total > MAX) throw new Error('الملف أكبر من 40 م.ب: ' + id);
     const rd = r.body && r.body.getReader(), parts = [];

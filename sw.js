@@ -1,4 +1,4 @@
-const CACHE='timaxo-v134';
+const CACHE='timaxo-v135';
 const VCACHE='timaxo-vendor-v1'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
 const VENDOR_PRE=['vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tessdata/fast/ara.traineddata.gz','vendor/tessdata/fast/eng.traineddata.gz','vendor/edge/blaze_face_short_range.onnx']; // الباقي (core وبيانات best) بيتخزن أول استخدام
 const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js','edge-learn.js','filters.js','fields.js','ocr-models.js','assistant.js','assistant-face.js','bg-dark.jpg','bg-black.jpg','bg-light.jpg'];
@@ -11,7 +11,7 @@ self.addEventListener('fetch',e=>{
   if(r.method==='POST'&&new URL(r.url).searchParams.get('share')==='1'){e.respondWith((async()=>{try{const fd=await r.formData(),fs=fd.getAll('media').filter(f=>f&&f.size),c=await caches.open('timaxo-share');for(const k of await c.keys())await c.delete(k);let i=0;for(const f of fs)await c.put('/__share/'+(i++),new Response(f,{headers:{'Content-Type':f.type||'image/jpeg'}}));}catch(x){}return Response.redirect('./?shared=1',303);})());return;}
   if(r.method!=='GET')return;
   const same=new URL(r.url).origin===location.origin;
-  if(!same&&/huggingface\.co\/SWHL\/RapidOCR|PaddlePaddle\/PaddleOCR/.test(r.url))return; // نماذج OCR بتتخزّن في كاش vendor من ocr-models.js بس
+  if(!same&&/huggingface\.co\/(SWHL|pitapo)\/rapidocr|PaddlePaddle\/PaddleOCR/.test(r.url))return; // نماذج OCR بتتخزّن في كاش vendor من ocr-models.js بس
   if(!same&&/\/npm\/onnxruntime-web@/.test(r.url))return; // المحرك بيتخزن في كاش vendor من صفحة الإعداد؛ مفيش داعي لنسخة تانية في كاش التطبيق
   if(same&&new URL(r.url).pathname.indexOf('/vendor/')>=0){ // ملفات OCR المحلية: الكاش الأول بدون تحديث في الخلفية (ملفات كبيرة)
     e.respondWith(caches.open(VCACHE).then(c=>c.match(r).then(m=>m||fetch(r).then(res=>{if(res&&res.ok)c.put(r,res.clone());return res;}))));return;

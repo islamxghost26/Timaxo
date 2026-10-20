@@ -24,3 +24,4 @@
 | fields.js (مستخرج الحقول) | كود داخلي للمشروع | بدون اعتماد على أي مكتبة؛ تجميع أنماط regex فقط |
 | نماذج PP-OCR ONNX (كشف + قراءة: عربي/لاتيني/سيريلي) وقواميس الحروف | Apache-2.0 (PaddleOCR / RapidOCR) | **لسه متنزّلتش.** بتتنزّل بـ `python3 tools/fetch-ocr-models.py --accept-license` وبعدها السكريبت بيطبع صفوف جاهزة (الرابط + sha256) تتلصق هنا، وبيحفظ نص الترخيص في `licenses/PaddleOCR-LICENSE.txt` |
 | ocr-models.js (منزّل النماذج) | كود داخلي للمشروع | بدون مكتبات؛ بيجيب ملفات النماذج الموثّقة فوق بطلبات GET وبيخزّنها في كاش vendor |
+| مصدر النماذج الفعلي: `huggingface.co/pitapo/rapidocr` (إعادة استضافة لـ RapidAI/RapidOCR) | Apache-2.0 (حسب بطاقة المستودع) + PaddleOCR Apache-2.0 للقواميس | مرفوض عمدًا: `ScienceSoft/scnsoft-ocr-rec-multilingual` (ترخيص proprietary) |
