@@ -31,7 +31,7 @@ from datetime import date
 
 UA = {"User-Agent": "timaxo-fetch/1.0"}
 MAX_MB = 40
-HF = "https://huggingface.co/SWHL/RapidOCR/resolve/main/"
+HF = "https://huggingface.co/pitapo/rapidocr/resolve/main/"
 PD = "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/release/2.7/ppocr/utils/dict/"
 LICENSE_URL = "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/release/2.7/LICENSE"
 
@@ -41,10 +41,10 @@ MIT = re.compile(r"\bMIT License\b|Permission is hereby granted, free of charge"
 
 # id -> (الدور، الكتابة، الرابط، اسم الملف، ترخيص المصدر المتوقع)
 ITEMS = {
-    "det":        ("det",  "any",      HF + "PP-OCRv4/ch_PP-OCRv4_det_infer.onnx",        "det.onnx",            "Apache-2.0"),
-    "rec-latin":  ("rec",  "latin",    HF + "PP-OCRv3/latin_PP-OCRv3_rec_infer.onnx",     "rec-latin.onnx",      "Apache-2.0"),
-    "rec-arabic": ("rec",  "arabic",   HF + "PP-OCRv3/arabic_PP-OCRv3_rec_infer.onnx",    "rec-arabic.onnx",     "Apache-2.0"),
-    "rec-cyrillic": ("rec", "cyrillic", HF + "PP-OCRv3/cyrillic_PP-OCRv3_rec_infer.onnx", "rec-cyrillic.onnx",  "Apache-2.0"),
+    "det":        ("det",  "any",      HF + "onnx/PP-OCRv4/det/ch_PP-OCRv4_det_infer.onnx",        "det.onnx",            "Apache-2.0"),
+    "rec-latin":  ("rec",  "latin",    HF + "onnx/PP-OCRv4/rec/latin_PP-OCRv3_rec_infer.onnx",     "rec-latin.onnx",      "Apache-2.0"),
+    "rec-arabic": ("rec",  "arabic",   HF + "onnx/PP-OCRv4/rec/arabic_PP-OCRv4_rec_infer.onnx",    "rec-arabic.onnx",     "Apache-2.0"),
+    "rec-cyrillic": ("rec", "cyrillic", HF + "onnx/PP-OCRv4/rec/cyrillic_PP-OCRv3_rec_infer.onnx", "rec-cyrillic.onnx",  "Apache-2.0"),
     "dict-latin": ("dict", "latin",    PD + "latin_dict.txt",                             "dict-latin.txt",      "Apache-2.0"),
     "dict-arabic": ("dict", "arabic",  PD + "arabic_dict.txt",                            "dict-arabic.txt",     "Apache-2.0"),
     "dict-cyrillic": ("dict", "cyrillic", PD + "cyrillic_dict.txt",                       "dict-cyrillic.txt",   "Apache-2.0"),
