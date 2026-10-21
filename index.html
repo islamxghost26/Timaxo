@@ -2355,14 +2355,14 @@ $('#editBack').onclick=async()=>{
 
 /* ---------- export ---------- */
 const QUAL={small:{edge:1400,q:.6},medium:{edge:1800,q:.8},high:{edge:2200,q:.92}};
-const X={fmt:'pdf',size:'medium',ps:'fit',sel:new Set(),busy:false};
+const X={fmt:'pdf',size:'high',ps:'fit',sel:new Set(),busy:false};
 let DL=null;
 (async()=>{try{if(window.claude&&claude.use)DL=(await claude.use('downloads'))||null;}catch(e){DL=null;}})();
 function openSheet(only,opt){
   if(!state.pages.length)return;
   const one=Array.isArray(only)&&only.length>0;opt=(one&&opt)||{};
   X.sel=new Set(one?only:state.pages.map((_,i)=>i));X.mode=one?(only.length===1?'one':'pick'):'all';X.busy=false;X.act='save';$('#xFb').hidden=true;$('#xFb').innerHTML='';
-  try{const f=localStorage.getItem('tx_xfmt'),ps=localStorage.getItem('tx_xps'),sz=localStorage.getItem('tx_xsz');if(f&&/^(pdf|jpg|png)$/.test(f))X.fmt=f;if(ps&&/^(fit|a4|a5|letter)$/.test(ps))X.ps=ps;if(sz&&QUAL[sz])X.size=sz;}catch(_){}
+  try{const f=localStorage.getItem('tx_xfmt'),ps=localStorage.getItem('tx_xps'),sz=localStorage.getItem('tx_xsz2');if(f&&/^(pdf|jpg|png)$/.test(f))X.fmt=f;if(ps&&/^(fit|a4|a5|letter)$/.test(ps))X.ps=ps;if(sz&&QUAL[sz])X.size=sz;}catch(_){}
   if(opt.fmt)X.fmt=opt.fmt;if(opt.ps)X.ps=opt.ps;
   $('#xName').value=(one&&opt.file)||state.name||defName();buildXPages();syncX();$('#scrim').classList.add('on');$('#sheet').classList.add('on');
 }
@@ -4781,7 +4781,9 @@ function xUi(){
   const fld=$('#xPgFld');if(!fld)return;fld.dataset.m=m;fld.hidden=n<2;
   const lab={all:Lg('كل الصفحات','All pages'),one:Lg('صفحة واحدة','One page'),pick:Lg('اختيار','Pick')};
   $$('#xMode button').forEach(b=>{b.textContent=lab[b.dataset.m];b.classList.toggle('on',b.dataset.m===m);});
-  const adv=!$('#xAdv').hidden;$('#xMore').textContent=Lg('خيارات إضافية','More options')+(adv?'  ▴':'  ▾');$('#xMore').setAttribute('aria-expanded',adv?'true':'false');
+  const adv=!$('#xAdv').hidden,ql={small:Lg('صغيرة','Small'),medium:Lg('متوسطة','Medium'),high:Lg('عالية','High')},wm=($('#xWm')||{}).value;
+  const mb=$('#xMore');mb.innerHTML='<span class="xml">'+Lg('خيارات إضافية','More options')+'</span><span class="xms">'+Lg('الجودة: ','Quality: ')+ql[X.size]+(wm?' · '+Lg('علامة مائية','Watermark'):'')+'</span><svg class="i xch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  mb.setAttribute('aria-expanded',adv?'true':'false');mb.classList.toggle('open',adv);$('#xAdv').classList.toggle('open',adv);
   $('#xShLbl').textContent=Lg('مشاركة','Share');$('#xClose').setAttribute('aria-label',Lg('إغلاق','Close'));
   if(!X.busy)$('#xGoLbl').textContent=Lg('حفظ على الجهاز','Save to device')+(X.sel.size>1?' · '+X.sel.size:'');
   $('#xShare').disabled=!X.sel.size||X.busy;
@@ -4810,8 +4812,25 @@ html body #sheet .chip.xth b{position:absolute;inset-inline-start:4px;bottom:4px
 html body #sheet .chip.xth i{position:absolute;top:4px;inset-inline-end:4px;width:18px;height:18px;border-radius:50%;background:var(--accent);opacity:0;transform:scale(.5);transition:opacity .15s,transform .15s}
 html body #sheet .chip.xth i::after{content:"";position:absolute;left:5px;top:3px;width:4px;height:8px;border:solid var(--accent-ink,#fff);border-width:0 2px 2px 0;transform:rotate(45deg)}
 html body #sheet .chip.xth.on i{opacity:1;transform:none}
-html body #sheet .xmore{display:block;width:100%;height:36px;margin:0 0 8px;border:0;background:transparent;color:var(--ink2);font:700 13px system-ui}
-html body #sheet .xadv{margin-bottom:4px;padding:12px 12px 2px;border-radius:16px;background:color-mix(in srgb,var(--surface2) 55%,transparent)}
+html body #sheet{--xl:color-mix(in srgb,var(--ink2) 22%,transparent)}
+html body #sheet .fld>.l,html body #sheet .fld>label{font-size:12px;font-weight:800;letter-spacing:.2px;color:var(--ink2);opacity:.9}
+html body #sheet .docname{height:46px;border-radius:14px;font-size:15px;font-weight:600}
+html body #sheet .xmore{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;margin:2px 0 10px;padding:0 14px;border:1px solid var(--xl);border-radius:16px;background:color-mix(in srgb,var(--surface2) 60%,transparent);color:var(--ink);text-align:start;cursor:pointer;transition:background .15s,border-color .15s}
+html body #sheet .xmore:active{transform:scale(.99)}
+html body #sheet .xmore .xml{font:800 14px system-ui;flex:none}
+html body #sheet .xmore .xms{flex:1;min-width:0;font:600 12px system-ui;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
+html body #sheet .xmore .xch{flex:none;width:26px;height:26px;padding:4px;border-radius:50%;background:var(--surface2);color:var(--ink);fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s,background .15s,color .15s}
+html body #sheet .xmore.open{border-color:var(--accent);border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
+html body #sheet .xmore.open .xch{transform:rotate(180deg);background:var(--accent);color:var(--accent-ink,#fff)}
+html body #sheet .xadv{margin:0 0 12px;padding:14px 12px 4px;border:1px solid var(--accent);border-top:0;border-radius:0 0 16px 16px;background:color-mix(in srgb,var(--surface2) 40%,transparent);animation:xin .2s ease-out}
+html body #sheet .xadv .fld:last-child{margin-bottom:8px}
+html body #sheet .xadv .chips:not(.xseg){display:flex;flex-wrap:wrap;gap:8px}
+html body #sheet .xadv .chips:not(.xseg) .chip{height:36px;padding:0 14px;border-radius:12px;font-weight:700;font-size:13px}
+html body #sheet .xadv .docname{height:42px}
+html body #sheet #xEst{font-size:12px;color:var(--ink2);padding:0 4px}
+html body #sheet .xact .savebtn{font-weight:800;box-shadow:0 10px 22px -10px rgba(90,100,255,.85)}
+@keyframes xin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html body #sheet .xadv{animation:none}html body #sheet .xmore .xch{transition:none}}
 html body #sheet .xadv[hidden]{display:none}
 html body #sheet .note:empty{display:none}
 html body #sheet #xEst{margin:0 0 10px;min-height:0}
@@ -4830,7 +4849,7 @@ html body #qsBtn .i{width:20px;height:20px}
     if(m==='all')X.sel=new Set(state.pages.map((_,i)=>i));
     else if(m==='one'){const cur=E.page?state.pages.indexOf(E.page):-1,keep=prev==='pick'?[...X.sel].sort((a,b)=>a-b)[0]:undefined;X.sel=new Set([keep!==undefined?keep:(prev==='one'&&X.sel.size?[...X.sel][0]:(cur>=0?cur:state.pages.length-1))]);}
     X.mode=m;syncX();const on=$('#xPages .chip.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});};
-  ['xFmt','xPs','xSize'].forEach(id=>$('#'+id).addEventListener('click',()=>{try{localStorage.setItem('tx_xfmt',X.fmt);localStorage.setItem('tx_xps',X.ps);localStorage.setItem('tx_xsz',X.size);}catch(_){}}));
+  ['xFmt','xPs','xSize'].forEach(id=>$('#'+id).addEventListener('click',()=>{try{localStorage.setItem('tx_xfmt',X.fmt);localStorage.setItem('tx_xps',X.ps);localStorage.setItem('tx_xsz2',X.size);}catch(_){}}));
   $('#xGo').addEventListener('pointerdown',()=>{X.act='save';});
   $('#xShare').onclick=()=>{if(X.busy||!X.sel.size)return;X.act='share';$('#xGo').click();};
   $('#qsBtn').onclick=async()=>{const pg=E.page;if(!pg||X.busy)return;
@@ -4838,6 +4857,7 @@ html body #qsBtn .i{width:20px;height:20px}
     const i=state.pages.indexOf(pg);if(i<0)return;openSheet([i]);};
   const ql=()=>{$('#qsBtn').setAttribute('aria-label',Lg('حفظ الصفحة دي','Save this page'));$('#qsBtn').title=Lg('حفظ الصفحة دي','Save this page');};ql();
   $('#langBtn').addEventListener('click',()=>setTimeout(()=>{ql();xUi();},60));
+  $('#xWm')&&$('#xWm').addEventListener('input',()=>{try{xUi();}catch(_){}});
   xUi();
 })();
 
