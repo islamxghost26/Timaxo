@@ -106,17 +106,25 @@ html body #vEdit .pa{flex:none;width:78px;height:74px;flex-direction:column;gap:
 html body #vEdit .pa svg.i{width:24px;height:24px}
 html body #vEdit #ocrB{order:1}html body #vEdit #ltBtn{order:2}html body #vEdit #rotR{order:3}html body #vEdit #rotL{order:4}html body #vEdit #recrop{order:5}html body #vEdit #bookB{order:6}html body #vEdit #mvE{order:7}html body #vEdit #mvL{order:8}html body #vEdit #delPg{order:9}
 html body #vEdit #ocrB,html body #vEdit #ltBtn{background:color-mix(in srgb,var(--accent,#1b63f0) 14%,var(--surface));border-color:color-mix(in srgb,var(--accent,#1b63f0) 38%,var(--line))}
-/* الضبط */
-html body #vEdit #pAdjust:not([hidden]){display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:6px 2px 8px}
+/* الضبط: سلايدرات رأسية (من تحت لفوق) + زر إعادة ضبط صغير ثابت */
+html body #vEdit #pAdjust:not([hidden]){display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:6px 2px 8px}
 html body #vEdit #pAdjust::-webkit-scrollbar{display:none}
-html body #vEdit #pAdjust .sld{flex:none;width:196px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:8px;align-content:center;padding:11px 14px 9px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
-html body #vEdit #pAdjust .sld span{grid-column:1;grid-row:1;font-size:13px!important}
-html body #vEdit #pAdjust .sld output{grid-column:2;grid-row:1}
-html body #vEdit #pAdjust .sld input{grid-column:1/-1;grid-row:2;width:100%;margin:0}
-html body #vEdit #pAdjust>.fld{order:1;flex:none;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:9px 12px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
-html body #vEdit #pAdjust .chips{display:flex;flex-wrap:nowrap;gap:6px}
-html body #vEdit #pAdjust .chip{flex:none;height:34px;min-height:34px;padding:0 13px}
-html body #vEdit #pAdjust>.row{order:2;flex:none;align-items:center}
+html body #vEdit #pAdjust>.row{order:-1;position:sticky;inset-inline-start:0;z-index:2;flex:none;padding-inline-end:4px;background:var(--bg)}
+html body #vEdit #adjReset{font-size:0!important;width:34px;height:34px;min-width:0;min-height:0;padding:0;border-radius:50%;position:relative;color:var(--ink2);background:var(--surface);border:1px solid var(--line)}
+html body #vEdit #adjReset::before{content:'';position:absolute;inset:0;margin:auto;width:17px;height:17px;background:currentColor;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.7L3 8M3 3v5h5'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.7L3 8M3 3v5h5'/></svg>") center/contain no-repeat}
+html body #vEdit #adjReset:active{transform:rotate(-120deg) scale(.92)}
+html body #vEdit #pAdjust .sld{flex:none;width:68px;display:grid;grid-template-columns:1fr;grid-template-rows:auto 96px auto;justify-items:center;align-items:center;gap:4px;padding:8px 0 7px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+html body #vEdit #pAdjust .sld output{grid-row:1;grid-column:1;min-width:0;text-align:center;font:800 12px system-ui!important;color:var(--accent,#1b63f0)}
+html body #vEdit #pAdjust .sld span{grid-row:3;grid-column:1;font:700 11.5px system-ui!important;color:var(--ink);white-space:nowrap}
+html body #vEdit #pAdjust .sld input[type=range]{grid-row:2;grid-column:1;justify-self:center;width:96px;height:28px;margin:0;transform:rotate(-90deg);direction:ltr;touch-action:none;-webkit-appearance:none;appearance:none;background:transparent}
+html body #vEdit #pAdjust input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:5px;background:var(--line)}
+html body #vEdit #pAdjust input[type=range]::-moz-range-track{height:5px;border-radius:5px;background:var(--line)}
+html body #vEdit #pAdjust input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8.5px;border-radius:50%;background:var(--accent,#1b63f0);border:3px solid var(--surface);box-shadow:0 1px 6px rgba(0,0,0,.4)}
+html body #vEdit #pAdjust input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent,#1b63f0);border:3px solid var(--surface)}
+html body #vEdit #pAdjust>.fld{order:1;flex:none;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:8px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+html body #vEdit #pAdjust>.fld .l{font:700 11px system-ui!important;color:var(--ink2);text-align:center}
+html body #vEdit #pAdjust .chips{display:flex;flex-direction:column;flex-wrap:nowrap;gap:5px}
+html body #vEdit #pAdjust .chip{flex:none;height:28px;min-height:28px;padding:0 12px;font-size:12px!important;border-radius:12px;white-space:nowrap}
 /* التعديل والمسح */
 html body #vEdit .tcats{display:none!important}
 html body #vEdit #toolRow{margin-bottom:2px!important}

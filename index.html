@@ -1263,6 +1263,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 <script src="ocr-models.js"></script>
 <script src="ocr-onnx.js"></script>
 <script src="translate.js"></script>
+<script src="tool-order.js"></script>
 <script src="ui-polish.js"></script>
 <script src="assistant.js"></script>
 <script>
@@ -2212,6 +2213,7 @@ function setTab(id){
   $$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
   if(vid!=='pMarkup')closeTextBar();
   ov_enable(vid==='pMarkup');
+  try{window.TXOrd&&TXOrd.sync();}catch(e){}
 }
 function ov_enable(on){$('#ov').style.pointerEvents=on?'auto':'none';}
 $$('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
@@ -4196,10 +4198,11 @@ function expiryIcs(r,ex){const e=new Date(ex+'T00:00:00Z'),rm=new Date(e.getTime
  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Timaxo Scan//AR','BEGIN:VEVENT','UID:tx-'+r.id+'-'+ex+'@timaxo','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','DTSTART;VALUE=DATE:'+f(at),'DTEND;VALUE=DATE:'+f(nx),'SUMMARY:'+nm+' - '+msg,'DESCRIPTION:'+msg,'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+nm+' - '+msg,'TRIGGER:PT9H','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
  dl('reminder-'+ex+'.ics','text/calendar',ics);toast(Lg('افتح الملف عشان يتضاف لتقويمك','Open the file to add it to your calendar'));}
 /* ===== v8: grouped tools, theme toggle ===== */
-function buildTools(){buildTools0();try{regroup();}catch(e){console.error(e);}}
+function buildTools(){buildTools0();try{regroup();}catch(e){console.error(e);}try{window.TXOrd&&TXOrd.mark();}catch(e){}}
 let tcat=-1;
 function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).forEach(b=>M[b.dataset.k]=b);
- const er=E.sub==='erase',GR=er?[[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']]]:[[ar?'تعديل':'Edit',['hand','pen','hl','text','arrow','note','box','check','cross','redact','sign','ocrbox']]];
+ const er=E.sub==='erase',GR=er?[[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']]]:[[ar?'تعديل':'Edit',['ocrbox','text','pen','hl','hand','note','arrow','box','check','cross','redact','sign']]];
+ if(window.TXOrd)GR[0][1]=TXOrd.sort(er?'erase':'edit',GR[0][1]); /* v144: ترتيب حسب استخدام المستخدم أو ترتيبه اليدوي */
  tcat=0; /* v143: مجموعة واحدة لكل تبويب مرتّبة بأولوية الاستخدام، وبتتعرض كشريط أفقي بسلايدر */
  row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';bar.hidden=true;row.append(bar,rw);
  GR.forEach((g,gi)=>{const c=document.createElement('button');c.className='tcat';c.textContent=g[0];c.onclick=()=>show(gi);bar.append(c);g[1].forEach(k=>{const b=M[k];if(!b)return;if(!b.querySelector('span')){const sp=document.createElement('span');sp.textContent=t(k);b.appendChild(sp);}if(k==='ocrbox'||k==='classo')b.classList.add('key');rw.append(b);});});
@@ -4218,7 +4221,7 @@ function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).f
    const lk=document.querySelector('button[aria-label=PIN]');if(lk){lk.style.cssText='';lk.className='ut';w.append(lk);}}
   else{const b=document.createElement('button');b.className='ut th';b.setAttribute('aria-label','theme');b.onclick=e=>set(ORD[(ORD.indexOf(m)+1)%3],e);w.append(b);}
   h.append(w);});ui();})();
-buildTools();
+buildTools();window.__E=E;window.__buildTools=buildTools;
 
 /* ===== v9: collapsible bottom dock ===== */
 (function(){const mk=$('#pMarkup'),par=mk.parentElement,items=[...par.children].filter(c=>c.classList.contains('panel')||c.id==='tabs');
