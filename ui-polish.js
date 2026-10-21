@@ -95,6 +95,42 @@ html body svg.i{stroke-linecap:round;stroke-linejoin:round}
 html body #bgPill{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)!important;animation:bgp .22s ease-out}
 @keyframes bgp{from{opacity:0;transform:translateY(8px)}}
 @media (prefers-reduced-motion:reduce){html body .tabs .tab svg.i{transition:none}}
+
+/* ===== v143: كل لوحات المحرر بارتفاع لوحة الفلاتر — شريط أفقي بسلايدر ومرتّب بأولوية الاستخدام ===== */
+@media (orientation:portrait){
+html body #vEdit .edk>.panel{max-height:none;overflow:visible;min-height:0;padding:2px 12px 6px;justify-content:flex-start}
+/* الصفحة */
+html body #vEdit #pPage .pgact{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:4px 2px 6px}
+html body #vEdit #pPage .pgact::-webkit-scrollbar{display:none}
+html body #vEdit .pa{flex:none;width:78px;height:74px;flex-direction:column;gap:6px;padding:8px 4px;border-radius:18px;font-size:11.5px!important;line-height:1.2;text-align:center;white-space:normal}
+html body #vEdit .pa svg.i{width:24px;height:24px}
+html body #vEdit #ocrB{order:1}html body #vEdit #ltBtn{order:2}html body #vEdit #rotR{order:3}html body #vEdit #rotL{order:4}html body #vEdit #recrop{order:5}html body #vEdit #bookB{order:6}html body #vEdit #mvE{order:7}html body #vEdit #mvL{order:8}html body #vEdit #delPg{order:9}
+html body #vEdit #ocrB,html body #vEdit #ltBtn{background:color-mix(in srgb,var(--accent,#1b63f0) 14%,var(--surface));border-color:color-mix(in srgb,var(--accent,#1b63f0) 38%,var(--line))}
+/* الضبط */
+html body #vEdit #pAdjust:not([hidden]){display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:6px 2px 8px}
+html body #vEdit #pAdjust::-webkit-scrollbar{display:none}
+html body #vEdit #pAdjust .sld{flex:none;width:196px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:8px;align-content:center;padding:11px 14px 9px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+html body #vEdit #pAdjust .sld span{grid-column:1;grid-row:1;font-size:13px!important}
+html body #vEdit #pAdjust .sld output{grid-column:2;grid-row:1}
+html body #vEdit #pAdjust .sld input{grid-column:1/-1;grid-row:2;width:100%;margin:0}
+html body #vEdit #pAdjust>.fld{order:1;flex:none;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:9px 12px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+html body #vEdit #pAdjust .chips{display:flex;flex-wrap:nowrap;gap:6px}
+html body #vEdit #pAdjust .chip{flex:none;height:34px;min-height:34px;padding:0 13px}
+html body #vEdit #pAdjust>.row{order:2;flex:none;align-items:center}
+/* التعديل والمسح */
+html body #vEdit .tcats{display:none!important}
+html body #vEdit #toolRow{margin-bottom:2px!important}
+html body #vEdit .tgr{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;gap:8px;padding:4px 2px 6px}
+html body #vEdit .tool{flex:none;width:68px!important;min-width:0;height:64px!important;min-height:0!important;padding:6px 3px!important;gap:5px;border-radius:18px}
+html body #vEdit .tool svg.i{width:24px;height:24px}
+html body #vEdit .tool span{font-size:11px!important;white-space:nowrap;line-height:1.15}
+html body #vEdit #pMarkup>.row:last-child{flex-wrap:nowrap!important;gap:6px!important;align-items:center}
+html body #vEdit #swRow{flex:1 1 0;min-width:0;gap:9px!important;padding:3px 4px!important}
+html body #vEdit #swRow .sw{width:26px;height:26px}
+html body #vEdit #szSeg{flex:none}
+html body #vEdit #szSeg button{min-width:30px;height:30px;padding:0 8px}
+html body #vEdit #pMarkup .row .ib{width:34px;height:34px;flex:none}
+}
 `;
   const st = document.createElement('style');
   st.id = 'uipolish';

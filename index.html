@@ -1085,6 +1085,9 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <defs>
+<symbol id="i-ocr" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"/><path d="M8 9.5h8M8 13h8M8 16.5h4.5"/></symbol>
+<symbol id="i-live" viewBox="0 0 24 24"><path d="M4 7h9M4 12h6M4 17h9"/><path d="M17.5 5.5v13M15.2 5.5h4.6M15.2 18.5h4.6"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.8C10.4 5.2 8 4.5 4.5 4.5v13c3.5 0 5.9.7 7.5 2.3 1.6-1.6 4-2.3 7.5-2.3v-13c-3.5 0-5.9.7-7.5 2.3z" fill="currentColor" fill-opacity=".12"/><path d="M12 6.8v12"/></symbol>
 <symbol id="i-docs" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="12" height="15" rx="2.5" fill="currentColor" fill-opacity=".12"/><path d="M4 8v9.5A3 3 0 007 20.5h8.5"/><path d="M10 8.5h5M10 12h5M10 15.5h2.5"/></symbol>
 <symbol id="i-bk" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 01-.7-8.95 5.8 5.8 0 0111.2 1.2 3.9 3.9 0 01-1 7.75z" fill="currentColor" fill-opacity=".12"/><path d="M12 11v6.5M9.3 14.9l2.7 2.7 2.7-2.7"/></symbol>
 <symbol id="i-rs" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 01-.7-8.95 5.8 5.8 0 0111.2 1.2 3.9 3.9 0 01-1 7.75z" fill="currentColor" fill-opacity=".12"/><path d="M12 17.5V11M9.3 13.6L12 10.9l2.7 2.7"/></symbol>
@@ -3549,9 +3552,9 @@ async function ocrRun(cv,lang,q,psm,deep,stage,isDead){
  }
  const P=top(),mg=ocrMerge(P.N,R.filter(x=>x!==P).map(x=>x.N.filter(w=>w.c>=55)));
  return{r:P.r,W:P.W,sc:P.sc,v:P.v,M:mg.M,pc:pc1,T:mg.changed?(P.k===1?ocrCompose(P,mg.added):tbText(mg.M.filter(w=>w.c>=35),null)):null};}
-$('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ocrB"><svg class="i"><use href="#i-pen"/></svg><span>'+(AR()?'استخراج النص':'Extract text')+'</span></button>');
+$('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ocrB"><svg class="i"><use href="#i-ocr"/></svg><span>'+(AR()?'استخراج النص':'Extract text')+'</span></button>');
 $('#ocrB').onclick=()=>{if(E.page)ocrModal(E.page,null);};
-$('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ltBtn"><svg class="i"><use href="#i-text"/></svg><span>'+(AR()?'نص حي':'Live text')+'</span></button>');
+$('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="ltBtn"><svg class="i"><use href="#i-live"/></svg><span>'+(AR()?'نص حي':'Live text')+'</span></button>');
 $('#ltBtn').onclick=()=>{if(E.page)liveText(E.page);};
 if(!document.getElementById('oxcss')){const s=document.createElement('style');s.id='oxcss';s.textContent=`
 .ox{gap:10px}
@@ -4196,9 +4199,9 @@ function expiryIcs(r,ex){const e=new Date(ex+'T00:00:00Z'),rm=new Date(e.getTime
 function buildTools(){buildTools0();try{regroup();}catch(e){console.error(e);}}
 let tcat=-1;
 function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).forEach(b=>M[b.dataset.k]=b);
- const er=E.sub==='erase',GR=er?[[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']]]:[[ar?'نص':'Text',['ocrbox','text','note','sign']],[ar?'رسم':'Draw',['hand','pen','hl','arrow','redact','box','check','cross']]];
- if(er)tcat=0;else{const gi=GR.findIndex(g=>g[1].includes(E.tool));if(tcat<0||tcat>=GR.length)tcat=gi<0?1:gi;else if(gi>=0)tcat=gi;}
- row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';if(er)bar.hidden=true;row.append(bar,rw);
+ const er=E.sub==='erase',GR=er?[[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']]]:[[ar?'تعديل':'Edit',['hand','pen','hl','text','arrow','note','box','check','cross','redact','sign','ocrbox']]];
+ tcat=0; /* v143: مجموعة واحدة لكل تبويب مرتّبة بأولوية الاستخدام، وبتتعرض كشريط أفقي بسلايدر */
+ row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';bar.hidden=true;row.append(bar,rw);
  GR.forEach((g,gi)=>{const c=document.createElement('button');c.className='tcat';c.textContent=g[0];c.onclick=()=>show(gi);bar.append(c);g[1].forEach(k=>{const b=M[k];if(!b)return;if(!b.querySelector('span')){const sp=document.createElement('span');sp.textContent=t(k);b.appendChild(sp);}if(k==='ocrbox'||k==='classo')b.classList.add('key');rw.append(b);});});
  const show=gi=>{tcat=gi;$$('.tcat',bar).forEach((c,i)=>c.classList.toggle('on',i===gi));GR.forEach((g,i)=>g[1].forEach((k,n)=>{const b=M[k];if(b){b.style.display=i===gi?'':'none';b.style.setProperty('--i',n);}}));rw.scrollLeft=0;};show(tcat);}
 (function(){const R=document.documentElement,K='tx_theme3',ORD=['light','blue','dark'],G={light:'☀',blue:'✦',dark:'☾'};let m=R.getAttribute('data-theme')||'blue';
@@ -4225,7 +4228,7 @@ buildTools();
 
 /* ===== v11: tool name on dock handle, auto-minimize after picking a tool ===== */
 (function(){const dk=document.querySelector('.edk'),g=dk.querySelector('.grab');const nm=k=>{g.dataset.n=t(k);};nm(E.tool);
- $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b&&(b.dataset.tab==='pMarkup'||b.dataset.tab==='pErase')&&!b.classList.contains('on')){const er=b.dataset.tab==='pErase';E.sub=er?'erase':'edit';E.tool=er?'classo':'hand';tcat=er?0:1;buildTools();nm(E.tool);}},true);
+ $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b&&(b.dataset.tab==='pMarkup'||b.dataset.tab==='pErase')&&!b.classList.contains('on')){const er=b.dataset.tab==='pErase';E.sub=er?'erase':'edit';E.tool=er?'classo':'hand';tcat=0;buildTools();nm(E.tool);}},true);
  $('#toolRow').addEventListener('click',e=>{const b=e.target.closest('.tool');if(!b)return;nm(b.dataset.k);if(b.dataset.k!=='sign')setTimeout(()=>dk.classList.add('mini'),300);});})();
 
 /* ===== v20.1: features moved inside the app scope ===== */
@@ -4638,7 +4641,7 @@ idbReady.then(function(){setTimeout(function(){if(homeMode==='docs')renderHome()
 /* ===== v21: Book mode — split an open-book spread into two pages ===== */
 (function(){
 const A=()=>{try{return AR()}catch(e){return true}},L=(a,b)=>A()?a:b,q=x=>document.querySelector(x);
-q('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="bookB"><svg class="i"><use href="#i-crop"/></svg><span>'+L('تقسيم كتاب','Split book')+'</span></button>');
+q('#pPage .pgact').insertAdjacentHTML('beforeend','<button class="pa" id="bookB"><svg class="i"><use href="#i-book"/></svg><span>'+L('تقسيم كتاب','Split book')+'</span></button>');
 const lum=(d,o)=>d[o]*.299+d[o+1]*.587+d[o+2]*.114;
 function findGutter(cv){
  const w=cv.width,h=cv.height,sw=Math.min(w,600),sh=Math.max(1,Math.round(h*sw/w)),t=mk(sw,sh),g=t.getContext('2d');g.drawImage(cv,0,0,sw,sh);
