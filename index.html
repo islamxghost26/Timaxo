@@ -1175,6 +1175,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
     <header class="top">
       <button class="ib" id="editBack" data-ta="back"><svg class="i flip"><use href="#i-back"/></svg></button>
       <div class="ttl" id="editTitle"></div>
+      <button class="ib" id="qsBtn" type="button" aria-label="Save"><svg class="i"><use href="#i-save"/></svg></button>
       <button class="btn sm" id="nextBtn"><svg class="i" style="width:18px;height:18px"><use href="#i-plus"/></svg><span data-t="nextPage"></span></button>
       <button class="btn sm pri" id="doneBtn" data-t="done"></button>
     </header>
@@ -1231,14 +1232,16 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
   <div class="scrim" id="scrim"></div>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true">
     <div class="grab"></div>
-    <h2 data-t="saveTitle"></h2>
+    <div class="xhd"><h2 data-t="saveTitle"></h2><button class="xclose" id="xClose" type="button" aria-label="Close"><svg class="i"><use href="#i-cross"/></svg></button></div>
     <div class="fld"><label for="xName" data-t="fileName"></label><input class="docname" id="xName" maxlength="60" autocomplete="off" spellcheck="false"></div>
-    <div class="fld"><span class="l" data-t="format"></span><div class="chips" id="xFmt"><button class="chip" data-v="pdf">PDF</button><button class="chip" data-v="jpg">JPG</button><button class="chip" data-v="png">PNG</button></div></div>
-    <div class="fld"><span class="l" data-t="quality"></span><div class="chips" id="xSize"><button class="chip" data-v="small" data-t="qSmall"></button><button class="chip" data-v="medium" data-t="qMed"></button><button class="chip" data-v="high" data-t="qHigh"></button></div><div id="xEst"></div></div>
-    <div class="fld" id="xPsRow"><span class="l" data-t="pageSize"></span><div class="chips" id="xPs"><button class="chip" data-v="fit" data-t="psFit"></button><button class="chip" data-v="a4">A4</button><button class="chip" data-v="a5">A5</button><button class="chip" data-v="letter">Letter</button></div></div>
-    <div class="fld"><span class="l" data-t="pagesSel"></span><div class="chips" id="xPages"></div></div>
+    <div class="fld" id="xPgFld"><span class="l" data-t="pagesSel"></span><div class="xmode" id="xMode"><button type="button" data-m="all"></button><button type="button" data-m="one"></button><button type="button" data-m="pick"></button></div><div class="xstrip" id="xPages"></div></div>
+    <div class="fld"><span class="l" data-t="format"></span><div class="chips xseg" id="xFmt"><button class="chip" data-v="pdf">PDF</button><button class="chip" data-v="jpg">JPG</button><button class="chip" data-v="png">PNG</button></div></div>
+    <div class="fld" id="xPsRow"><span class="l" data-t="pageSize"></span><div class="chips xseg" id="xPs"><button class="chip" data-v="fit" data-t="psFit"></button><button class="chip" data-v="a4">A4</button><button class="chip" data-v="a5">A5</button><button class="chip" data-v="letter">Letter</button></div></div>
+    <button class="xmore" id="xMore" type="button"></button>
+    <div class="xadv" id="xAdv" hidden><div class="fld" id="xQFld"><span class="l" data-t="quality"></span><div class="chips xseg" id="xSize"><button class="chip" data-v="small" data-t="qSmall"></button><button class="chip" data-v="medium" data-t="qMed"></button><button class="chip" data-v="high" data-t="qHigh"></button></div></div></div>
     <div class="note" id="xNote"></div>
-    <button class="btn pri savebtn" id="xGo"><div class="bar" id="xBar"></div><span id="xGoLbl"></span></button>
+    <div id="xEst"></div>
+    <div class="xact"><button class="btn pri savebtn" id="xGo"><div class="bar" id="xBar"></div><svg class="i" style="width:20px;height:20px"><use href="#i-save"/></svg><span id="xGoLbl"></span></button><button class="btn xshare" id="xShare" type="button"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg><span id="xShLbl"></span></button></div>
     <div class="fallback" id="xFb" hidden></div>
   </div>
   <div class="dropzone" id="dropzone"><div id="dzTxt">Drop to scan</div></div>
@@ -2355,14 +2358,18 @@ const QUAL={small:{edge:1400,q:.6},medium:{edge:1800,q:.8},high:{edge:2200,q:.92
 const X={fmt:'pdf',size:'medium',ps:'fit',sel:new Set(),busy:false};
 let DL=null;
 (async()=>{try{if(window.claude&&claude.use)DL=(await claude.use('downloads'))||null;}catch(e){DL=null;}})();
-function openSheet(){
+function openSheet(only,opt){
   if(!state.pages.length)return;
-  X.sel=new Set(state.pages.map((_,i)=>i));X.busy=false;$('#xFb').hidden=true;$('#xFb').innerHTML='';
-  $('#xName').value=state.name||defName();buildXPages();syncX();$('#scrim').classList.add('on');$('#sheet').classList.add('on');
+  const one=Array.isArray(only)&&only.length>0;opt=(one&&opt)||{};
+  X.sel=new Set(one?only:state.pages.map((_,i)=>i));X.mode=one?(only.length===1?'one':'pick'):'all';X.busy=false;X.act='save';$('#xFb').hidden=true;$('#xFb').innerHTML='';
+  try{const f=localStorage.getItem('tx_xfmt'),ps=localStorage.getItem('tx_xps'),sz=localStorage.getItem('tx_xsz');if(f&&/^(pdf|jpg|png)$/.test(f))X.fmt=f;if(ps&&/^(fit|a4|a5|letter)$/.test(ps))X.ps=ps;if(sz&&QUAL[sz])X.size=sz;}catch(_){}
+  if(opt.fmt)X.fmt=opt.fmt;if(opt.ps)X.ps=opt.ps;
+  $('#xName').value=(one&&opt.file)||state.name||defName();buildXPages();syncX();$('#scrim').classList.add('on');$('#sheet').classList.add('on');
 }
 function closeSheet(){$('#scrim').classList.remove('on');$('#sheet').classList.remove('on');}
 function buildXPages(){const box=$('#xPages');box.innerHTML='';
-  state.pages.forEach((_,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=i+1;b.onclick=()=>{X.sel.has(i)?X.sel.delete(i):X.sel.add(i);syncX();};box.appendChild(b);});}
+  state.pages.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='chip xth';b.setAttribute('aria-label',t('pageN',i+1));b.innerHTML=(p.thumb?'<img alt="" src="'+p.thumb+'">':'')+'<b>'+(i+1)+'</b><i></i>';
+    b.onclick=()=>{if(X.busy)return;if(X.mode==='one'){X.sel=new Set([i]);}else{X.sel.has(i)?X.sel.delete(i):X.sel.add(i);}syncX();};box.appendChild(b);});}
 function syncX0(){
   $$('#xFmt .chip').forEach(b=>b.classList.toggle('on',b.dataset.v===X.fmt));
   $$('#xSize .chip').forEach(b=>b.classList.toggle('on',b.dataset.v===X.size));
@@ -2471,9 +2478,9 @@ window.__txQuickPdf=async function(r){
 };
 async function saveFile(blob,filename){
   if(DL){try{await DL.save({filename,data:blob});return'saved';}catch(e){if(e&&e.code==='declined')return'cancelled';}}
-  const hosted=!!(window.claude&&window.claude.use);
+  const hosted=!!(window.claude&&window.claude.use),act=X.act||'save';X.act='save';
   if(!hosted){
-    try{const f=new File([blob],filename,{type:blob.type});if(/Android|iPhone|iPad/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:filename});return'saved';}}catch(e){if(e&&e.name==='AbortError')return'cancelled';}
+    if(act==='share'){try{const f=new File([blob],filename,{type:blob.type});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:filename});return'saved';}}catch(e){if(e&&e.name==='AbortError')return'cancelled';}}
     try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);return'saved';}catch(e){}
   }
   return'fallback';
@@ -2558,7 +2565,7 @@ function buildFilters(){buildFilters0();const row=$('#fltRow'),b=document.create
     b.classList.remove('pulse');void b.offsetWidth;b.classList.add('pulse');toast('✨ '+r.why+' → '+(r.f==='original'?t('original'):t('f_'+r.f)));};row.prepend(b);}
 const EST={};let estTok=0,estT=0;
 const fmtB=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
-function syncX(){syncX0();clearTimeout(estT);estT=setTimeout(estSize,300);}
+function syncX(){syncX0();try{xUi();}catch(e){console.warn('xUi',e);}clearTimeout(estT);estT=setTimeout(estSize,300);}
 async function estSize(){const el=$('#xEst');if(!el||X.busy)return;const idx=[...X.sel].sort((a,b)=>a-b);if(!idx.length){el.innerHTML='';return;}
   const p=state.pages[idx[0]],key=p.id+'|'+fsig(p)+'|'+X.fmt,my=++estTok;
   if(!EST[key]){el.textContent=Lg('بحسب الحجم المتوقع…','Estimating size…');
@@ -4756,10 +4763,82 @@ function idTool(pd){
  const ov=document.getElementById('idOv');if(!ov)return;
  const th=()=>[...ov.querySelectorAll('.idt')],n=th().length,pick=i=>{const t=th()[i];if(t)t.click();};
  if(pd.id==='card'){pick(n-2);pick(n-1);}else{pick(n-1);const ch=ov.querySelectorAll('#iL .chip');if(ch[2])ch[2].click();}}
+async function cardAuto(pd){
+ try{idTool(pd);const ov=document.getElementById('idOv'),go=ov&&ov.querySelector('#iGo');if(!go)return;ov.style.visibility='hidden';const n0=state.pages.length;go.click();
+  for(let k=0;k<100&&document.getElementById('idOv');k++)await sleep(100);
+  const ov2=document.getElementById('idOv');if(ov2)ov2.style.visibility='';
+  if(state.pages.length>n0)openSheet([state.pages.length-1],{fmt:'pdf',ps:'a4',file:Lg('بطاقة','ID card')+' '+defName().replace(/^\S+\s*/,'')});}catch(e){console.warn('cardAuto',e);}}
 const _gh=goHome;goHome=function(fr){const r=_gh.apply(this,arguments);const pd=window.__txPend;
  if(pd&&!state.queue.length){window.__txPend=null;const add=state.pages.length-pd.start;
-  if((pd.id==='card'&&pd.multi&&add>=2)||(pd.id==='ph'&&add>=1))setTimeout(()=>idTool(pd),300);}
+  if(pd.id==='card'&&pd.multi&&add>=2)setTimeout(()=>cardAuto(pd),300);
+  else if(pd.id==='ph'&&add>=1)setTimeout(()=>idTool(pd),300);}
  return r;};
+})();
+
+/* ===== v146: quick save icon + new save sheet (thumbnails, save-to-phone / share) ===== */
+function xUi(){
+  const m=X.mode||'all',n=state.pages.length;
+  const fld=$('#xPgFld');if(!fld)return;fld.dataset.m=m;fld.hidden=n<2;
+  const lab={all:Lg('كل الصفحات','All pages'),one:Lg('صفحة واحدة','One page'),pick:Lg('اختيار','Pick')};
+  $$('#xMode button').forEach(b=>{b.textContent=lab[b.dataset.m];b.classList.toggle('on',b.dataset.m===m);});
+  const adv=!$('#xAdv').hidden;$('#xMore').textContent=Lg('خيارات إضافية','More options')+(adv?'  ▴':'  ▾');$('#xMore').setAttribute('aria-expanded',adv?'true':'false');
+  $('#xShLbl').textContent=Lg('مشاركة','Share');$('#xClose').setAttribute('aria-label',Lg('إغلاق','Close'));
+  if(!X.busy)$('#xGoLbl').textContent=Lg('حفظ على الجهاز','Save to device')+(X.sel.size>1?' · '+X.sel.size:'');
+  $('#xShare').disabled=!X.sel.size||X.busy;
+}
+(function(){
+  if(!document.getElementById('qs146')){const st=document.createElement('style');st.id='qs146';st.textContent=`
+html body #sheet{padding:6px 18px calc(env(safe-area-inset-bottom,0px) + 16px);border-radius:28px 28px 0 0}
+html body #sheet .xhd{display:flex;align-items:center;justify-content:space-between;margin:2px 0 12px}
+html body #sheet .xhd h2{margin:0;font-size:20px}
+html body #sheet .xclose{width:36px;height:36px;border:0;border-radius:50%;background:var(--surface2);color:var(--ink2);display:grid;place-items:center;padding:0}
+html body #sheet .xclose .i{width:18px;height:18px}
+html body #sheet .fld{margin-bottom:12px;gap:8px}
+html body #sheet .xmode,html body #sheet .xseg{display:flex;flex-wrap:nowrap;gap:4px;padding:4px;border-radius:14px;background:var(--surface2)}
+html body #sheet .xmode button,html body #sheet .xseg .chip{flex:1 1 0;min-width:0;height:38px;padding:0 6px;border:0;border-radius:11px;background:transparent;color:var(--ink2);font-weight:700;font-size:13px;box-shadow:none;transition:background .15s,color .15s}
+html body #sheet .xmode button.on,html body #sheet .xseg .chip.on{background:linear-gradient(100deg,#1F6BFF,#8A56FF);color:#fff;box-shadow:0 4px 12px -5px rgba(90,100,255,.9)}
+html body #sheet .xseg .chip{white-space:nowrap}
+html body #sheet #xPs .chip{flex:1 1 auto;padding:0 10px}
+html body:has(.sheet.on) .fab2{opacity:0!important;pointer-events:none!important}
+html body #sheet #xPgFld[data-m="all"] .xstrip{display:none}
+html body #sheet .xstrip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+html body #sheet .chip.xth{position:relative;flex:none;width:64px;height:86px;min-width:0;padding:0;border:2px solid transparent;border-radius:12px;overflow:hidden;background:var(--surface2);scroll-snap-align:center;box-shadow:none;opacity:.55;transition:opacity .15s,border-color .15s,transform .12s}
+html body #sheet .chip.xth.on{opacity:1;border-color:var(--accent);background:var(--surface2);color:inherit;box-shadow:none}
+html body #sheet .chip.xth:active{transform:scale(.94)}
+html body #sheet .chip.xth img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+html body #sheet .chip.xth b{position:absolute;inset-inline-start:4px;bottom:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:rgba(8,12,24,.72);color:#fff;font:700 11px/18px system-ui;text-align:center}
+html body #sheet .chip.xth i{position:absolute;top:4px;inset-inline-end:4px;width:18px;height:18px;border-radius:50%;background:var(--accent);opacity:0;transform:scale(.5);transition:opacity .15s,transform .15s}
+html body #sheet .chip.xth i::after{content:"";position:absolute;left:5px;top:3px;width:4px;height:8px;border:solid var(--accent-ink,#fff);border-width:0 2px 2px 0;transform:rotate(45deg)}
+html body #sheet .chip.xth.on i{opacity:1;transform:none}
+html body #sheet .xmore{display:block;width:100%;height:36px;margin:0 0 8px;border:0;background:transparent;color:var(--ink2);font:700 13px system-ui}
+html body #sheet .xadv{margin-bottom:4px;padding:12px 12px 2px;border-radius:16px;background:color-mix(in srgb,var(--surface2) 55%,transparent)}
+html body #sheet .xadv[hidden]{display:none}
+html body #sheet .note:empty{display:none}
+html body #sheet #xEst{margin:0 0 10px;min-height:0}
+html body #sheet .xact{display:grid;grid-template-columns:1fr auto;gap:10px}
+html body #sheet .xact .btn{height:54px;border-radius:16px;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+html body #sheet .xact .xshare{padding:0 20px;background:var(--surface2);color:var(--ink);border:0;font-weight:700}
+html body #sheet .xact .xshare:disabled,html body #sheet .xact .savebtn:disabled{opacity:.4}
+html body #qsBtn{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;padding:0}
+html body #qsBtn .i{width:20px;height:20px}
+`;document.head.appendChild(st);}
+  /* move the extra fields (quality, watermark, max size) under "More options" */
+  {const adv=$('#xAdv');['xStamp','xLim'].forEach(id=>{const e=document.getElementById(id);if(e)adv.appendChild(e);});}
+  $('#xMore').onclick=()=>{const a=$('#xAdv');a.hidden=!a.hidden;xUi();};
+  $('#xClose').onclick=()=>{if(!X.busy)closeSheet();};
+  $('#xMode').onclick=e=>{const b=e.target.closest('button');if(!b||X.busy)return;const m=b.dataset.m,prev=X.mode;
+    if(m==='all')X.sel=new Set(state.pages.map((_,i)=>i));
+    else if(m==='one'){const cur=E.page?state.pages.indexOf(E.page):-1,keep=prev==='pick'?[...X.sel].sort((a,b)=>a-b)[0]:undefined;X.sel=new Set([keep!==undefined?keep:(prev==='one'&&X.sel.size?[...X.sel][0]:(cur>=0?cur:state.pages.length-1))]);}
+    X.mode=m;syncX();const on=$('#xPages .chip.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});};
+  ['xFmt','xPs','xSize'].forEach(id=>$('#'+id).addEventListener('click',()=>{try{localStorage.setItem('tx_xfmt',X.fmt);localStorage.setItem('tx_xps',X.ps);localStorage.setItem('tx_xsz',X.size);}catch(_){}}));
+  $('#xGo').addEventListener('pointerdown',()=>{X.act='save';});
+  $('#xShare').onclick=()=>{if(X.busy||!X.sel.size)return;X.act='share';$('#xGo').click();};
+  $('#qsBtn').onclick=async()=>{const pg=E.page;if(!pg||X.busy)return;
+    try{closeEditDocks();busy(true);await commitPage();}catch(e){console.error(e);}finally{busy(false);}
+    const i=state.pages.indexOf(pg);if(i<0)return;openSheet([i]);};
+  const ql=()=>{$('#qsBtn').setAttribute('aria-label',Lg('حفظ الصفحة دي','Save this page'));$('#qsBtn').title=Lg('حفظ الصفحة دي','Save this page');};ql();
+  $('#langBtn').addEventListener('click',()=>setTimeout(()=>{ql();xUi();},60));
+  xUi();
 })();
 
 })();
