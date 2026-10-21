@@ -71,7 +71,7 @@ body{background:var(--bg);color:var(--ink);font:500 15px/1.45 var(--fb);overflow
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
-svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
 [dir="rtl"] .flip{transform:scaleX(-1)}
 #app{position:relative;height:100%;overflow:hidden}
 .view{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);opacity:0;visibility:hidden;pointer-events:none;
@@ -1085,38 +1085,38 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <defs>
-<symbol id="i-docs" viewBox="0 0 24 24"><path d="M8 3.5h9a1.5 1.5 0 011.5 1.5v11A1.5 1.5 0 0117 17.5H8A1.5 1.5 0 016.5 16V5A1.5 1.5 0 018 3.5z" fill="currentColor" fill-opacity=".14"/><path d="M4 7.5v11A1.5 1.5 0 005.5 20H14"/><path d="M9.5 8h6M9.5 11h6M9.5 14h3.5"/></symbol>
-<symbol id="i-bk" viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0117.7 8.6 3.9 3.9 0 0117 18z" fill="currentColor" fill-opacity=".14"/><path d="M12 11v6M9.5 14.5L12 17l2.5-2.5"/></symbol>
-<symbol id="i-rs" viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0117.7 8.6 3.9 3.9 0 0117 18z" fill="currentColor" fill-opacity=".14"/><path d="M12 17v-6M9.5 13.5L12 11l2.5 2.5"/></symbol>
-<symbol id="i-cur" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" fill-opacity=".14"/><path d="M8.5 12.5l2.4 2.4 4.6-5"/></symbol>
-<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" fill="currentColor" fill-opacity=".14"/><circle cx="12" cy="13" r="3.6"/></symbol>
-<symbol id="i-img" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="currentColor" fill-opacity=".14"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></symbol>
-<symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.5 11L12 15.5 16.5 11"/><path d="M5 19.5h14"/></symbol>
-<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V5h5v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/></symbol>
-<symbol id="i-rotl" viewBox="0 0 24 24"><path d="M5 9a8 8 0 111.2 8.2"/><path d="M5 4v5h5"/></symbol>
-<symbol id="i-rotr" viewBox="0 0 24 24"><path d="M19 9a8 8 0 10-1.2 8.2"/><path d="M19 4v5h-5"/></symbol>
-<symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8 19l-4 1z"/><path d="M14 7l3 3"/></symbol>
-<symbol id="i-hl" viewBox="0 0 24 24"><path d="M9 15l6.5-6.5 3.5 3.5L12.5 18.5H9z"/><path d="M15.5 8.5l1.2-1.2a1.4 1.4 0 012 0l1 1a1.4 1.4 0 010 2L19 12"/><path d="M4.5 20.5h7"/></symbol>
-<symbol id="i-text" viewBox="0 0 24 24"><path d="M5 7V5h14v2M12 5v14M9 19h6"/></symbol>
-<symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v10l-5 6H5z" fill="currentColor" fill-opacity=".14"/><path d="M14 20v-6h5"/></symbol>
-<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19L19 5M10 5h9v9"/></symbol>
-<symbol id="i-box" viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11" rx="1.5" fill="currentColor" fill-opacity=".14"/></symbol><symbol id="i-redact" viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="10" rx="1.6" fill="currentColor"/></symbol>
-<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
-<symbol id="i-cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
-<symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 19h10M5.3 14.7l7.5-8.2a2 2 0 013 0l2.4 2.6a2 2 0 010 2.7L13 19H9.2l-3.9-3.6a1.4 1.4 0 010-.7z"/></symbol>
-<symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L5 11l4 4"/><path d="M5 11h9a5 5 0 010 10h-3"/></symbol>
-<symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l4 4-4 4"/><path d="M19 11h-9a5 5 0 000 10h3"/></symbol>
-<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
-<symbol id="i-wand" viewBox="0 0 24 24"><path d="M4.5 19.5L14 10"/><path d="M15 4l.9 2.1L18 7l-2.1.9L15 10l-.9-2.1L12 7l2.1-.9z"/><path d="M19 12.5l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z"/></symbol>
-<symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
-<symbol id="i-filter" viewBox="0 0 24 24"><circle cx="9" cy="10" r="5" fill="currentColor" fill-opacity=".14"/><circle cx="15" cy="10" r="5" fill="currentColor" fill-opacity=".14"/><circle cx="12" cy="15" r="5" fill="currentColor" fill-opacity=".14"/></symbol>
-<symbol id="i-adjust" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2" fill="currentColor" fill-opacity=".14"/><circle cx="9" cy="17" r="2" fill="currentColor" fill-opacity=".14"/></symbol>
-<symbol id="i-page" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20.5H7z" fill="currentColor" fill-opacity=".14"/><path d="M14 3.5v4h4"/></symbol>
+<symbol id="i-docs" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="12" height="15" rx="2.5" fill="currentColor" fill-opacity=".12"/><path d="M4 8v9.5A3 3 0 007 20.5h8.5"/><path d="M10 8.5h5M10 12h5M10 15.5h2.5"/></symbol>
+<symbol id="i-bk" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 01-.7-8.95 5.8 5.8 0 0111.2 1.2 3.9 3.9 0 01-1 7.75z" fill="currentColor" fill-opacity=".12"/><path d="M12 11v6.5M9.3 14.9l2.7 2.7 2.7-2.7"/></symbol>
+<symbol id="i-rs" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 01-.7-8.95 5.8 5.8 0 0111.2 1.2 3.9 3.9 0 01-1 7.75z" fill="currentColor" fill-opacity=".12"/><path d="M12 17.5V11M9.3 13.6L12 10.9l2.7 2.7"/></symbol>
+<symbol id="i-cur" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".12"/><path d="M8.4 12.3l2.6 2.6 4.7-5.3"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 9.5a2 2 0 012-2h1.4l1.2-2h6.8l1.2 2H18a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2z" fill="currentColor" fill-opacity=".12"/><circle cx="12" cy="13" r="3.3"/></symbol>
+<symbol id="i-img" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3.2" fill="currentColor" fill-opacity=".12"/><circle cx="9" cy="10" r="1.7"/><path d="M4 17.5l4.6-4.6 3.4 3.4 2.6-2.6 5.4 5.4"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5l4.5 4.5 4.5-4.5M5 19.5h14"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5.7 8h12.6l-.9 10.7a2 2 0 01-2 1.8H8.6a2 2 0 01-2-1.8z" fill="currentColor" fill-opacity=".12"/><path d="M4 7.5h16M9.5 7.5V5.8A1.8 1.8 0 0111.3 4h1.4a1.8 1.8 0 011.8 1.8v1.7M10 11.5v5M14 11.5v5"/></symbol>
+<symbol id="i-rotl" viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.7L3 8M3 3v5h5"/></symbol>
+<symbol id="i-rotr" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-9-9 9.7 9.7 0 016.7 2.7L21 8M21 3v5h-5"/></symbol>
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1.2-4.6L16.6 4a2.1 2.1 0 013 3L8.2 18.4z" fill="currentColor" fill-opacity=".12"/><path d="M14.5 6.1l3.4 3.4M4 20l4.2-1.6"/></symbol>
+<symbol id="i-hl" viewBox="0 0 24 24"><path d="M9 14.5l6-6 3.5 3.5-6 6H9z" fill="currentColor" fill-opacity=".12"/><path d="M15 8.5l2.3-2.3a1.6 1.6 0 012.3 0l.2.2a1.6 1.6 0 010 2.3L17.5 11M4 20.5h8"/></symbol>
+<symbol id="i-text" viewBox="0 0 24 24"><path d="M5 7.5V5.5h14v2M12 5.5V19M9 19h6"/></symbol>
+<symbol id="i-note" viewBox="0 0 24 24"><path d="M5 6.5a2 2 0 012-2h10a2 2 0 012 2V14l-5.5 5.5H7a2 2 0 01-2-2z" fill="currentColor" fill-opacity=".12"/><path d="M13.5 19.5V16a2 2 0 012-2H19"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5.5 18.5l13-13M9 5.5h9.5V15"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="13" rx="3.2" fill="currentColor" fill-opacity=".12"/></symbol><symbol id="i-redact" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="9" rx="2.6" fill="currentColor"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.5 4.4L19 7.2"/></symbol>
+<symbol id="i-cross" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-erase" viewBox="0 0 24 24"><path d="M7 20.5l-4.3-4.3a2.4 2.4 0 010-3.4l9.6-9.6a2.4 2.4 0 013.4 0l5.6 5.6a2.4 2.4 0 010 3.4L13 20.5z" fill="currentColor" fill-opacity=".12"/><path d="M21.5 20.5H7M5 11l9 9"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 000 11H13"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5.5L8.5 12l6.5 6.5"/></symbol>
+<symbol id="i-wand" viewBox="0 0 24 24"><path d="M11 3.5l1.7 4.8 4.8 1.7-4.8 1.7L11 16.5l-1.7-4.8L4.5 10l4.8-1.7z" fill="currentColor" fill-opacity=".12"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V6a2 2 0 012-2h3M20 9V6a2 2 0 00-2-2h-3M4 15v3a2 2 0 002 2h3M20 15v3a2 2 0 01-2 2h-3"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><circle cx="9.3" cy="9.6" r="5.3" fill="currentColor" fill-opacity=".12"/><circle cx="14.7" cy="9.6" r="5.3" fill="currentColor" fill-opacity=".12"/><circle cx="12" cy="14.6" r="5.3" fill="currentColor" fill-opacity=".12"/></symbol>
+<symbol id="i-adjust" viewBox="0 0 24 24"><path d="M4 7h9.5M18 7h2M4 17h2M10.5 17H20"/><circle cx="15.7" cy="7" r="2.3" fill="currentColor" fill-opacity=".12"/><circle cx="8.3" cy="17" r="2.3" fill="currentColor" fill-opacity=".12"/></symbol>
+<symbol id="i-page" viewBox="0 0 24 24"><path d="M6.5 3.5H14l4.5 4.5v10.5a2 2 0 01-2 2h-10a2 2 0 01-2-2v-13a2 2 0 012-2z" fill="currentColor" fill-opacity=".12"/><path d="M14 3.5V8h4.5"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-<symbol id="i-left" viewBox="0 0 24 24"><path d="M10 7l-5 5 5 5M5 12h14"/></symbol>
-<symbol id="i-right" viewBox="0 0 24 24"><path d="M14 7l5 5-5 5M19 12H5"/></symbol>
-<symbol id="i-crop" viewBox="0 0 24 24"><path d="M7 3v14h14M3 7h14v14"/></symbol>
-<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8" fill="currentColor" fill-opacity=".14"/></symbol>
+<symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+<symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2.5v14a2 2 0 002 2h13.5M2.5 6H16a2 2 0 012 2v13.5"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3" fill="currentColor" fill-opacity=".12"/></symbol>
 <symbol id="i-logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="currentColor"/><path d="M11 17v-4a2 2 0 012-2h4M23 11h4a2 2 0 012 2v4M29 23v4a2 2 0 01-2 2h-4M17 29h-4a2 2 0 01-2-2v-4" fill="none" stroke="var(--bg)" stroke-width="2.4" stroke-linecap="round"/><path d="M9 20h22" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round"/></symbol>
 </defs>
 </svg>
@@ -1219,6 +1219,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
       <button class="tab on" data-tab="pFilters"><svg class="i"><use href="#i-filter"/></svg><span data-t="tFilters"></span></button>
       <button class="tab" data-tab="pAdjust"><svg class="i"><use href="#i-adjust"/></svg><span data-t="tAdjust"></span></button>
       <button class="tab" data-tab="pMarkup"><svg class="i"><use href="#i-pen"/></svg><span data-t="tMarkup"></span></button>
+      <button class="tab" data-tab="pErase"><svg class="i"><use href="#i-erase"/></svg><span data-t="tErase"></span></button>
       <button class="tab" data-tab="pPage"><svg class="i"><use href="#i-page"/></svg><span data-t="tPage"></span></button>
     </nav>
   </section>
@@ -1279,7 +1280,7 @@ en:{docName:'Document name',newDoc:'New',newDoc2:'Tap to clear all',gallery:'Gal
  emptyT:'Scan your first page',emptyP:'Open the camera and shoot a document. Timaxo straightens it, cleans the colors and keeps the text exactly as written.',
  sample:'Try a sample page',pages:n=>n===1?'1 page':n+' pages',cropTitle:'Adjust edges',auto:'Auto',full:'Full',cont:'Continue',
  cropHint:'Drag corners or edge handles · arrows for fine tuning',snapT:'Snap to edge',fineT:'Fine',finding:'Finding edges…',holdOrig:'Hold for original',nextPage:'Page',done:'Done',
- tFilters:'Filters',tAdjust:'Adjust',tMarkup:'Edit',tPage:'Page',original:'Original',f_auto:'Auto',f_magic:'Color',f_gray:'Gray',f_bw:'B&W',f_deshadow:'No shadow',f_flat:'Even bg',f_ink:'Strong ink',f_print:'Print',f_hand:'Handwriting',f_card:'ID card',
+ tFilters:'Filters',tAdjust:'Adjust',tMarkup:'Edit',tErase:'Erase',tPage:'Page',original:'Original',f_auto:'Auto',f_magic:'Color',f_gray:'Gray',f_bw:'B&W',f_deshadow:'No shadow',f_flat:'Even bg',f_ink:'Strong ink',f_print:'Print',f_hand:'Handwriting',f_card:'ID card',
  bright:'Brightness',contrast:'Contrast',satur:'Color',reset:'Reset',
  pen:'Pen',cbrush:'Clean brush',sign:'Signature',hand:'Move',ocrbox:'Replace text',classo:'Lasso erase',cbox:'Clean area',hl:'Highlight',text:'Text',note:'Note',arrow:'Arrow',box:'Box',redact:'Hide info',check:'Tick',cross:'Cross',erase:'Erase',undo:'Undo',redo:'Redo',clearAll:'Clear all marks',
  textPh:'Type your note',add:'Add',cancel:'Cancel',rotL:'Left',rotR:'Right',edges:'Edges',earlier:'Earlier',later:'Later',del:'Delete',delSure:'Tap again',
@@ -1291,7 +1292,7 @@ ar:{docName:'اسم المستند',newDoc:'جديد',newDoc2:'اضغط لمسح
  emptyT:'صوّر أول صفحة',emptyP:'افتح الكاميرا وصوّر المستند. Timaxo بيعدّل الزاوية وينضّف الألوان ويسيب الكلام زي ما هو.',
  sample:'جرّب صفحة تجريبية',pages:n=>arPlural(n),cropTitle:'اضبط الحواف',auto:'تلقائي',full:'كامل',cont:'متابعة',
  cropHint:'اسحب الأركان أو مقابض الحواف · الأسهم للضبط الدقيق',snapT:'التصاق بالحافة',fineT:'دقيق',finding:'جاري تحديد الحواف…',holdOrig:'اضغط لرؤية الأصل',nextPage:'صفحة',done:'تم',
- tFilters:'فلاتر',tAdjust:'ضبط',tMarkup:'تعديل',tPage:'الصفحة',original:'الأصل',f_auto:'تلقائي',f_magic:'ألوان',f_gray:'رمادي',f_bw:'أبيض وأسود',f_deshadow:'بدون ظل',f_flat:'خلفية موحّدة',f_ink:'حبر قوي',f_print:'للطباعة',f_hand:'خط يد',f_card:'بطاقة',
+ tFilters:'فلاتر',tAdjust:'ضبط',tMarkup:'تعديل',tErase:'مسح',tPage:'الصفحة',original:'الأصل',f_auto:'تلقائي',f_magic:'ألوان',f_gray:'رمادي',f_bw:'أبيض وأسود',f_deshadow:'بدون ظل',f_flat:'خلفية موحّدة',f_ink:'حبر قوي',f_print:'للطباعة',f_hand:'خط يد',f_card:'بطاقة',
  bright:'السطوع',contrast:'التباين',satur:'الألوان',reset:'إعادة ضبط',
  pen:'قلم',cbrush:'فرشاة مسح',sign:'توقيع',hand:'تحريك',ocrbox:'استبدال النص',classo:'لاسو مسح',cbox:'مسح مربع',hl:'تظليل',text:'نص',note:'ملاحظة',arrow:'سهم',box:'مربع',redact:'إخفاء بيانات',check:'صح',cross:'خطأ',erase:'ممحاة',undo:'تراجع',redo:'إعادة',clearAll:'مسح كل العلامات',
  textPh:'اكتب ملاحظتك',add:'إضافة',cancel:'إلغاء',rotL:'يسار',rotR:'يمين',edges:'الحواف',earlier:'قدّم',later:'أخّر',del:'حذف',delSure:'اضغط مرة أخرى',
@@ -2200,11 +2201,14 @@ function syncControls(){
   $$('#inkRow .chip').forEach(b=>b.classList.toggle('on',+b.dataset.v===((p&&p.ink)||0)));
   resetDel();
 }
+const ERA_T=['classo','cbrush','cbox','erase'];
 function setTab(id){
-  E.tab=id;['pFilters','pAdjust','pMarkup','pPage'].forEach(k=>{$('#'+k).hidden=k!==id;});
+  const vid=id==='pErase'?'pMarkup':id; /* «مسح» تبويب مستقل في الشريط لكن بيستخدم نفس لوحة التعديل (نفس الـcanvas والأدوات) */
+  if(vid==='pMarkup'){const sub=id==='pErase'?'erase':'edit';if(E.sub!==sub){E.sub=sub;const ok=sub==='erase'?ERA_T.includes(E.tool):!ERA_T.includes(E.tool);if(!ok)E.tool=sub==='erase'?'classo':'hand';try{buildTools();}catch(e){console.error(e);}try{syncControls();}catch(e){}}}
+  E.tab=vid;['pFilters','pAdjust','pMarkup','pPage'].forEach(k=>{$('#'+k).hidden=k!==vid;});
   $$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
-  if(id!=='pMarkup')closeTextBar();
-  ov_enable(id==='pMarkup');
+  if(vid!=='pMarkup')closeTextBar();
+  ov_enable(vid==='pMarkup');
 }
 function ov_enable(on){$('#ov').style.pointerEvents=on?'auto':'none';}
 $$('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
@@ -4095,13 +4099,14 @@ async function bgOcr(){
  }while(bgAgain&&bgOn());}finally{bgBusy=0;bgPill(0);}
 }
 function bgPill(on){let b=document.getElementById('bgPill');
- if(!on){if(b)b.hidden=true;return;}
+ if(!on){if(b){b.hidden=true;b._shown=0;clearTimeout(b._t);}return;}
+ if(b&&b._shown)return; /* v141: بيظهر مرة واحدة في بداية الفهرسة ويختفي لوحده بدل ما يفضل ظاهر طول المدة */
  if(!b){b=document.createElement('div');b.id='bgPill';b.setAttribute('role','status');
   b.style.cssText='position:fixed;inset-inline:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);margin:0 auto;width:fit-content;max-width:calc(100% - 24px);z-index:60;display:flex;align-items:center;gap:6px;padding:4px 6px 4px 14px;border-radius:999px;background:rgba(5,12,38,.9);color:#fff;font:700 13px/1.4 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3)';
   b.innerHTML='<span></span><button type="button" style="min-width:44px;min-height:44px;padding:0 12px;border-radius:22px;color:#22d3f5;font-weight:800"></button>';
   b.lastChild.onclick=()=>{try{localStorage.setItem(BGK,'0')}catch(e){}b.hidden=true;toast(Lg('اتوقفت الفهرسة التلقائية. تقدر تشغّلها من المزيد','Auto-index stopped. Re-enable it from More'));};
   document.body.appendChild(b);}
- b.firstChild.textContent=Lg('جاري فهرسة النص…','Indexing text…');b.lastChild.textContent=Lg('إيقاف','Stop');b.hidden=false;}
+ b.firstChild.textContent=Lg('جاري فهرسة النص…','Indexing text…');b.lastChild.textContent=Lg('إيقاف','Stop');b.hidden=false;b._shown=1;clearTimeout(b._t);b._t=setTimeout(()=>{b.hidden=true;},3200);}
 {const _snap=snapDoc;snapDoc=async function(){const r=await _snap.apply(this,arguments);setTimeout(bgOcr,1500);return r;};}
 setTimeout(bgOcr,6000);
 
@@ -4191,9 +4196,9 @@ function expiryIcs(r,ex){const e=new Date(ex+'T00:00:00Z'),rm=new Date(e.getTime
 function buildTools(){buildTools0();try{regroup();}catch(e){console.error(e);}}
 let tcat=-1;
 function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).forEach(b=>M[b.dataset.k]=b);
- const GR=[[ar?'نص':'Text',['ocrbox','text','note','sign']],[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']],[ar?'رسم':'Draw',['hand','pen','hl','arrow']],[ar?'أشكال':'Shapes',['redact','box','check','cross']]];
- if(tcat<0){tcat=Math.max(0,GR.findIndex(g=>g[1].includes(E.tool)));if(E.tool==='pen'||tcat<0)tcat=0;}
- row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';row.append(bar,rw);
+ const er=E.sub==='erase',GR=er?[[ar?'مسح':'Erase',['classo','cbrush','cbox','erase']]]:[[ar?'نص':'Text',['ocrbox','text','note','sign']],[ar?'رسم':'Draw',['hand','pen','hl','arrow','redact','box','check','cross']]];
+ if(er)tcat=0;else{const gi=GR.findIndex(g=>g[1].includes(E.tool));if(tcat<0||tcat>=GR.length)tcat=gi<0?1:gi;else if(gi>=0)tcat=gi;}
+ row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';if(er)bar.hidden=true;row.append(bar,rw);
  GR.forEach((g,gi)=>{const c=document.createElement('button');c.className='tcat';c.textContent=g[0];c.onclick=()=>show(gi);bar.append(c);g[1].forEach(k=>{const b=M[k];if(!b)return;if(!b.querySelector('span')){const sp=document.createElement('span');sp.textContent=t(k);b.appendChild(sp);}if(k==='ocrbox'||k==='classo')b.classList.add('key');rw.append(b);});});
  const show=gi=>{tcat=gi;$$('.tcat',bar).forEach((c,i)=>c.classList.toggle('on',i===gi));GR.forEach((g,i)=>g[1].forEach((k,n)=>{const b=M[k];if(b){b.style.display=i===gi?'':'none';b.style.setProperty('--i',n);}}));rw.scrollLeft=0;};show(tcat);}
 (function(){const R=document.documentElement,K='tx_theme3',ORD=['light','blue','dark'],G={light:'☀',blue:'✦',dark:'☾'};let m=R.getAttribute('data-theme')||'blue';
@@ -4220,7 +4225,7 @@ buildTools();
 
 /* ===== v11: tool name on dock handle, auto-minimize after picking a tool ===== */
 (function(){const dk=document.querySelector('.edk'),g=dk.querySelector('.grab');const nm=k=>{g.dataset.n=t(k);};nm(E.tool);
- $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b&&b.dataset.tab==='pMarkup'&&!b.classList.contains('on')){E.tool='hand';tcat=2;buildTools();nm('hand');}},true);
+ $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b&&(b.dataset.tab==='pMarkup'||b.dataset.tab==='pErase')&&!b.classList.contains('on')){const er=b.dataset.tab==='pErase';E.sub=er?'erase':'edit';E.tool=er?'classo':'hand';tcat=er?0:1;buildTools();nm(E.tool);}},true);
  $('#toolRow').addEventListener('click',e=>{const b=e.target.closest('.tool');if(!b)return;nm(b.dataset.k);if(b.dataset.k!=='sign')setTimeout(()=>dk.classList.add('mini'),300);});})();
 
 /* ===== v20.1: features moved inside the app scope ===== */
@@ -4940,7 +4945,7 @@ const D=[
  w:['افتح أي صفحة ← التابات تحت','Open any page ← tabs at the bottom'],
  p:[['فلتر: أصلي، تلقائي، سحري، رمادي، أبيض وأسود.','Filters: Original, Auto, Magic, Gray, B&W.'],
  ['ضبط: السطوع والتباين والتشبّع.','Adjust: brightness, contrast, saturation.'],
- ['تعديل: قلم، تظليل، نص (بخط وحجم ولون)، ملاحظة، توقيع، وممحاة بأشكال.','Markup: pen, highlighter, text (font/size/colour), note, signature, erasers.'],
+ ['تعديل: نص وملاحظة وتوقيع، ورسم (قلم، تظليل، سهم، مربع، صح، خطأ، إخفاء). ومسح: تبويب لوحده بأدوات المسح.','Edit: text, note, signature and drawing (pen, highlighter, arrow, shapes, redact). Erase: its own tab with the erasers.'],
  ['الصفحة: تدوير، الحواف، تقديم/تأخير، حذف.','Page: rotate, edges, move earlier/later, delete.'],
  ['تراجع وإعادة شغالين مع كل التعديلات.','Undo / redo work with every edit.']]},
 {c:['#7c4dff','#b28cff'],i:ic('<path d="M4 6h16M4 12h10M4 18h14"/><circle cx="19" cy="15" r="2.5"/>'),

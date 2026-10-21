@@ -83,6 +83,18 @@ html body .fx-l::-webkit-scrollbar{display:none}
 html body .fx-c,html body .fx-a{flex:none}
 html body .fx-i{flex:none!important;flex-basis:auto!important;align-self:center;font-size:11px;opacity:.7;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){html body .ox-menu{animation:none}}
+
+/* ===== v141: شريط التبويبات (5 تبويبات) + أيقونات أنعم ===== */
+html body .tabs{grid-template-columns:repeat(5,1fr)!important}
+html body .tabs .tab{min-width:0;padding-inline:2px}
+html body .tabs .tab span{font-size:11.5px;white-space:nowrap}
+html body .tabs .tab svg.i{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+html body .tabs .tab.on svg.i{transform:translateY(-1px) scale(1.08)}
+html body .tabs .tab.on svg.i [fill-opacity]{fill-opacity:.3}
+html body svg.i{stroke-linecap:round;stroke-linejoin:round}
+html body #bgPill{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)!important;animation:bgp .22s ease-out}
+@keyframes bgp{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){html body .tabs .tab svg.i{transition:none}}
 `;
   const st = document.createElement('style');
   st.id = 'uipolish';
