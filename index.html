@@ -4245,9 +4245,7 @@ buildTools();window.__E=E;window.__buildTools=buildTools;
 (function(){
 const A=()=>{try{return AR()}catch(e){return true}},L=(a,b)=>A()?a:b;
 /* ---- update banner ---- */
-if('serviceWorker' in navigator){let want=0,rl=0;
- const show=w=>{if(document.querySelector('.upd'))return;const b=document.createElement('button');b.className='upd';txUpdFill(b);b.onclick=()=>{want=1;txUpdFill(b,1);w.postMessage('skip');setTimeout(()=>location.reload(),2500)};document.body.appendChild(b);};
- navigator.serviceWorker.addEventListener('controllerchange',()=>{if(want&&!rl){rl=1;location.reload()}});
+if('serviceWorker' in navigator){const show=w=>{const f=()=>window.TXU?TXU.offer(null,w):setTimeout(f,400);f();};
  navigator.serviceWorker.ready.then(reg=>{if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
   reg.addEventListener('updatefound',()=>{const w=reg.installing;if(!w)return;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)show(w)})});
   const up=()=>reg.update().catch(()=>{});setInterval(up,30*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)up()});up();}).catch(()=>{});}
@@ -5011,13 +5009,28 @@ if(typeof window.show==='function'){var o=window.show;window.show=function(){try
 })();</script>
 
 
-<script>/* update-on-open: compares index.html with the last seen copy */
-(function(){var K='timaxo_html_hash',AR2=function(){try{return AR()}catch(e){return true}};
-async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
-function show(hh){if(document.querySelector('.upd'))return;var b=document.createElement('button');b.className='upd';txUpdFill(b);
-b.onclick=async function(){txUpdFill(b,1);try{localStorage.setItem(K,hh)}catch(e){}try{var k=await caches.keys();await Promise.all(k.map(function(x){return caches.delete(x)}))}catch(e){}try{var r=await navigator.serviceWorker.getRegistration();r&&await r.update()}catch(e){}location.reload()};document.body.appendChild(b)}
-async function check(){if(!navigator.onLine)return;try{var r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;var hh=await sha(await r.text()),o=localStorage.getItem(K);if(!o){localStorage.setItem(K,hh);return}if(o!==hh)show(hh)}catch(e){}}
-addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script>
+<script>/* v151: ONE update coordinator (SW waiting + changed index.html) — banner once, one tap, one reload */
+(function(){var K='timaxo_html_hash',D='tx_upd_done',shown=0,busy=0,pend=null;
+ async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
+ async function fresh(){var r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;return sha(await r.text())}
+ function recent(){try{return Date.now()-(+localStorage.getItem(D)||0)<120000}catch(e){return false}}
+ function offer(hh,w){if(hh)pend=hh;if(shown||recent())return;if(document.querySelector('.upd'))return;shown=1;
+  var b=document.createElement('button');b.className='upd';b.type='button';txUpdFill(b);b.onclick=function(){apply(b)};document.body.appendChild(b)}
+ async function apply(b){if(busy)return;busy=1;txUpdFill(b,1);
+  try{localStorage.setItem(D,String(Date.now()))}catch(e){}
+  try{localStorage.setItem(K,pend||await fresh())}catch(e){}
+  var done=0,go=function(){if(done)return;done=1;location.reload()},reg=null;
+  try{reg=await navigator.serviceWorker.getRegistration()}catch(e){}
+  if(reg){
+   navigator.serviceWorker.addEventListener('controllerchange',go);
+   try{if(!reg.waiting){await reg.update();var w=reg.installing;if(w&&w.state!=='installed'&&w.state!=='activated')await new Promise(function(res){w.addEventListener('statechange',function(){if(w.state==='installed'||w.state==='activated')res()});setTimeout(res,6000)})}}catch(e){}
+   if(reg.waiting){reg.waiting.postMessage('skip');setTimeout(go,4000);return}
+  }
+  try{var k=await caches.keys();await Promise.all(k.filter(function(x){return /^timaxo-v\d+$/.test(x)}).map(function(x){return caches.delete(x)}))}catch(e){}
+  go()}
+ window.TXU={offer:offer};
+ async function check(){if(!navigator.onLine||shown||recent())return;try{var hh=await fresh(),o=localStorage.getItem(K);if(!o){localStorage.setItem(K,hh);return}if(o!==hh)offer(hh)}catch(e){}}
+ addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script>
 
 
 <script>
@@ -5074,65 +5087,52 @@ const A=()=>document.documentElement.lang!=='en',L=(a,b)=>A()?a:b,SEEN='tx_guide
 const ic=p=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
 const D=[
 {c:['#E8501A','#ff8a4c'],i:ic('<path d="M4 8a2 2 0 0 1 2-2h1.5l1.2-2h6.6l1.2 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>'),
- t:['التصوير والاستيراد','Capture & import'],s:['كاميرا ذكية بتلقط الورقة لوحدها','A smart camera that finds the page for you'],
- w:['الرئيسية ← زرار الكاميرا العايم','Home ← the floating camera button'],
- p:[['اضغط زرار الكاميرا وصوّر. حواف الورقة بتتحدد تلقائي.','Tap the camera button and shoot. Page edges are found automatically.','cam'],
- ['أوضاع الكاميرا: مستند، بطاقة، شخصية. وزرار «تلقائي» بيصوّر لوحده لما تثبّت الجهاز.','Modes: Document, Card, ID photo. “Auto” shoots by itself when you hold steady.'],
- ['استورد صور أو PDF من الجهاز (لحد ٦٠ صفحة).','Import photos or a PDF from your device (up to 60 pages).','gal'],
- ['اضغط مطوّلًا على زرار الكاميرا عشان تضيف صفحة A4 فاضية.','Long-press the camera button to add a blank A4 page.','blank'],
- ['اضغط مطوّلًا على أي صفحة واسحبها عشان تغيّر ترتيبها.','Long-press any page and drag it to reorder.']]},
+ t:['التصوير والاستيراد','Capture & import'],s:['كاميرا ذكية وصور وPDF','Smart camera, photos & PDF'],w:['الرئيسية ← الزرار العايم','Home ← floating button'],
+ p:[['الكاميرا|اضغط الزرار العايم وصوّر، والحواف بتتحدد لوحدها','Camera|Tap the floating button and shoot; edges are found for you','cam'],
+ ['استيراد|صور أو PDF من الجهاز (لحد ٦٠ صفحة)','Import|Photos or a PDF from your device (up to 60 pages)','gal'],
+ ['صفحة A4 فاضية|اضغط مطوّلًا على زرار الكاميرا','Blank A4 page|Long-press the camera button','blank'],
+ ['ترتيب الصفحات|اضغط مطوّلًا على صفحة واسحبها','Reorder|Long-press a page and drag it']]},
 {c:['#1b63f0','#5b9bff'],i:ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
- t:['تعديل الصفحة','Edit a page'],s:['خمس تابات: فلاتر · ضبط · تعديل · مسح · الصفحة','Five tabs: Filters · Adjust · Edit · Erase · Page'],
- w:['افتح أي صفحة ← التابات تحت الصورة','Open any page ← tabs under the image'],
- p:[['فلاتر: أصلي، تلقائي، سحري، رمادي، أبيض وأسود.','Filters: Original, Auto, Magic, Gray, B&W.','tab:pFilters'],
- ['ضبط: السطوع والتباين والألوان بسلايدرات رأسية. ضغطتين على الاسم تصفّر السلايدر.','Adjust: brightness, contrast and colors with vertical sliders. Double-tap a name to reset it.','tab:pAdjust'],
- ['تعديل: استبدال النص، نص، قلم، تظليل، سهم، مربع، صح/خطأ، إخفاء، توقيع.','Edit: replace text, text, pen, highlighter, arrow, shapes, tick/cross, redact, signature.','tab:pMarkup'],
- ['مسح: أدوات لمسح جزء من الصورة.','Erase: tools to wipe part of the image.','tab:pErase'],
- ['الصفحة: تدوير، حواف، تقديم/تأخير، حذف، وتقسيم الكتاب.','Page: rotate, edges, move earlier/later, delete, and book split.','tab:pPage'],
- ['علامة ⇅ الصغيرة بترتّب الأدوات حسب استخدامك، وتقدر ترتّبها بإيدك.','The small ⇅ mark orders tools by how you use them, or arrange them by hand.'],
- ['أيقونة الحفظ السريع في أعلى الشاشة بتحفظ الصفحة دي لوحدها.','The quick-save icon at the top saves just this page.']]},
+ t:['تعديل الصفحة','Edit a page'],s:['خمس تابات تحت الصورة','Five tabs under the image'],w:['افتح أي صفحة ← التابات','Open a page ← the tabs'],
+ p:[['فلاتر|أصلي، تلقائي، سحري، رمادي، أبيض وأسود','Filters|Original, Auto, Magic, Gray, B&W','tab:pFilters'],
+ ['ضبط|السطوع والتباين والألوان','Adjust|Brightness, contrast, colors','tab:pAdjust'],
+ ['تعديل|نص، قلم، تظليل، سهم، إخفاء، توقيع','Edit|Text, pen, highlighter, arrow, redact, signature','tab:pMarkup'],
+ ['مسح|امسح جزء من الصورة','Erase|Wipe part of the image','tab:pErase'],
+ ['الصفحة|تدوير، حواف، ترتيب، حذف','Page|Rotate, edges, order, delete','tab:pPage'],
+ ['حفظ سريع|الأيقونة فوق بتحفظ الصفحة دي لوحدها','Quick save|The top icon saves just this page']]},
 {c:['#0e9f8e','#37d6c3'],i:ic('<path d="M6 3v4M6 17v4M3 6h4M17 6h4M3 18h4M17 18h4"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
- t:['تحديد الحواف والقص','Edges & crop'],s:['قص تلقائي دقيق وتعديل بإيدك','Accurate auto-crop, fine-tune by hand'],
- w:['بعد كل تصوير · تاب الصفحة ← الحواف','After each shot · Page tab ← Edges'],
- p:[['الحواف بتتحدد تلقائي، واسحب أي ركن أو ضلع لضبطها.','Edges are found automatically; drag any corner or side to adjust.'],
- ['زرار «تلقائي» يقترح تحديد مختلف كل ضغطة، و«الصفحة كاملة» لو عايز من غير قص.','“Auto” suggests a different outline each tap; “Full page” skips cropping.'],
- ['عدّل حواف صفحة متصوّرة من قبل.','Re-adjust the edges of an existing page.','edge']]},
+ t:['الحواف والقص','Edges & crop'],s:['قص تلقائي وتعديل بإيدك','Auto-crop, fine-tune by hand'],w:['بعد التصوير · تاب الصفحة','After a shot · Page tab'],
+ p:[['ضبط الحواف|اسحب أي ركن أو ضلع','Adjust edges|Drag any corner or side','edge'],
+ ['تلقائي|يقترح تحديد مختلف كل ضغطة','Auto|Suggests a new outline each tap'],
+ ['الصفحة كاملة|لو عايز من غير قص','Full page|When you want no crop']]},
 {c:['#7c4dff','#b28cff'],i:ic('<path d="M4 6h16M4 12h10M4 18h14"/><circle cx="19" cy="15" r="2.5"/>'),
- t:['استخراج النص والترجمة','Extract text & translate'],s:['عربي وإنجليزي، حقول ذكية، وترجمة لـ٢٢ لغة','Arabic & English, smart fields, 22-language translation'],
- w:['تاب الصفحة ← استخراج النص','Page tab ← Extract text'],
- p:[['اضغط «استخراج النص» وراجع النتيجة. بيشتغل من غير نت.','Tap “Extract text” and review the result. Works offline.','ocr'],
- ['شريط الأزرار: نسخ، استبدال، ترجمة. وقايمة ⋯ فيها تحديد من الصورة وقراءة أدق ومشاركة وتصدير TXT / Word / CSV.','The bar offers Copy, Replace, Translate; the ⋯ menu adds select-from-image, finer read, share and TXT / Word / CSV export.'],
- ['الهاتف والبريد والرابط والتاريخ والرقم القومي بتظهر شرايح: اضغط للنسخ أو للتنفيذ.','Phones, emails, links, dates and IDs appear as chips: tap to copy or act.'],
- ['«نص حي»: حدّد الكلام على الصورة نفسها وانسخه أو ترجمه.','“Live text”: select words right on the image to copy or translate.','pg:نص حي|Live'],
- ['«استبدال النص» بيغيّر الكلام جوه الصورة نفسها.','“Replace text” rewrites words inside the image itself.'],
- ['فهرسة النص بتخليك تدوّر في كل مستنداتك.','Text indexing lets you search all your documents.','more:فهرسة النص|Text indexing']]},
+ t:['النص والترجمة','Text & translate'],s:['عربي وإنجليزي وبدون نت','Arabic & English, offline'],w:['تاب الصفحة ← استخراج النص','Page tab ← Extract text'],
+ p:[['استخراج النص|استخرج النص وراجعه قبل الاستخدام','Extract text|Pull out the text and review it','ocr'],
+ ['نص حي|حدّد الكلام على الصورة نفسها','Live text|Select words right on the image','pg:نص حي|Live'],
+ ['ترجمة وتصدير|من شريط الأزرار: نسخ، ترجمة، TXT / Word / CSV','Translate & export|From the bar: copy, translate, TXT / Word / CSV'],
+ ['بحث في المستندات|فعّل فهرسة النص','Search documents|Turn on text indexing','more:فهرسة النص|Text indexing']]},
 {c:['#d98a00','#ffc24a'],i:ic('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>'),
- t:['الحفظ والمشاركة','Save & share'],s:['PDF أو صور: صفحة واحدة أو كلها','PDF or images: one page or all'],
- w:['الرئيسية ← حفظ · أو أيقونة الحفظ السريع في المحرر','Home ← Save · or the quick-save icon in the editor'],
- p:[['اختار الصفحات (كلها، واحدة، أو اختيار) من الصور المصغّرة.','Choose pages (all, one, or custom) from the thumbnails.','save'],
- ['الصيغة PDF أو JPG أو PNG، ومقاس الورقة: حسب الصورة، A4، A5، Letter.','Format PDF, JPG or PNG; page size: fit, A4, A5, Letter.'],
- ['«خيارات إضافية»: الجودة (الافتراضي عالية)، علامة مائية، ترقيم، وحد أقصى للحجم للواتساب.','“More options”: quality (High by default), watermark, numbering and a size cap for WhatsApp.'],
- ['«حفظ على الجهاز» بينزّل الملف، و«مشاركة» بتفتح قايمة المشاركة.','“Save to device” downloads the file; “Share” opens the share sheet.']]},
+ t:['الحفظ والمشاركة','Save & share'],s:['PDF أو صور، صفحة أو كلها','PDF or images, one page or all'],w:['الرئيسية ← حفظ','Home ← Save'],
+ p:[['اختيار الصفحات|كلها، واحدة، أو اختيار بالصور المصغّرة','Pages|All, one, or pick from thumbnails','save'],
+ ['الصيغة والمقاس|PDF أو JPG أو PNG، وA4 أو A5 أو Letter','Format & size|PDF, JPG or PNG; A4, A5 or Letter'],
+ ['خيارات إضافية|الجودة (الافتراضي عالية)، علامة مائية، حد أقصى للحجم','More options|Quality (High by default), watermark, size cap'],
+ ['حفظ أو مشاركة|حفظ على الجهاز، أو قايمة المشاركة','Save or share|To the device, or the share sheet']]},
 {c:['#0e9f8e','#2bd1a0'],i:ic('<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h3M6 16c.6-1.6 1.8-2 3-2s2.4.4 3 2"/>'),
- t:['بطاقة وصور شخصية','ID card & passport photos'],s:['وش وضهر على A4 جاهز للطباعة','Front & back on a print-ready A4'],
- w:['الكاميرا ← وضع بطاقة · ⋯ المزيد ← الأدوات','Camera ← Card mode · ⋯ More ← Tools'],
- p:[['صوّر وش البطاقة وبعدين الضهر في وضع «بطاقة». صفحة A4 بتتعمل وتتفتح للحفظ لوحدها.','Shoot the card front, then back, in Card mode. An A4 page is built and opened for saving automatically.'],
- ['أو من ⋯ المزيد ← بطاقة وصور شخصية: اختار الصفحات والشكل وعدد النسخ.','Or via ⋯ More ← Card & ID photos: pick pages, layout and copies.','more:بطاقة وصور شخصية|Card & ID photos']]},
+ t:['بطاقة وصور شخصية','ID card & photos'],s:['وش وضهر على A4 للطباعة','Front & back on a print-ready A4'],w:['الكاميرا ← وضع بطاقة','Camera ← Card mode'],
+ p:[['صوّر الوش ثم الضهر|بيتعمل A4 جاهز تلقائي','Shoot front then back|An A4 page is built automatically'],
+ ['من الأدوات|اختار الصفحات والشكل وعدد النسخ','From Tools|Pick pages, layout and copies','more:بطاقة وصور شخصية|Card & ID photos']]},
 {c:['#e0245e','#ff6b9a'],i:ic('<path d="M3 7h18v13H3z"/><path d="M3 7l2-3h14l2 3M10 12h4"/>'),
- t:['المستندات والأمان','Documents & security'],s:['مكتبة، سلة محذوفات، نسخ احتياطي وقفل','Library, trash, backups and app lock'],
- w:['أيقونة المستندات · ⋯ المزيد','Documents icon · ⋯ More'],
- p:[['كل مستنداتك على جهازك: ثبّت المهم وصنّفه وابحث بالاسم أو بنص الصفحات.','Everything lives on your device: pin, tag, and search by name or page text.','docs'],
- ['الحذف بيودّي المستند لسلة المحذوفات ٣٠ يوم، وبعد حذف صفحة عندك ١٠ ثواني تضغط «تراجع».','Deleted items stay in Trash 30 days; after deleting a page you have 10 seconds to Undo.'],
- ['«نسخة احتياطية» بتطلّع ملف واحد، و«استعادة» بترجّع كل حاجة (ممكن بكلمة سر).','“Backup” exports one file and “Restore” brings everything back (optionally password-protected).','more:مستنداتي والنسخ الاحتياطي|Documents & backup'],
- ['قفل التطبيق: رقم سري ٤–٨ أرقام أو بصمة، ومفيش حاجة بتتبعت لأي مكان.','App lock: a 4–8 digit PIN or fingerprint; nothing is ever uploaded.','more:قفل التطبيق|App lock']]},
+ t:['المستندات والأمان','Documents & security'],s:['مكتبة ونسخ احتياطي وقفل','Library, backup and lock'],w:['أيقونة المستندات · ⋯ المزيد','Documents icon · ⋯ More'],
+ p:[['مستنداتي|ثبّت وصنّف وابحث','My documents|Pin, tag and search','docs'],
+ ['سلة المحذوفات|المحذوف بيفضل ٣٠ يوم وتقدر تسترجعه','Trash|Deleted items stay 30 days and can be restored'],
+ ['نسخة احتياطية|ملف واحد ترجّعه وقت ما تحب','Backup|One file you can restore any time','more:مستنداتي والنسخ الاحتياطي|Documents & backup'],
+ ['قفل التطبيق|رقم سري أو بصمة','App lock|PIN or fingerprint','more:قفل التطبيق|App lock']]},
 {c:['#16a34a','#4ade80'],i:ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'),
- t:['الإعدادات والأدوات السريعة','Settings & quick tools'],s:['ثيم، صوت، لغة، QR وأوفلاين','Theme, sound, language, QR and offline'],
- w:['الكبسولة اللي فوق · ⋯ المزيد','The top capsule · ⋯ More'],
- p:[['الكبسولة فوق: الثيم (فاتح / أزرق / غامق)، الصوت، الدليل ده، وقايمة ⋯.','The top capsule: theme (light / blue / dark), sound, this guide and the ⋯ menu.'],
- ['زرار الكرة بيبدّل اللغة بين العربي والإنجليزي.','The globe button switches between Arabic and English.'],
- ['قارئ QR والباركود من الزرار العايم في الرئيسية.','QR / barcode reader from the floating button on Home.','qr'],
- ['«تجهيز الأوفلاين» مرة واحدة بالنت، وبعدها كل حاجة بتشتغل من غير نت.','“Prepare offline” once online; then everything works without internet.','more:تجهيز الأوفلاين|Prepare offline'],
- ['زرار الرجوع أو السحب من الجنب بيرجّعك خطوة جوه التطبيق.','The back button / side swipe steps back inside the app.']]}
+ t:['الإعدادات والأدوات','Settings & tools'],s:['ثيم، لغة، QR وأوفلاين','Theme, language, QR & offline'],w:['الكبسولة فوق · ⋯ المزيد','Top capsule · ⋯ More'],
+ p:[['الكبسولة فوق|الثيم والصوت والدليل وقايمة ⋯','Top capsule|Theme, sound, this guide and ⋯'],
+ ['اللغة|زرار الكرة بيبدّل عربي / English','Language|The globe button switches Arabic / English'],
+ ['قارئ QR|من الزرار العايم في الرئيسية','QR reader|From the floating button on Home','qr'],
+ ['أوفلاين|جهّزه مرة بالنت وبعدها من غير نت','Offline|Prepare once online, then no internet needed','more:تجهيز الأوفلاين|Prepare offline']]}
 ];
 const QS=[['١','صوّر','Scan','cam'],['٢','عدّل','Edit','tab:pFilters'],['٣','احفظ','Save','save']];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),q1=x=>document.querySelector(x);
@@ -5251,6 +5251,40 @@ html body #tgBtn.tgpulse svg{animation:tgspark 2.6s ease-in-out infinite;filter:
 #tgTip .ta button:active{transform:scale(.96)}
 @media (prefers-reduced-motion:reduce){html body #tgBtn.tgpulse,html body #tgBtn.tgpulse::before,html body #tgBtn.tgpulse::after,html body #tgBtn.tgpulse svg{animation:none}html body #tgBtn.tgpulse::after{opacity:.8;transform:scale(1.5)}#tgTip{transition:opacity .2s;transform:none}}
 `;document.head.appendChild(st2);
+const st3=document.createElement('style');st3.textContent=`
+html body #tg .hero{padding:10px 18px 14px;background:linear-gradient(150deg,var(--navy1,#0a1f6b),var(--navy2,#14409a))}
+html body #tg .hero h2{font-size:20px}
+html body #tg .hero p{font-size:12.5px;margin:3px 0 12px;opacity:.8}
+html body #tg .sr{height:40px;background:rgba(255,255,255,.12);border:0}
+html body #tg .ls{padding:6px 14px 8px}
+html body #tg .qh{font:800 12px system-ui;color:var(--ink2,#8a94b8);margin:14px 4px 8px;letter-spacing:.2px}
+html body #tg .qs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+html body #tg .qt{height:68px;flex-direction:column;gap:6px;border-radius:16px;background:var(--surface2,#eef);border:0;color:var(--ink,#0F1A2B);font:800 13px system-ui}
+html body #tg .qt:active{background:color-mix(in srgb,var(--accent,#3b82f6) 18%,var(--surface2,#eef))}
+html body #tg .qt b{width:24px;height:24px;font-size:12px}
+html body #tg details{border:0;border-radius:18px;margin-bottom:8px;background:var(--surface2,#eef);box-shadow:none}
+html body #tg details[open]{background:var(--surface,#fff);box-shadow:inset 0 0 0 1.5px var(--tc,#3b82f6)}
+html body #tg summary{padding:10px 12px;gap:12px}
+html body #tg .ti{width:40px;height:40px;border-radius:12px;box-shadow:none}
+html body #tg .ti svg{width:20px;height:20px}
+html body #tg .tt b{font-size:14.5px}
+html body #tg .tt small{font-size:12px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #tg .ch{width:18px;height:18px;padding:0;background:none;border-radius:0;opacity:.45}
+html body #tg details[open] .ch{background:none;color:inherit;opacity:.8}
+html body #tg .bd{padding:0 14px 6px}
+html body #tg .wh{display:block;width:auto;background:none;border-radius:0;padding:0 0 8px;margin:0;color:var(--ink2,#8a94b8);font-size:11.5px!important;font-weight:700}
+html body #tg ol{margin:0}
+html body #tg li{padding:10px 0;gap:10px;border-top:1px solid color-mix(in srgb,var(--ink2,#8a94b8) 16%,transparent);font-size:13px}
+html body #tg li:first-child{border-top:1px solid color-mix(in srgb,var(--ink2,#8a94b8) 16%,transparent)}
+html body #tg li::before{display:none}
+html body #tg li .tx{display:flex;flex-direction:column;gap:2px}
+html body #tg li .tx b{font-size:14px;font-weight:800}
+html body #tg li .tx span{font-size:12.5px;line-height:1.5;color:var(--ink2,#8a94b8)}
+html body #tg .gb{width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--tc,#3b82f6) 15%,transparent);color:var(--tc,#3b82f6);box-shadow:none}
+html body #tg .gb:active{background:var(--tc,#3b82f6);color:#fff}
+html body #tg .ft{padding-top:8px}
+html body #tg .go{height:50px;box-shadow:none}
+`;document.head.appendChild(st3);
 let ov=null;
 function close(){if(!ov)return;const o=ov;ov=null;o.classList.remove('in');setTimeout(()=>o.remove(),230);}
 const BOLT='<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M13.2 2.5 5 13.2h5.6l-1 8.3 8.4-11h-5.7z"/></svg>';
@@ -5259,15 +5293,17 @@ function open(){
  const d0=document.querySelector('#tgBtn i');if(d0)d0.remove();const pb=document.getElementById('tgBtn');if(pb)pb.classList.remove('tgpulse');const tp=document.getElementById('tgTip');if(tp)tp.remove();
  const o=document.createElement('div');o.id='tg';o.style.zIndex='9000';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
  const k=A()?0:1,gl=L('جرّبها الآن','Try it now');
- o.innerHTML='<div class="bx"><div class="hero"><div class="hd"></div><button class="x" type="button" data-a="x" aria-label="'+L('إغلاق','Close')+'">✕</button><h2>'+L('التطبيق يقدر يعمل إيه؟','What can Timaxo do?')+'</h2><p>'+L('دليل مبسّط بكل الأدوات وأماكنها. اضغط ⚡ جنب أي خطوة وهتروح للأداة على طول.','A simple guide to every tool and where it lives. Tap ⚡ next to any step to jump straight to it.')+'</p><div class="qs">'+QS.map(a=>'<button type="button" class="qt" data-g="'+a[3]+'"><b>'+a[0]+'</b><span>'+a[A()?1:2]+'</span></button>').join('')+'</div><label class="sr">'+ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>').replace('width="22" height="22"','width="18" height="18"')+'<input type="search" id="tgQ" autocomplete="off" placeholder="'+L('ابحث: قفل، PDF، بطاقة، ترجمة…','Search: lock, PDF, card, translate…')+'"></label></div><div class="ls" id="tgL"></div><div class="ft"><button class="go" type="button" id="tgGo">'+L('ابدأ التصوير','Start scanning')+'</button></div></div>';
+ o.innerHTML='<div class="bx"><div class="hero"><div class="hd"></div><button class="x" type="button" data-a="x" aria-label="'+L('إغلاق','Close')+'">✕</button><h2>'+L('التطبيق يقدر يعمل إيه؟','What can Timaxo do?')+'</h2><p>'+L('اضغط ⚡ جنب أي خطوة وهتروح للأداة على طول.','Tap ⚡ next to any step to jump straight to the tool.')+'</p><label class="sr">'+ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>').replace('width="22" height="22"','width="18" height="18"')+'<input type="search" id="tgQ" autocomplete="off" placeholder="'+L('ابحث: قفل، PDF، بطاقة، ترجمة…','Search: lock, PDF, card, translate…')+'"></label></div><div class="ls" id="tgL"></div><div class="ft"><button class="go" type="button" id="tgGo">'+L('ابدأ التصوير','Start scanning')+'</button></div></div>';
  const ls=o.querySelector('#tgL');
- D.forEach((x,n)=>{const dt=document.createElement('details');if(n===0)dt.open=true;dt.style.setProperty('--tc',x.c[0]);
+ ls.insertAdjacentHTML('beforeend','<div class="qh" id="tgQH">'+L('ابدأ في ٣ خطوات','Start in 3 steps')+'</div><div class="qs" id="tgQS">'+QS.map(a=>'<button type="button" class="qt" data-g="'+a[3]+'"><b>'+a[0]+'</b><span>'+a[A()?1:2]+'</span></button>').join('')+'</div><div class="qh">'+L('الأدوات حسب الموضوع','Tools by topic')+'</div>');
+ const stp=t=>{const p=t.split('|');return p.length>1?'<b>'+p[0]+'</b><span>'+p[1]+'</span>':'<span>'+t+'</span>';};
+ D.forEach((x,n)=>{const dt=document.createElement('details');dt.style.setProperty('--tc',x.c[0]);
   dt.dataset.s=(x.t[k]+' '+x.s[k]+' '+x.w[k]+' '+x.p.map(a=>a[k]).join(' ')).toLowerCase();
-  dt.innerHTML='<summary><span class="ti" style="background:linear-gradient(135deg,'+x.c[0]+','+x.c[1]+')">'+x.i+'</span><span class="tt"><b>'+x.t[k]+'</b><small>'+x.s[k]+'</small></span>'+ic('<path d="M6 9l6 6 6-6"/>').replace('width="22" height="22"','class="ch" width="18" height="18"')+'</summary><div class="bd"><span class="wh">📍 '+x.w[k]+'</span><ol>'+x.p.map(a=>'<li><span class="tx">'+a[k]+'</span>'+(a[2]?'<button type="button" class="gb" data-g="'+a[2]+'" aria-label="'+gl+'" title="'+gl+'">'+BOLT+'</button>':'')+'</li>').join('')+'</ol></div>';
+  dt.innerHTML='<summary><span class="ti" style="background:linear-gradient(135deg,'+x.c[0]+','+x.c[1]+')">'+x.i+'</span><span class="tt"><b>'+x.t[k]+'</b><small>'+x.s[k]+'</small></span>'+ic('<path d="M6 9l6 6 6-6"/>').replace('width="22" height="22"','class="ch" width="18" height="18"')+'</summary><div class="bd"><span class="wh">📍 '+x.w[k]+'</span><ol>'+x.p.map(a=>'<li><span class="tx">'+stp(a[k])+'</span>'+(a[2]?'<button type="button" class="gb" data-g="'+a[2]+'" aria-label="'+gl+'" title="'+gl+'">'+BOLT+'</button>':'')+'</li>').join('')+'</ol></div>';
   dt.addEventListener('toggle',()=>{if(dt.open&&!o.querySelector('#tgQ').value)ls.querySelectorAll('details[open]').forEach(e=>{if(e!==dt)e.open=false;});});
   ls.appendChild(dt);});
  const em=document.createElement('div');em.className='em';em.hidden=true;em.textContent=L('مفيش نتايج. جرّب كلمة تانية.','No results. Try another word.');ls.appendChild(em);
- o.querySelector('#tgQ').addEventListener('input',e=>{const v=e.target.value.trim().toLowerCase();let n=0;ls.querySelectorAll('details').forEach(d=>{const m=!v||d.dataset.s.includes(v);d.hidden=!m;if(m)n++;if(v&&m)d.open=true;});em.hidden=n>0;});
+ o.querySelector('#tgQ').addEventListener('input',e=>{const v=e.target.value.trim().toLowerCase();let n=0;ls.querySelectorAll('.qh,.qs').forEach(x=>x.hidden=!!v);ls.querySelectorAll('details').forEach(d=>{const m=!v||d.dataset.s.includes(v);d.hidden=!m;if(m)n++;if(v&&m)d.open=true;});em.hidden=n>0;});
  o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-a=x]')){close();return;}const g=e.target.closest('[data-g]');if(g){const a=g.dataset.g;close();setTimeout(()=>run(a),260);}});
  o.querySelector('#tgGo').onclick=()=>{close();setTimeout(()=>{const b=document.getElementById('scanBtn');if(b)b.click();},240);};
  let y0=null;const hero=o.querySelector('.hero');hero.addEventListener('touchstart',e=>{y0=e.touches[0].clientY;},{passive:true});hero.addEventListener('touchend',e=>{if(y0!==null&&e.changedTouches[0].clientY-y0>60)close();y0=null;},{passive:true});
