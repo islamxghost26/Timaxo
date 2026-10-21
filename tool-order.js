@@ -98,6 +98,18 @@
     const pg = document.querySelector('#pPage .pgact');
     if (pg) new MutationObserver(() => applyPage()).observe(pg, { childList: true });
     const r = document.getElementById('adjReset'); if (r) { r.setAttribute('aria-label', T('إعادة ضبط', 'Reset')); r.title = r.getAttribute('aria-label'); }
+    // سلايدرات الضبط: تعبئة المسار من المنتصف ناحية القيمة، وخفض لون القيمة 0، وضغطتين على الاسم = رجّع للصفر
+    const adj = () => document.querySelectorAll('#pAdjust label.sld').forEach(l => {
+      const i = l.querySelector('input'); if (!i) return;
+      const mn = +i.min, mx = +i.max, v = +i.value, ps = (((v - mn) / (mx - mn)) * 100).toFixed(1) + '%';
+      if (l.dataset.pp !== ps) { l.dataset.pp = ps; l.style.setProperty('--p', ps); l.dataset.z = v === 0 ? '1' : '0'; }
+    });
+    document.querySelectorAll('#pAdjust label.sld').forEach(l => {
+      const i = l.querySelector('input'); if (!i) return;
+      i.addEventListener('input', adj);
+      l.addEventListener('dblclick', e => { if (e.target.closest('input')) return; e.preventDefault(); i.value = 0; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); adj(); });
+    });
+    setInterval(adj, 250); adj();
     sync();
     if (g.__buildTools) g.__buildTools();
   }
