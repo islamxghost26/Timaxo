@@ -4246,7 +4246,7 @@ buildTools();window.__E=E;window.__buildTools=buildTools;
 const A=()=>{try{return AR()}catch(e){return true}},L=(a,b)=>A()?a:b;
 /* ---- update banner ---- */
 if('serviceWorker' in navigator){let want=0,rl=0;
- const show=w=>{if(document.querySelector('.upd'))return;const b=document.createElement('button');b.className='upd';b.textContent=L('✨ فيه تحديث جديد — اضغط للتحديث','✨ New update — tap to refresh');b.onclick=()=>{want=1;b.textContent='…';w.postMessage('skip');setTimeout(()=>location.reload(),2500)};document.body.appendChild(b);};
+ const show=w=>{if(document.querySelector('.upd'))return;const b=document.createElement('button');b.className='upd';txUpdFill(b);b.onclick=()=>{want=1;txUpdFill(b,1);w.postMessage('skip');setTimeout(()=>location.reload(),2500)};document.body.appendChild(b);};
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(want&&!rl){rl=1;location.reload()}});
  navigator.serviceWorker.ready.then(reg=>{if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
   reg.addEventListener('updatefound',()=>{const w=reg.installing;if(!w)return;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)show(w)})});
@@ -4775,6 +4775,31 @@ const _gh=goHome;goHome=function(fr){const r=_gh.apply(this,arguments);const pd=
  return r;};
 })();
 
+
+/* ===== v147: modern update banner ===== */
+(function(){
+  if(!document.getElementById('upd147')){const st=document.createElement('style');st.id='upd147';st.textContent=`
+html body .upd{all:unset;box-sizing:border-box;position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:9990;width:min(calc(100vw - 24px),400px);display:flex;align-items:center;gap:12px;padding:10px 10px 10px 14px;border-radius:20px;background:color-mix(in srgb,var(--surface,#0c1230) 82%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid color-mix(in srgb,var(--accent,#3b82f6) 45%,transparent);color:var(--ink,#fff);box-shadow:0 18px 40px -14px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04) inset,0 0 26px -10px var(--accent,#3b82f6);cursor:pointer;-webkit-tap-highlight-color:transparent;animation:upd147in .55s cubic-bezier(.18,1,.3,1)}
+html body .upd:active{transform:translateX(-50%) scale(.98)}
+html body .upd .ui{flex:none;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#1F6BFF,#8A56FF);box-shadow:0 6px 16px -6px rgba(90,100,255,.9)}
+html body .upd .ui svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+html body .upd .ut{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:start}
+html body .upd .ut b{font:800 14.5px/1.25 system-ui}
+html body .upd .ut span{font:600 12px/1.3 system-ui;color:var(--ink2,#9aa4c7)}
+html body .upd .ub{flex:none;height:36px;padding:0 16px;border-radius:12px;display:flex;align-items:center;background:linear-gradient(100deg,#1F6BFF,#8A56FF);color:#fff;font:800 13px system-ui;box-shadow:0 6px 14px -6px rgba(90,100,255,.9)}
+html body .upd.busy{pointer-events:none}
+html body .upd.busy .ui svg{animation:upd147spin 1s linear infinite}
+html body .upd.busy .ub{opacity:.55}
+@keyframes upd147in{from{opacity:0;transform:translate(-50%,-24px) scale(.96)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes upd147spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){html body .upd,html body .upd.busy .ui svg{animation:none}}
+`;document.head.appendChild(st);}
+  window.txUpdFill=function(b,busy){let ar=true;try{ar=!!AR();}catch(_){}
+    const T=ar?['تحديث جديد متاح','اضغط لتطبيق آخر التحسينات','تحديث','جارٍ التحديث…','برجاء الانتظار']:['New update available','Tap to get the latest improvements','Update','Updating…','Please wait'];
+    b.innerHTML='<span class="ui"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></span><span class="ut"><b>'+T[busy?3:0]+'</b><span>'+T[busy?4:1]+'</span></span>'+(busy?'':'<span class="ub">'+T[2]+'</span>');
+    b.classList.toggle('busy',!!busy);b.setAttribute('role','button');};
+})();
+
 /* ===== v146: quick save icon + new save sheet (thumbnails, save-to-phone / share) ===== */
 function xUi(){
   const m=X.mode||'all',n=state.pages.length;
@@ -4832,6 +4857,16 @@ html body #sheet .xact .savebtn{font-weight:800;box-shadow:0 10px 22px -10px rgb
 @keyframes xin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){html body #sheet .xadv{animation:none}html body #sheet .xmore .xch{transition:none}}
 html body #sheet .xadv[hidden]{display:none}
+html body #sheet{overflow-x:hidden}
+html body #sheet>*{min-width:0;max-width:100%}
+html body #sheet .fld{display:flex;flex-direction:column;min-width:0}
+html body #sheet #xPgFld{display:block}
+html body #sheet #xPgFld>.l{display:block;margin-bottom:8px}
+html body #sheet .xstrip{width:100%;max-width:100%;min-width:0;box-sizing:border-box;overscroll-behavior-x:contain;scrollbar-width:none}
+html body #sheet .xstrip::-webkit-scrollbar{display:none}
+html body #sheet #xEst{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+html body #sheet #xEst>*{max-width:100%}
+html body #sheet .note{overflow-wrap:anywhere}
 html body #sheet .note:empty{display:none}
 html body #sheet #xEst{margin:0 0 10px;min-height:0}
 html body #sheet .xact{display:grid;grid-template-columns:1fr auto;gap:10px}
@@ -4971,8 +5006,8 @@ if(typeof window.show==='function'){var o=window.show;window.show=function(){try
 <script>/* update-on-open: compares index.html with the last seen copy */
 (function(){var K='timaxo_html_hash',AR2=function(){try{return AR()}catch(e){return true}};
 async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
-function show(hh){if(document.querySelector('.upd'))return;var b=document.createElement('button');b.className='upd';b.textContent=AR2()?'\u2728 \u0641\u064a\u0647 \u062a\u062d\u062f\u064a\u062b \u062c\u062f\u064a\u062f \u2014 \u0627\u0636\u063a\u0637 \u0644\u0644\u062a\u062d\u062f\u064a\u062b':'\u2728 New update \u2014 tap to refresh';
-b.onclick=async function(){b.textContent='\u2026';try{localStorage.setItem(K,hh)}catch(e){}try{var k=await caches.keys();await Promise.all(k.map(function(x){return caches.delete(x)}))}catch(e){}try{var r=await navigator.serviceWorker.getRegistration();r&&await r.update()}catch(e){}location.reload()};document.body.appendChild(b)}
+function show(hh){if(document.querySelector('.upd'))return;var b=document.createElement('button');b.className='upd';txUpdFill(b);
+b.onclick=async function(){txUpdFill(b,1);try{localStorage.setItem(K,hh)}catch(e){}try{var k=await caches.keys();await Promise.all(k.map(function(x){return caches.delete(x)}))}catch(e){}try{var r=await navigator.serviceWorker.getRegistration();r&&await r.update()}catch(e){}location.reload()};document.body.appendChild(b)}
 async function check(){if(!navigator.onLine)return;try{var r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;var hh=await sha(await r.text()),o=localStorage.getItem(K);if(!o){localStorage.setItem(K,hh);return}if(o!==hh)show(hh)}catch(e){}}
 addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script>
 
