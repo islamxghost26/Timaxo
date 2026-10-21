@@ -4800,6 +4800,12 @@ html body .upd.busy .ub{opacity:.55}
     b.classList.toggle('busy',!!busy);b.setAttribute('role','button');};
 })();
 
+/* v148: center the selected thumbnail inside the strip ONLY (scrollIntoView also scrolled #app/body and pushed the whole screen sideways) */
+function xCenter(){try{const st=$('#xPages'),on=st&&st.querySelector('.chip.on');if(!st||!on||!st.offsetWidth)return;
+  const a=st.getBoundingClientRect(),b=on.getBoundingClientRect();st.scrollBy({left:(b.left+b.width/2)-(a.left+a.width/2),behavior:'auto'});}catch(_){}
+  ['#app','#sheet'].forEach(q=>{const e=document.querySelector(q);if(e&&e.scrollLeft)e.scrollLeft=0;});
+  const de=document.scrollingElement;if(de&&de.scrollLeft)de.scrollLeft=0;}
+{const _os=openSheet;openSheet=function(){const r=_os.apply(this,arguments);setTimeout(xCenter,60);return r;};}
 /* ===== v146: quick save icon + new save sheet (thumbnails, save-to-phone / share) ===== */
 function xUi(){
   const m=X.mode||'all',n=state.pages.length;
@@ -4857,6 +4863,8 @@ html body #sheet .xact .savebtn{font-weight:800;box-shadow:0 10px 22px -10px rgb
 @keyframes xin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){html body #sheet .xadv{animation:none}html body #sheet .xmore .xch{transition:none}}
 html body #sheet .xadv[hidden]{display:none}
+html body #app{overflow:clip}
+html,body{overflow-x:clip}
 html body #sheet{overflow-x:hidden}
 html body #sheet>*{min-width:0;max-width:100%}
 html body #sheet .fld{display:flex;flex-direction:column;min-width:0}
@@ -4883,7 +4891,7 @@ html body #qsBtn .i{width:20px;height:20px}
   $('#xMode').onclick=e=>{const b=e.target.closest('button');if(!b||X.busy)return;const m=b.dataset.m,prev=X.mode;
     if(m==='all')X.sel=new Set(state.pages.map((_,i)=>i));
     else if(m==='one'){const cur=E.page?state.pages.indexOf(E.page):-1,keep=prev==='pick'?[...X.sel].sort((a,b)=>a-b)[0]:undefined;X.sel=new Set([keep!==undefined?keep:(prev==='one'&&X.sel.size?[...X.sel][0]:(cur>=0?cur:state.pages.length-1))]);}
-    X.mode=m;syncX();const on=$('#xPages .chip.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});};
+    X.mode=m;syncX();xCenter();};
   ['xFmt','xPs','xSize'].forEach(id=>$('#'+id).addEventListener('click',()=>{try{localStorage.setItem('tx_xfmt',X.fmt);localStorage.setItem('tx_xps',X.ps);localStorage.setItem('tx_xsz2',X.size);}catch(_){}}));
   $('#xGo').addEventListener('pointerdown',()=>{X.act='save';});
   $('#xShare').onclick=()=>{if(X.busy||!X.sel.size)return;X.act='share';$('#xGo').click();};
