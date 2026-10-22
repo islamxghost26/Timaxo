@@ -289,28 +289,32 @@
     return r;
   }
 
+  const tick = () => new Promise(r => { let d = 0; const f = () => { if (!d) { d = 1; r(); } }; try { requestAnimationFrame(f); } catch (e) { } setTimeout(f, 40); }); // بيدّي المتصفح فرصة يرسم الشريط
   async function run(cv0, script, opt) {
     opt = Object.assign({}, DEF, opt);
     const prog = opt.onProgress || (() => { }), dead = opt.isDead || (() => false);
     const ort = await getOrt();
-    prog(0.04);
+    prog(0.04); await tick();
     // تعديل الميل (بيتحوّل للإحداثيات الأصلية بعد القراءة)
     let cv = cv0, rot = null, skew = 0;
     if (typeof opt.skew === 'function') { try { skew = opt.skew(cv0) || 0; } catch (e) { skew = 0; } }
     if (Math.abs(skew) > 0.012 && Math.abs(skew) < 0.45) { rot = rotate(cv0, -skew); cv = rot.cv; } else skew = 0;
     const detId = opt.fast ? 'det-fast' : 'det';
     if (!S.det[detId]) S.det[detId] = await session(detId);
+    prog(0.1); await tick();
     await loadRec(script);
     if (script === 'arabic') { try { await loadRec('latin'); } catch (e) { console.warn('TXOnnx helper', e); } }
+    prog(0.18); await tick();
     if (dead()) return null;
     // --- كشف ---
     const det = S.det[detId];
+    prog(0.2); await tick();
     const k = Math.min(opt.detMax / Math.max(cv.width, cv.height), 1.6);
     const dw = Math.max(32, Math.round(cv.width * k / 32) * 32), dh = Math.max(32, Math.round(cv.height * k / 32) * 32);
     const dt = toTensor(cv, 0, 0, cv.width, cv.height, dw, dh, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]);
     const dout = await det.run({ [det.inputNames[0]]: new ort.Tensor('float32', dt, [1, 3, dh, dw]) });
     const prob = dout[det.outputNames[0]].data;
-    prog(0.25);
+    prog(0.4); await tick();
     const rtl = script === 'arabic';
     const boxes = dbBoxes(prob, dw, dh, Object.assign({}, opt, opt.fast ? { boxThresh: 0.4 } : { boxThresh: 0.45 })).map(b => ({ x0: b.x0 * cv.width / dw, x1: b.x1 * cv.width / dw, y0: b.y0 * cv.height / dh, y1: b.y1 * cv.height / dh, score: b.score }));
     const lines = orderBoxes(boxes, rtl), total = boxes.length;
@@ -322,7 +326,7 @@
       for (const b of L.items) {
         if (dead()) return null;
         const r = await readBox(cv, b, script, opt, ort);
-        done++; prog(0.25 + 0.75 * done / Math.max(1, total));
+        done++; prog(0.4 + 0.6 * done / Math.max(1, total)); await tick();
         if (!r || !r.vis.trim()) continue;
         const arLine = ARL.test(r.vis);
         let text = tidy(arLine ? arabicReorder(r.vis) : r.vis);
@@ -356,8 +360,23 @@
     } catch (e) { console.warn('TXOnnx', e); return null; }
   }
 
+  /** تسخين: يحمّل النماذج في الخلفية قبل ما المستخدم يدوس «استخراج»، عشان أول قراءة ماتستناش التحميل. */
+  async function warm(langStr, fast) {
+    try {
+      if (S._warm || !g.TXOcrModels || !g.EdgeModel || localStorage.getItem('tx_onnx') === '0') return;
+      S._warm = 1;
+      const script = await pickScript(langStr); if (!script) { S._warm = 0; return; }
+      await g.TXOcrModels.install(script, null, !!fast);
+      await getOrt();
+      const id = fast ? 'det-fast' : 'det';
+      if (!S.det[id]) S.det[id] = await session(id);
+      await loadRec(script);
+      if (script === 'arabic') { try { await loadRec('latin'); } catch (e) { } }
+    } catch (e) { S._warm = 0; console.warn('TXOnnx warm', e); }
+  }
+
   g.TXOnnx = {
-    tryRun, run, pickScript, buildChars, ctcDecode, ctcSteps, mergeScripts, arabicReorder, tidy, dbBoxes, orderBoxes, splitWords, wordsFromSteps, toTensor, rotate,
+    tryRun, warm, run, pickScript, buildChars, ctcDecode, ctcSteps, mergeScripts, arabicReorder, tidy, dbBoxes, orderBoxes, splitWords, wordsFromSteps, toTensor, rotate,
     _chars(script, C) { const k = script + ':' + C; return (S._ck = S._ck || {})[k] || (S._ck[k] = buildChars(S.chars[script], C)); },
     _state: S, DEF
   };

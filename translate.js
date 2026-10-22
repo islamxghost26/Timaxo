@@ -150,6 +150,9 @@
   /* ---------------- الواجهة ---------------- */
   const CSS = `
 .tr .tr-h{display:flex;align-items:center;gap:11px}
+.mdl.tr{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.mdl.tr>*{flex-shrink:0}
+.mdl.tr .tr-card{min-height:auto}
 .tr .tr-hint{font:600 11.5px/1.4 system-ui;color:var(--ink2);margin-top:2px}
 .tr-lang{display:grid;grid-template-columns:1fr 40px 1fr;gap:8px;align-items:center}
 .tr-sel{position:relative;display:block}
@@ -238,7 +241,7 @@ html[dir=rtl] .tr-sel select{padding:18px 14px 0 36px}
         if (my !== tok || (e && e.message === 'aborted')) return;
         card.classList.remove('busy');
         if (e.code === 'consent') { st.textContent = ''; return; }
-        st.classList.add('err'); st.textContent = (e.code === 'nodevice' ? e.message + ' — جرّب «إنترنت».' : L('تعذّرت الترجمة: ', 'Translation failed: ') + String(e && e.message || e).slice(0, 80) + (navigator.onLine ? '' : L(' · مفيش إنترنت', ' · offline')));
+        st.classList.add('err'); const m0 = String(e && e.message || e), netErr = !navigator.onLine || /failed to fetch|networkerror|load failed|network request failed|timeout|aborted/i.test(m0); st.textContent = (e.code === 'nodevice' ? e.message + ' — جرّب «إنترنت».' : netErr ? L('تعذّرت الترجمة: مفيش اتصال بالإنترنت أو الخدمة مش متاحة دلوقتي. جرّب تاني.', 'Translation failed: no internet connection or the service is unavailable. Try again.') : L('تعذّرت الترجمة: ', 'Translation failed: ') + m0.slice(0, 80));
         if (e.code === 'nodevice' && !ar) st.textContent = e.message + ' — try “Online”.';
       }
     };

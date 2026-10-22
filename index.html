@@ -1262,6 +1262,7 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 <script src="fields.js"></script>
 <script src="ocr-models.js"></script>
 <script src="ocr-onnx.js"></script>
+<script>document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-m="ocr"]');if(b&&window.TXOnnx&&TXOnnx.warm){var l="ara+eng";try{l=localStorage.getItem("tx_ol")||l;if(l.charAt(0)==="["||l.charAt(0)==="{")l="ara+eng"}catch(_){}setTimeout(function(){TXOnnx.warm(l,localStorage.getItem("tx_oq")==="fast")},60)}},true)</script>
 <script src="translate.js"></script>
 <script src="tool-order.js"></script>
 <script src="ui-polish.js"></script>
@@ -1876,7 +1877,7 @@ function renderHome(fresh){
   updLib();
 }
 function goHome(fresh){
-  releaseSrc();show('vHome');renderHome(fresh);
+  window.__txCamBack=0;releaseSrc();show('vHome');renderHome(fresh);
 }
 let undoT=0;
 async function deletePage(p){
@@ -2035,7 +2036,7 @@ window.__txImportPdf=importPdf;
 $('#galIn').addEventListener('change',async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
   const pdfs=fs.filter(isPdf),imgs=fs.filter(f=>!isPdf(f));
   for(const f of pdfs)await importPdf(f);
-  if(imgs.length){state.queue=imgs.slice(1);ingest(imgs[0]);}});
+  if(imgs.length){window.__txCamBack=0;state.queue=imgs.slice(1);ingest(imgs[0]);}});
 $('#scanBtn').onclick=()=>$('#camIn').click();
 $('#galBtn').onclick=()=>$('#galIn').click();
 
@@ -2140,7 +2141,9 @@ new ResizeObserver(()=>{if(V.cur==='vCrop')layoutCrop();}).observe($('#cropStage
 let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.src!==C.src){busy(true);await detectAsync(C.src);busy(false);autoI=0;}else{autoI++;}const al=detectCorners.alts;await tween(C.page.corners,al[autoI%al.length],380);if(al.length>1)toast((lang==='ar'?'اقتراح ':'Suggestion ')+((autoI%al.length)+1)+'/'+al.length+(lang==='ar'?' — اضغط تاني لاقتراح مختلف':' — tap again for another'));};
 $('#fullBtn').onclick=()=>tween(C.page.corners,[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],320);
 $('#cropBack').onclick=()=>{
-  if(C.from==='new'){state.draft=null;C.page=null;state.queue=[];goHome();}
+  const cam=!!window.__txCamBack;
+  if(C.from==='new'||(C.from==='edit'&&E.isDraft&&cam)){state.draft=null;C.page=null;E.page=null;state.queue=[];goHome();
+    if(cam)setTimeout(()=>{try{window.__txOpenLive&&window.__txOpenLive()}catch(e){}},140);}
   else{openEdit(C.page,E.isDraft,true);}
 };
 $('#cropGo').onclick=()=>{ try{if(window.EdgeLearn&&C.page)EdgeLearn.observePage(C.page);}catch(e){} if(C.from==='new'){openEdit(C.page,true);}else{openEdit(C.page,E.isDraft,true);} };
@@ -2852,7 +2855,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='155';
+  const APPV='156';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -2943,6 +2946,7 @@ document.addEventListener('pointerdown',e=>{try{if(nat||camP||document.getElemen
  camT=performance.now();const pr=camP=camOpen();pr.catch(()=>{});
  setTimeout(()=>{if(camP===pr){camP=null;pr.then(s=>s.getTracks().forEach(t=>t.stop())).catch(()=>{});}},3500);}catch(x){}},true);
 $('#camIn').addEventListener('click',e=>{if(nat||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))return;e.preventDefault();e.stopImmediatePropagation();openLive();},true);
+window.__txOpenLive=function(){if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&!document.getElementById('lv'))return openLive()};
 async function openLive(){
  const ar=AR(),T=(a,b)=>ar?a:b;
  document.documentElement.classList.add('txcam');
@@ -3065,7 +3069,7 @@ html.txcam,html.txcam body{overscroll-behavior:none}
   tgl.onclick=()=>{col=!col;try{localStorage.setItem('tx_tbc',col?'1':'0')}catch(e){}ap();};}}
  let tool='',xpaint=null,qrOn=false,qrShown=0,qrQ=null,qrDet=null,lastOb=null,segA=0,cvDirty=false,calmT=0,lastHs=0,mu0=localStorage.getItem('tx_multi')==='1',fbk=localStorage.getItem('tx_fb')==='1',helpAuto=null,gdOn=localStorage.getItem('tx_grid')==='1';
  const segGo=(sg,to)=>{cancelAnimationFrame(segA);const a=sg.scrollLeft,d=to-a;if(Math.abs(d)<2)return;const t0=performance.now(),D=130,st=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sg.scrollLeft=a+d*e;if(k<1)segA=requestAnimationFrame(st);};segA=requestAnimationFrame(st);};
- let uiM='doc',amu=0,mode=(uiM==='id'?'id':'doc'),multi=localStorage.getItem('tx_multi')==='1',auto=localStorage.getItem('tx_auto')!=='0',snd=localStorage.getItem('tx_snd')!=='0';
+ let uiM='doc',amu=0,mode=(uiM==='id'?'id':'doc'),multi=localStorage.getItem('tx_multi')==='1',auto=localStorage.getItem('tx_auto')==='1',snd=localStorage.getItem('tx_snd')!=='0';
  let stable=0,last=null,lastGood=null,alive=true,gb=0,armed=true,torch=false,trk=null,files=[],bz=0,lockT=0,dtm=0,raf=0,backs=[],bi=0,hk='',fm=localStorage.getItem('tx_fm')||'off',tmv=0,cnt=0,cntI=0,fmTry=0,sugN=0,sugT=0,galFn=null,flyFn=null,sugFn=null;
  /* ---- feedback: haptics + synthesized sounds ---- */
  const buzz=n=>{try{if(localStorage.getItem('tx_hap')!=='0'&&navigator.vibrate)navigator.vibrate(n)}catch(e){}};
@@ -3149,7 +3153,7 @@ html.txcam,html.txcam body{overscroll-behavior:none}
   const ck=qrOn?'qr':tool==='card'?'id':(tool||uiM);m.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===ck));const ob=m.querySelector('[data-m].on'),sg=ob&&ob.parentNode;if(sg&&ob!==lastOb){lastOb=ob;segGo(sg,ob.offsetLeft-(sg.clientWidth-ob.offsetWidth)/2);}xpaint&&xpaint();
   db.style.display='flex';db.querySelector('span').textContent=T('تم','Done')+' · '+files.length;db.setAttribute('aria-label',T('تم','Done')+' · '+files.length);galFn&&galFn();};
  const close=()=>{window.__txTool=null;alive=false;clearInterval(cntI);clearTimeout(dtm);cancelAnimationFrame(raf);try{wk&&wk.terminate()}catch(e){}wk=null;try{ac&&ac.close()}catch(e){}stream&&stream.getTracks().forEach(t=>t.stop());m.classList.add('out');setTimeout(()=>{m.remove();document.documentElement.classList.remove('txcam');},110);};
- const finish=()=>{const tl=tool,mu=multi;close();if(!files.length)return;window.__txPend=tl?{id:tl,n:files.length,multi:!!mu,start:state.pages.length,f:{}}:null;state.queue=files.slice(1);ingest(files[0]);};
+ const finish=()=>{const tl=tool,mu=multi;close();if(!files.length)return;window.__txPend=tl?{id:tl,n:files.length,multi:!!mu,start:state.pages.length,f:{}}:null;state.queue=files.slice(1);window.__txCamBack=1;ingest(files[0]);};
  const guideQ=()=>{const vw=v.videoWidth||4,vh=v.videoHeight||3;let gw,gh;
   if(mode==='qr'){gw=gh=Math.min(.7*vw,.7*vh);}else if(mode==='id'){gw=.88*vw;gh=gw/1.586;if(gh>.78*vh){gh=.78*vh;gw=gh*1.586;}}else{gh=.8*vh;gw=gh*.75;if(gw>.88*vw){gw=.88*vw;gh=gw/.75;}}
   const x0=(vw-gw)/2/vw,y0=(vh-gh)/2/vh,x1=x0+gw/vw,y1=y0+gh/vh;return[{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}];};
@@ -4101,7 +4105,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   if(box||!best||!best.M)return;const t=tbBuild(best.M,cv,best.pc);if(!t)return;TB=t;tbDraw();
   meta.insertAdjacentHTML('beforeend','<button type="button" class="ox-chip on" data-tv="t">'+L2('النص','Text')+'</button><button type="button" class="ox-chip" data-tv="tb">'+L2('جدول','Table')+'</button>');
   tbView(t.strong?'tb':'t');};
- const go=async(deep)=>{const id=++rid;res.hidden=true;acts.hidden=true;run.hidden=false;th.classList.remove('done');t1.textContent=L2('جاري التحميل…','Loading…');t2.textContent=lang().split('+').map(c=>lname(OCR_LANGS.find(l=>l.c===c))).join(' + ')+' · '+(OQ()==='best'?L2('نموذج عالي الدقة','High-accuracy model'):L2('نموذج سريع','Fast model'));pb.style.width='6%';
+ const go=async(deep)=>{const id=++rid;res.hidden=true;acts.hidden=true;run.hidden=false;th.classList.remove('done');t1.textContent=L2('جاري التحميل…','Loading…');t2.textContent=lang().split('+').map(c=>lname(OCR_LANGS.find(l=>l.c===c))).join(' + ')+' · '+(OQ()==='best'?L2('نموذج عالي الدقة','High-accuracy model'):L2('نموذج سريع','Fast model'));pb.style.transition='width .3s ease-out';pb.style.width='6%';
   let sg='render';
   try{if(!cv){const f=await renderFinal(p,2200);if(!box)cv=f;else{const sx=Math.round(box.x0*f.width),sy=Math.round(box.y0*f.height),cw=Math.max(8,Math.round((box.x1-box.x0)*f.width)),ch=Math.max(8,Math.round((box.y1-box.y0)*f.height)),k=clamp(110/ch,1,3),pd=12;
     const d=f.getContext('2d').getImageData(sx,sy,Math.min(cw,f.width-sx),Math.min(ch,f.height-sy)).data,Y=[];for(let i=0;i<d.length;i+=4)Y.push([d[i]*.3+d[i+1]*.59+d[i+2]*.11,i]);Y.sort((a,b)=>a[0]-b[0]);const nk=Math.max(1,Y.length*.06|0);let r=0,g=0,b=0;for(let i=0;i<nk;i++){r+=d[Y[i][1]];g+=d[Y[i][1]+1];b+=d[Y[i][1]+2];}ink=`rgb(${r/nk|0},${g/nk|0},${b/nk|0})`;
@@ -4408,14 +4412,22 @@ let lastPush=0;
   فبنضيف entry واحدة بس مع كل لمسة (مش كذا entry مرة واحدة)، وبنحتفظ بـentry احتياطية (spare) فوق الـlayers. */
 function sync(g){
  const want=2+layers();
- if(pushed<want){if(!g||!act)return;const nw=Date.now();if(nw-lastPush<350)return;try{history.pushState({tx:pushed+1},'');pushed++;lastPush=nw}catch(e){}}
+ if(pushed<want){if(!g||!act||Date.now()<exitUntil)return;const nw=Date.now();if(nw-lastPush<350)return;try{history.pushState({tx:pushed+1},'');pushed++;lastPush=nw}catch(e){}}
  else if(pushed>want&&!syncing){const n=pushed-want;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);pushed=want;history.go(-n);}}
 /* a real tap/key is required before Chrome treats pushed entries as back-able */
 ['touchend','pointerup','click','keydown'].forEach(t=>addEventListener(t,()=>{act=1;sync(1)},{capture:true,passive:true}));
 new MutationObserver(()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;sync()})}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
+let lastBk=0,exitUntil=0;
 addEventListener('popstate',()=>{
  if(syncing){syncing=0;return}
  pushed=Math.max(0,pushed-1);
+ const nw=Date.now();
+ if(lastBk&&nw-lastBk<700){ /* رجعتين ورا بعض بسرعة = خروج: نفضّي الـentries وأي رجعة بعدها بتخرّج التطبيق */
+  lastBk=0;exitUntil=nw+4000;const n=pushed;pushed=0;
+  if(n>0){syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);try{history.go(-n)}catch(e){}}
+  try{toast(A()?'اسحب مرة كمان للخروج':'Swipe back once more to exit')}catch(e){}
+  setTimeout(()=>{try{window.close()}catch(e){}},120);return}
+ lastBk=nw;
  if(layers()>0){back();return}
  try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
  if(pushed>0){const n=pushed;pushed=0;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);try{history.go(-n)}catch(e){}}   /* نرجع للـentry الأولى عشان الرجعة التانية تخرّج فعلًا */
