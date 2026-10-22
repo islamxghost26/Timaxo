@@ -103,6 +103,15 @@ function fill(tb,words,rtl,textFn){
   if(c.w.length){const x0=Math.min(...c.w.map(w=>w.x0)),x1=Math.max(...c.w.map(w=>w.x1)),L=x0-c.x0,R=c.x1-x1,cw=c.x1-c.x0;c.al=Math.abs(L-R)<=cw*.16?'c':(L<R?'l':'r');}}
  return tb;}
 
+/* رؤوس الأعمدة المكتوبة فوق الجدول (زي «فطور/غداء» فوق جدول الوجبات) لو الصف الأول فاضي: بتتنقل لخلايا الصف الأول حسب العمود. بيرجّع الكلمات اللي اتستعملت */
+function attachHeader(tb,words,rtl,textFn){
+ const tf=textFn||((ws)=>ws.map(w=>w.t).join(' ')),row0=tb.cells.filter(c=>c.r===0&&c.rs===1);
+ if(row0.length<2||row0.some(c=>c.t))return[];
+ const rh=tb.ys[1]-tb.ys[0],lim=Math.max(70,rh*.9),cand=words.filter(w=>{const cy=(w.y0+w.y1)/2;return cy<=tb.box.y0+2&&cy>=tb.box.y0-lim;});
+ const by=new Map();for(const w of cand){const cx=(w.x0+w.x1)/2,c=row0.find(k=>cx>=k.x0&&cx<k.x1);if(c){if(!by.has(c))by.set(c,[]);by.get(c).push(w);}}
+ if(by.size<2)return[];const used=[];
+ for(const [c,ws] of by){c.t=tf(ws,rtl);c.w=ws;c.al='c';used.push(...ws);}
+ return used;}
 /* ألوان الخلية من الصورة الملوّنة: الخلفية = اللون الأكتر شيوعًا، ولون الخط = متوسط أغمق البكسلات (لو مش أسود) */
 const hx=(r,g,b)=>[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase();
 function styles(tb,img){const w=img.width,H=img.height,d=img.data;
@@ -122,7 +131,7 @@ function styles(tb,img){const w=img.width,H=img.height,d=img.data;
 function grid(tb,rtl){
  const nR=tb.nR,nC=tb.nC,rows=Array.from({length:nR},()=>Array(nC).fill('')),st=Array.from({length:nR},()=>Array(nC).fill(null)),spans=[],boxes=Array.from({length:nR},()=>Array(nC).fill(null));
  const lc=(c,cs)=>rtl?nC-c-cs:c;
- for(const c of tb.cells){const l=lc(c.c,c.cs),sty={bg:c.bg||null,fg:c.fg||null,al:c.al||null};rows[c.r][l]=c.t||'';
+ for(const c of tb.cells){const l=lc(c.c,c.cs),sty={bg:c.bg||null,fg:c.fg||null,al:c.al||null,b:false,sz:0};rows[c.r][l]=c.t||'';
   boxes[c.r][l]={x0:c.x0,y0:c.y0,x1:c.x1,y1:c.y1};
   if(c.rs>1||c.cs>1)spans.push({r:c.r,c:l,rs:c.rs,cs:c.cs});
   for(let i=c.r;i<c.r+c.rs;i++)for(let j=l;j<l+c.cs;j++)st[i][j]=sty;}
@@ -131,6 +140,6 @@ function grid(tb,rtl){
  const colW=Array.from({length:nC},(_,l)=>rtl?gw[nC-1-l]:gw[l]),rowH=[];for(let i=0;i<nR;i++)rowH.push(tb.ys[i+1]-tb.ys[i]);
  return{rows,spans,boxes,voids,st,colW,rowH,rtl:!!rtl,nR,nC};}
 
-root.TXTable={detect,fill,styles,grid,_masks:masks};
+root.TXTable={detect,fill,styles,attachHeader,grid,_masks:masks};
 if(typeof module!=='undefined')module.exports=root.TXTable;
 })(typeof window!=='undefined'?window:globalThis);

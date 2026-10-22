@@ -40,7 +40,7 @@ html[dir=rtl] .txhint button{margin:-6px 0 0 -6px}
 .tbx{display:flex;flex-direction:column;gap:10px;min-height:0}.tbx[hidden]{display:none}.tbx-h{display:flex;align-items:center;gap:10px}.tbx-h b{display:block;font:800 14px system-ui;color:var(--ink)}.tbx-h small{display:block;font:600 12px system-ui;color:var(--ink2);margin-top:2px}
 .tbx-w{overflow:auto;max-height:40vh;border:1px solid var(--line);border-radius:12px;background:var(--surface2);-webkit-overflow-scrolling:touch}.tbx-t{border-collapse:collapse;min-width:100%;font:600 13px/1.5 system-ui;color:var(--ink)}
 .tbx-t td{border:1px solid var(--line);padding:7px 9px;min-width:64px;vertical-align:middle;outline:none;white-space:pre-wrap}.tbx-t td:focus{background:rgba(27,99,240,.12);box-shadow:inset 0 0 0 2px var(--accent,#1b63f0)}
-.tbx-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tbx-a2{display:flex;gap:8px}.tbx-sw{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}.tbx-t td.tbx-v{background:transparent!important;border-color:transparent!important;pointer-events:none}.tbx-a2 .ox-btn{flex:1;height:42px;font-size:13px}.tbx-n{font:600 12px/1.5 system-ui;color:var(--ink2)}.ox-btn:disabled{opacity:.55}
+.tbx-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tbx-a2{display:flex;gap:8px}.tbx-sw{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}.tbx-ed{margin:10px 0}.tbx-eh{font:600 12px system-ui;color:var(--ink2);margin-bottom:6px}.tbx-er{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.tbx-sw2{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--ink2,#888);padding:0}.tbx-t td.tbx-sel{outline:2px solid #22d3f5;outline-offset:-2px}.tbx-t td.tbx-v{background:transparent!important;border-color:transparent!important;pointer-events:none}.tbx-a2 .ox-btn{flex:1;height:42px;font-size:13px}.tbx-n{font:600 12px/1.5 system-ui;color:var(--ink2)}.ox-btn:disabled{opacity:.55}
 /* ---- ltcss ---- */
 #ltO{position:absolute;left:0;top:0;width:100%;height:100%;z-index:5;touch-action:none;cursor:text;-webkit-user-select:none;user-select:none}#ltO i{position:absolute;display:block;border-radius:3px}#ltO i.s{background:rgba(27,99,240,.38);box-shadow:0 0 0 1px rgba(27,99,240,.65)}
 #ltO.flash i{background:rgba(34,211,245,.28);box-shadow:0 0 0 1px rgba(34,211,245,.7);animation:ltf 1.4s ease-out forwards}@keyframes ltf{to{background:transparent;box-shadow:0 0 0 0 transparent}}
@@ -2857,7 +2857,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='161';
+  const APPV='162';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3775,15 +3775,16 @@ function tbGrid(cv,pc){pc=pc||ocrPrep(cv,'flat');const w=pc.width,h=pc.height,d=
 function tbBuild(M,cv,pc){const ws=M.filter(w=>w.c>=30&&(w.y1-w.y0)>4);if(ws.length<4)return null;
  const rtl=tbIsAr(ws.map(w=>w.t).join(' '));let g=null;try{g=tbGrid(cv,pc);}catch(e){}
  /* v160: محرك البنية الجديد (table-engine.js): خطوط بالتباين + دمج خلايا + جداول متعددة. لو ماطلعش حاجة بنكمّل بالكشف القديم */
- try{const E2=window.TXTable;if(E2){const p2=pc||ocrPrep(cv,'flat'),R2=E2.detect(p2.getContext('2d').getImageData(0,0,p2.width,p2.height)),outs=[];let ci=null;try{if(cv.width===p2.width&&cv.height===p2.height)ci=cv.getContext('2d').getImageData(0,0,cv.width,cv.height);}catch(_){}
+ try{const E2=window.TXTable;if(E2){const p2=pc||ocrPrep(cv,'flat'),R2=E2.detect(p2.getContext('2d').getImageData(0,0,p2.width,p2.height)),outs=[],usedH=new Set();let ci=null;try{if(cv.width===p2.width&&cv.height===p2.height)ci=cv.getContext('2d').getImageData(0,0,cv.width,cv.height);}catch(_){}
   for(const t of R2.tables){const bx=t.box,iw=ws.filter(w=>{const cx=(w.x0+w.x1)/2,cy=(w.y0+w.y1)/2;return cx>=bx.x0-3&&cx<=bx.x1+3&&cy>=bx.y0-3&&cy<=bx.y1+3;});
    if(iw.length<3)continue;E2.fill(t,iw,rtl,tbText);const f=t.cells.filter(c=>c.t).length;if(f<Math.max(3,t.cells.length*.2))continue;
+   try{E2.attachHeader(t,ws.filter(w=>!usedH.has(w)),rtl,tbText).forEach(w=>usedH.add(w));}catch(_){}
    if(ci){try{E2.styles(t,ci);}catch(_){}}const gr=E2.grid(t,rtl);if(gr.nR<2||gr.nC<2)continue;
    outs.push({rows:gr.rows,rtl,ruled:true,strong:true,engine:2,spans:gr.spans,voids:gr.voids,st:gr.st,colW:gr.colW,rowH:gr.rowH,nR:gr.nR,nC:gr.nC,y0:t.box.y0,before:[],tail:[],nf:f,boxes:gr.boxes.map((r,i)=>r.map(b2=>b2||{x0:0,x1:0,y0:t.ys[i],y1:t.ys[i+1]}))});}
   if(outs.length){
    /* النص اللي برا الجداول (عناوين/ملاحظات/توقيعات) بيتحفظ في مكانه بين الجداول وبيتكتب في Word */
    try{const inT=w=>{const cx=(w.x0+w.x1)/2,cy=(w.y0+w.y1)/2;return R2.tables.some(t=>cx>=t.box.x0-4&&cx<=t.box.x1+4&&cy>=t.box.y0-4&&cy<=t.box.y1+4);};
-    const ow=M.filter(w=>w.c>=55&&(w.y1-w.y0)>4&&!inT(w)),mh=tbMedian(ow.map(w=>w.y1-w.y0)),W0=p2.width,segs=[];
+    const ow=M.filter(w=>w.c>=55&&(w.y1-w.y0)>4&&!inT(w)&&!usedH.has(w)),mh=tbMedian(ow.map(w=>w.y1-w.y0)),W0=p2.width,segs=[];
     for(const ln of tbLines(ow)){const sw=ln.w.slice().sort((a,b)=>a.x0-b.x0),ls=[];let cur=[sw[0]];for(let i=1;i<sw.length;i++){if(sw[i].x0-cur[cur.length-1].x1>Math.max(40,ln.h*3)){ls.push({w:cur,cy:ln.cy,h:ln.h});cur=[];}cur.push(sw[i]);}ls.push({w:cur,cy:ln.cy,h:ln.h});if(rtl)ls.reverse();segs.push(...ls);}
     for(const sg of segs){const t=tbText(sg.w,null).trim();if(!t)continue;const x0=Math.min(...sg.w.map(w=>w.x0)),x1=Math.max(...sg.w.map(w=>w.x1)),mid=(x0+x1)/2,al=Math.abs(mid-W0/2)<W0*.1&&(x1-x0)<W0*.8?'c':(mid<W0/2?'l':'r'),k=outs.findIndex(o=>sg.cy<o.y0),it={t,al,big:sg.h>mh*1.35};(k<0?outs[outs.length-1].tail:outs[k].before).push(it);}}catch(e){console.warn('tbl-out',e);}
    const P=outs.reduce((m,o)=>o.nf>m.nf?o:m);P.all=outs;return P;}}}catch(e){console.warn('tbl2',e);}
@@ -4104,23 +4105,27 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
  let TB=null,tbTok=0;
  const tbSave=(n,b)=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
  const tbRows=()=>{if(TB&&TB.engine===2&&TB.nR){const M2=Array.from({length:TB.nR},()=>Array(TB.nC).fill(''));tbx.querySelectorAll('.tbx-t td[data-r]').forEach(td=>{M2[+td.dataset.r][+td.dataset.c]=td.innerText.replace(/\u00a0/g,' ').trim();});return M2;}return Array.from(tbx.querySelectorAll('.tbx-t tr')).map(tr=>Array.from(tr.children).map(td=>td.innerText.replace(/\u00a0/g,' ').trim()));};
+ const tbEd=()=>{if(!(TB&&TB.engine===2))return'';const sw=['','FFF2CC','DDEBFF','E2F0D9','FCE4D6','D9D9D9','93B2DE'];
+  return'<div class="tbx-ed"><div class="tbx-eh">'+L2('أدوات الخلية: اضغط على خلية الأول','Cell tools: tap a cell first')+'</div><div class="tbx-er">'+[['mr',L2('دمج جنب','Merge next')],['md',L2('دمج تحت','Merge below')],['un',L2('فك الدمج','Unmerge')],['b','B'],['sz+','A+'],['sz-','A\u2212']].map(a=>'<button type="button" class="ox-chip" data-ed="'+a[0]+'">'+a[1]+'</button>').join('')+'</div><div class="tbx-er">'+sw.map(c=>'<button type="button" class="tbx-sw2" data-ed="bg" data-v="'+c+'" style="background:'+(c?'#'+c:'transparent')+'" aria-label="color"></button>').join('')+'</div></div>';};
  const tbSet=rs=>(TB.all&&TB.all.length>1?TB.all:[TB]).map(t=>t===TB?Object.assign({},t,{rows:rs}):t);
  const tbLum=h=>parseInt(h.slice(0,2),16)*.3+parseInt(h.slice(2,4),16)*.59+parseInt(h.slice(4,6),16)*.11;
+ let tbCur=null;
  const tbBody=()=>{const R=TB.rows;if(TB.engine===2&&window.TXExport){const L=TXExport.layout(TB),AL={l:'left',c:'center',r:'right'};let o='';
    for(let r=0;r<TB.nR;r++){o+='<tr>';for(let c=0;c<TB.nC;c++){const e=L[r][c];if(e.k==='cov')continue;
     if(e.k==='void'){o+='<td class="tbx-v" data-r="'+r+'" data-c="'+c+'"></td>';continue;}
     const s0=(TB.st&&TB.st[r]&&TB.st[r][c])||{},bg=s0.bg,fg=s0.fg||(bg?(tbLum(bg)<140?'FFFFFF':'111111'):null);
-    o+='<td contenteditable="true" dir="auto" data-r="'+r+'" data-c="'+c+'"'+(e.cs>1?' colspan="'+e.cs+'"':'')+(e.rs>1?' rowspan="'+e.rs+'"':'')+' style="'+(bg?'background:#'+bg+';':'')+(fg?'color:#'+fg+';':'')+(s0.al?'text-align:'+AL[s0.al]+';':'')+'">'+tbX(R[r][c]||'').replace(/\n/g,'<br>')+'</td>';}
+    o+='<td contenteditable="true" dir="auto" data-r="'+r+'" data-c="'+c+'"'+(tbCur&&tbCur.r===r&&tbCur.c===c?' class="tbx-sel"':'')+(e.cs>1?' colspan="'+e.cs+'"':'')+(e.rs>1?' rowspan="'+e.rs+'"':'')+' style="'+(bg?'background:#'+bg+';':'')+(fg?'color:#'+fg+';':'')+(s0.al?'text-align:'+AL[s0.al]+';':'')+(s0.b?'font-weight:700;':'')+(s0.sz?'font-size:'+Math.round(s0.sz/11*100)+'%;':'')+'">'+tbX(R[r][c]||'').replace(/\n/g,'<br>')+'</td>';}
     o+='</tr>';}return o;}
   return R.map(r=>'<tr>'+r.map(c=>'<td contenteditable="true" dir="auto">'+tbX(c).replace(/\n/g,'<br>')+'</td>').join('')+'</tr>').join('');};
  const tbView=v=>{const on=v==='tb',ox=ta.nextElementSibling;tbx.hidden=!on;ta.hidden=on||!ta.value.trim();if(ox&&ox.classList.contains('ocx'))ox.hidden=on;note.hidden=on;acts.hidden=on;meta.querySelectorAll('[data-tv]').forEach(b=>b.classList.toggle('on',b.dataset.tv===v));};
  const tbDraw=()=>{const R=TB.rows,nC=Math.max(...R.map(r=>r.length));
   tbx.innerHTML='<div class="tbx-h"><div class="ox-ic">'+OX_SVG.scan+'</div><div><b>'+L2('جدول متحدد','Table detected')+'</b><small>'+R.length+' × '+nC+' · '+L2('اضغط على أي خلية لتعديلها قبل الحفظ','Tap a cell to edit before saving')+'</small></div></div>'+
-  (TB.all&&TB.all.length>1?'<div class="tbx-sw">'+TB.all.map((x,i)=>'<button type="button" class="ox-chip'+(x===TB?' on':'')+'" data-tt="'+i+'">'+L2('جدول ','Table ')+(i+1)+'</button>').join('')+'</div>':'')+'<div class="tbx-w"><table class="tbx-t" dir="'+(TB.rtl?'rtl':'ltr')+'">'+tbBody()+'</table></div>'+
+  (TB.all&&TB.all.length>1?'<div class="tbx-sw">'+TB.all.map((x,i)=>'<button type="button" class="ox-chip'+(x===TB?' on':'')+'" data-tt="'+i+'">'+L2('جدول ','Table ')+(i+1)+'</button>').join('')+'</div>':'')+'<div class="tbx-w"><table class="tbx-t" dir="'+(TB.rtl?'rtl':'ltr')+'">'+tbBody()+'</table></div>'+tbEd()+
   '<div class="tbx-a"><button type="button" class="ox-btn pri" data-t="copy">'+OX_SVG.copy+'<span>'+L2('نسخ الجدول','Copy table')+'</span></button><button type="button" class="ox-btn" data-t="xlsx">Excel</button><button type="button" class="ox-btn" data-t="docx">Word</button><button type="button" class="ox-btn" data-t="csv">CSV</button></div>'+
   '<div class="tbx-a2"><button type="button" class="ox-btn" data-t="refine">'+L2('قراءة الخلايا بدقة أعلى','Precise cell read')+'</button><button type="button" class="ox-btn" data-t="deep">'+L2('قراءة أدق للصفحة','Deep read')+'</button></div>'+
   '<div class="tbx-n" id="tbN">'+L2('الجدول بيتنسخ ويتحفظ بنفس ترتيب الأعمدة والصفوف. راجع الأرقام قبل الاستخدام.','Rows and columns keep the same order. Check the numbers before using.')+'</div>';};
- tbx.onclick=async e=>{const sw=e.target.closest('[data-tt]');if(sw&&TB&&TB.all){const nt=TB.all[+sw.dataset.tt];if(nt&&nt!==TB){try{TB.rows=tbRows();}catch(_){}TB=nt;tbDraw();}return;}const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t,rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
+ tbx.addEventListener('focusin',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td&&TB&&TB.engine===2){const n={r:+td.dataset.r,c:+td.dataset.c};if(!tbCur||tbCur.r!==n.r||tbCur.c!==n.c){tbx.querySelectorAll('td.tbx-sel').forEach(x=>x.classList.remove('tbx-sel'));td.classList.add('tbx-sel');}tbCur=n;}});
+ tbx.onclick=async e=>{const ed=e.target.closest('[data-ed]');if(ed&&TB&&TB.engine===2){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}const k=ed.dataset.ed;TB.rows=tbRows();const ok=TXExport.op(TB,tbCur,k.startsWith('sz')?'sz':k,k==='sz+'?1:k==='sz-'?-1:ed.dataset.v);if(!ok)toast(L2('مش ينفع هنا','Not possible here'));tbDraw();return;}const sw=e.target.closest('[data-tt]');if(sw&&TB&&TB.all){const nt=TB.all[+sw.dataset.tt];if(nt&&nt!==TB){try{TB.rows=tbRows();}catch(_){}TB=nt;tbDraw();}return;}const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t,rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
   if(k==='copy'){let ok=false;try{if(window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([TB.engine===2&&window.TXExport?TXExport.html(Object.assign({},TB,{rows})):tbHtml(rows,TB.rtl)],{type:'text/html'}),'text/plain':new Blob([tbTsv(rows)],{type:'text/plain'})})]);ok=true;}}catch(_){}
    if(!ok){try{await navigator.clipboard.writeText(tbTsv(rows));ok=true;}catch(_){}}
    toast(ok?L2('اتنسخ الجدول — الصقه في Word أو Excel','Table copied — paste it into Word or Excel'):L2('تعذّر النسخ','Copy failed'));}
