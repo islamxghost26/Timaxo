@@ -2855,7 +2855,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='157';
+  const APPV='158';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -4117,7 +4117,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
    if(!deep){try{best=await TXOnnx.tryRun(cv,lang(),pr=>{if(id===rid&&!dead){pb.style.width=Math.round(8+pr*88)+'%';t1.textContent=L2('بالمحرك الحديث…','Modern engine…');t2.textContent=Math.round(pr*100)+'%';}},()=>dead||id!==rid,{skew:box?null:ocrSkew,fast:OQ()==='fast'});}catch(e){console.warn('onnx',e);}}
    if(!best)best=await ocrRun(cv,lang(),OQ(),box?'6':'3',!!deep,(i,n)=>{passI=i;passN=Math.max(n,2);stage(i,n);},()=>dead||id!==rid);
    if(!best||dead||id!==rid)return;pb.style.width='100%';finish(best,!!deep);}
-  catch(e){if(!dead&&id===rid){console.error(e);run.hidden=false;th.classList.add('done');t1.textContent=L2('تعذّر استخراج النص','Could not extract text');t2.textContent=sg+': '+String(e&&e.message||e).slice(0,140)+(navigator.onLine?'':' · '+L2('مفيش إنترنت. جهّز الأوفلاين من «المزيد».','Offline. Prepare offline from More.'));pb.style.width='0';}}};
+  catch(e){if(!dead&&id===rid){console.error(e);run.hidden=false;th.classList.add('done');t1.textContent=L2('تعذّر استخراج النص','Could not extract text');{const em=String(e&&e.message||e);t2.textContent=/importScripts|NetworkError|Failed to fetch|failed to load|script blocked|Load failed/i.test(em)?L2('ملفات القراءة ماتحمّلتش. اتأكد من الاتصال وجرّب تاني، ولو استمرت افتح صفحة /check.html وابعت لي النتيجة.','Reading files failed to load. Check your connection and retry; if it persists open /check.html and send me the result.'):sg+': '+em.slice(0,140)+(navigator.onLine?'':' · '+L2('مفيش إنترنت. جهّز الأوفلاين من «المزيد».','Offline. Prepare offline from More.'));}pb.style.width='0';}}};
  const doRep=txt=>{dead=1;m.remove();const bb=sbox||box,na={t:'txtr',id:newId(),x0:bb.x0,y0:bb.y0,x1:bb.x1,y1:bb.y1,txt:txt,c:ink,c0:ink,bg:null,ff:5,sz:1,bl:3,rot:sk};addAnn(na);txtSheet(na);};
  const mEl=$m('#oMenu'),exBtn=re=>[...m.querySelectorAll('.ocx button')].find(b=>re(b.textContent));
  const menuOpen=()=>{const I=OX_SVG,mi=(a,ic,tx,sm)=>'<button type="button" class="ox-mi" data-a="'+a+'">'+ic+'<span>'+tx+'</span>'+(sm?'<small>'+sm+'</small>':'')+'</button>',on=localStorage.getItem('tx_onnx')!=='0';
@@ -4382,7 +4382,7 @@ const q=new URLSearchParams(location.search).get('s');if(q){setTimeout(()=>{cons
 (function(){
 const A=()=>{try{return AR()}catch(e){return true}};
 const q=x=>document.querySelector(x);
-let pushed=0,syncing=0,sT=0,raf=0,act=0;
+let pushed=0,syncing=0,sT=0,raf=0,act=0,shT=0;
 const vcur=()=>{try{return V.cur}catch(e){return'vHome'}};
 const bodyDiv=z=>[...document.body.children].find(e=>e.tagName==='DIV'&&e.style.zIndex===z);
 function layers(){let n=0;
@@ -4411,9 +4411,9 @@ let lastPush=0;
 /* v119: Chrome بيتخطّى (skip) أي entry اتضافت من غير لمسة جديدة، وده كان بيخلّي السحب للرجوع من شاشة الحواف يقفل التطبيق.
   فبنضيف entry واحدة بس مع كل لمسة (مش كذا entry مرة واحدة)، وبنحتفظ بـentry احتياطية (spare) فوق الـlayers. */
 function sync(g){
- const want=2+layers();
+ const want=3+layers();
  if(pushed<want){if(!g||!act||Date.now()<exitUntil)return;const nw=Date.now();if(nw-lastPush<350)return;try{history.pushState({tx:pushed+1},'');pushed++;lastPush=nw}catch(e){}}
- else if(pushed>want&&!syncing){const n=pushed-want;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);pushed=want;history.go(-n);}}
+ else if(pushed>want&&!syncing){if(!shT)shT=setTimeout(()=>{shT=0;const w=3+layers();if(pushed>w&&!syncing){const n=pushed-w;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);pushed=w;try{history.go(-n)}catch(e){}}},800);}}
 /* a real tap/key is required before Chrome treats pushed entries as back-able */
 ['touchend','pointerup','click','keydown'].forEach(t=>addEventListener(t,()=>{act=1;sync(1)},{capture:true,passive:true}));
 new MutationObserver(()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;sync()})}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden']});
@@ -4428,7 +4428,7 @@ addEventListener('popstate',()=>{
   try{toast(A()?'اسحب مرة كمان للخروج':'Swipe back once more to exit')}catch(e){}
   setTimeout(()=>{try{window.close()}catch(e){}},120);return}
  lastBk=nw;
- if(layers()>0){back();return}
+ if(layers()>0){if(pushed<1){try{history.pushState({tx:'r'},'');pushed++}catch(e){}}back();return}
  try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
  if(pushed>0){const n=pushed;pushed=0;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);try{history.go(-n)}catch(e){}}   /* نرجع للـentry الأولى عشان الرجعة التانية تخرّج فعلًا */
 });
@@ -6242,4 +6242,9 @@ function open(){if(sheet)return;var a=ar(),s=document.createElement('div');s.cla
  if(!matchMedia('(prefers-reduced-motion:reduce)').matches&&s.animate){s.animate([{opacity:0},{opacity:1}],{duration:150,fill:'both'});s.firstChild.animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:230,easing:'cubic-bezier(.2,.9,.3,1)',fill:'both'});}}
 window.__txPriv=open;})();
 </script>
+<style id="perf158">
+.txlang,.txfan .lb,.txfs,#tgTip,html body #tg.in::before,html body .upd,#vHome .hdock,html:root body #qrFab,html:root body .fab2,.dock,.cmp,.dropzone,#oHint,.ltm,#ltB{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.txlang,.txfan .lb{background-color:color-mix(in srgb,var(--surface,#0b1226) 94%,transparent)!important}
+.txls .bx,#tg .bx{box-shadow:0 -8px 28px -14px rgba(0,0,0,.6)!important}
+</style>
 </body></html>
