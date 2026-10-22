@@ -1,8 +1,9 @@
-const CACHE='timaxo-v158';
-const VCACHE='timaxo-vendor-v1'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
+const CACHE='timaxo-v159';
+const VCACHE='timaxo-vendor-v2'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
 const VENDOR_PRE=['vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tessdata/fast/ara.traineddata.gz','vendor/tessdata/fast/eng.traineddata.gz','vendor/edge/blaze_face_short_range.onnx']; // الباقي (core وبيانات best) بيتخزن أول استخدام
 const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js','edge-learn.js','filters.js','fields.js','ocr-models.js','ocr-onnx.js','translate.js','tool-order.js','ui-polish.js','assistant.js','assistant-face.js','bg-dark.jpg','bg-black.jpg','bg-light.jpg'];
-self.addEventListener('install',e=>e.waitUntil(Promise.all([caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))),caches.open(VCACHE).then(c=>Promise.all(VENDOR_PRE.map(u=>c.match(u).then(h=>h||c.add(u)).catch(()=>{}))))])));            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
+const badRes=r=>!r||!r.ok||/text\/html/i.test(r.headers.get('content-type')||''); // v159: الـSPA fallback بيرجّع index.html بكود 200 لأي ملف ناقص، وكان بيتخزّن في الكاش للأبد
+self.addEventListener('install',e=>e.waitUntil(Promise.all([caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))),caches.open(VCACHE).then(c=>Promise.all(VENDOR_PRE.map(u=>c.match(u).then(h=>h||fetch(u).then(r=>{if(!badRes(r))return c.put(u,r)})).catch(()=>{}))))])));            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(
   caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE&&x!==VCACHE&&x!=='timaxo-ocr-v2'&&x!=='timaxo-share').map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
@@ -17,7 +18,7 @@ self.addEventListener('fetch',e=>{
     e.respondWith(caches.open('timaxo-ocr-v2').then(c=>c.match(r).then(m=>m||fetch(r))));return;
   }
   if(same&&new URL(r.url).pathname.indexOf('/vendor/')>=0){ // ملفات OCR المحلية: الكاش الأول بدون تحديث في الخلفية (ملفات كبيرة)
-    e.respondWith(caches.open(VCACHE).then(c=>c.match(r).then(m=>m||fetch(r).then(res=>{if(res&&res.ok)c.put(r,res.clone());return res;}))));return;
+    e.respondWith(caches.open(VCACHE).then(async c=>{const m=await c.match(r);if(m&&!badRes(m))return m;if(m)await c.delete(r);const res=await fetch(r);if(!badRes(res))c.put(r,res.clone());return res;}));return;
   }
   if(same){ // ملفات التطبيق: النت الأول، والكاش للأوفلاين
     e.respondWith(caches.match(r).then(m=>{const net=fetch(r,{cache:'no-cache'}).then(res=>{if(res&&res.ok){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));}return res}).catch(()=>m||caches.match('index.html'));

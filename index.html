@@ -2142,7 +2142,7 @@ let autoI=0;$('#autoBtn').onclick=async()=>{if(!C.page)return;if(detectCorners.s
 $('#fullBtn').onclick=()=>tween(C.page.corners,[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],320);
 $('#cropBack').onclick=()=>{
   const cam=!!window.__txCamBack;
-  if(C.from==='new'||(C.from==='edit'&&E.isDraft&&cam)){state.draft=null;C.page=null;E.page=null;state.queue=[];goHome();
+  if(C.from==='new'||(C.from==='edit'&&E.isDraft&&cam)){state.draft=null;C.page=null;E.page=null;state.queue=[];if(cam)window.__txCamWait=Date.now()+2500;goHome();
     if(cam)setTimeout(()=>{try{window.__txOpenLive&&window.__txOpenLive()}catch(e){}},140);}
   else{openEdit(C.page,E.isDraft,true);}
 };
@@ -2855,7 +2855,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='158';
+  const APPV='159';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3578,9 +3578,18 @@ const OQ=()=>{try{return localStorage.getItem('tx_oq')==='fast'?'fast':'best';}c
 const LPATH_CDN={best:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_best',fast:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_fast'};
 const LPATH_LOCAL={best:VB+'tessdata/best',fast:VB+'tessdata/fast'};
 const wopts=q=>window.__txLocal?{workerPath:VB+'tesseract/worker.min.js',corePath:VB+'tesseract-core',langPath:LPATH_LOCAL[q]}:{langPath:LPATH_CDN[q]};
-async function getW(l,q){q=q||'fast';const k=l+'|'+q;if(WK[k])return WK[k];const T=await loadT();
- try{return WK[k]=await T.createWorker(l,1,Object.assign(wopts(q),{logger:x=>{if(!LOGMUTE)logCb(x)}}));}
- catch(e){delete WK[k];if(q==='best')return getW(l,'fast');throw e;}}
+/* v159: لو ملف في كاش vendor اتخزّن غلط (صفحة HTML بدل المكتبة) بنمسحه */
+async function txHealVendor(){try{for(const n of['timaxo-vendor-v1','timaxo-vendor-v2']){if(!(await caches.has(n)))continue;const c=await caches.open(n);for(const rq of await c.keys()){const rs=await c.match(rq);if(!rs||!rs.ok||/text\/html/i.test(rs.headers.get('content-type')||''))await c.delete(rq);}}}catch(e){}}
+window.__txHeal=txHealVendor;
+async function getW(l,q){q=q||'fast';const k=l+'|'+q;if(WK[k])return WK[k];const T=await loadT();const lg={logger:x=>{if(!LOGMUTE)logCb(x)}};
+ try{return WK[k]=await T.createWorker(l,1,Object.assign(wopts(q),lg));}
+ catch(e){delete WK[k];
+  if(window.__txLocal&&/importScripts|NetworkError|failed to load|Failed to fetch/i.test(String(e&&e.message||e))){
+   await txHealVendor();
+   try{return WK[k]=await T.createWorker(l,1,Object.assign(wopts(q),lg));}catch(e2){delete WK[k];}
+   try{return WK[k]=await T.createWorker(l,1,Object.assign({langPath:LPATH_CDN[q]},lg));}catch(e3){delete WK[k];} /* آخر حل: نسخة الـCDN */
+  }
+  if(q==='best')return getW(l,'fast');throw e;}}
 window.__txWarm=async function(){await loadT();for(const q of['fast','best']){try{const w=await getW('ara+eng',q);if(q==='fast'){/* keep: used by background indexing */}}catch(_){}}return 1;};
 /* ---- image preparation: evens out lighting and contrast, which is what Tesseract needs most ---- */
 function ocrBox(a,w,h,r){const t=new Float32Array(w*h),o=new Float32Array(w*h),n=2*r+1;
@@ -4393,6 +4402,7 @@ function layers(){let n=0;
  if(q('#textBar:not([hidden])'))n++;
  if(q('#scrim.on'))n++;
  if(vcur()!=='vHome')n++;
+ if(window.__txCamWait&&Date.now()<window.__txCamWait&&!q('#lv'))n++; /* v159: الكاميرا لسه بتفتح بعد الرجوع من تحديد الحواف */
  if(vcur()==='vHome'&&window.__txLayer&&window.__txLayer())n++;
  return n;}
 function back(){
@@ -4411,9 +4421,9 @@ let lastPush=0;
 /* v119: Chrome بيتخطّى (skip) أي entry اتضافت من غير لمسة جديدة، وده كان بيخلّي السحب للرجوع من شاشة الحواف يقفل التطبيق.
   فبنضيف entry واحدة بس مع كل لمسة (مش كذا entry مرة واحدة)، وبنحتفظ بـentry احتياطية (spare) فوق الـlayers. */
 function sync(g){
- const want=3+layers();
+ const want=4+layers();
  if(pushed<want){if(!g||!act||Date.now()<exitUntil)return;const nw=Date.now();if(nw-lastPush<350)return;try{history.pushState({tx:pushed+1},'');pushed++;lastPush=nw}catch(e){}}
- else if(pushed>want&&!syncing){if(!shT)shT=setTimeout(()=>{shT=0;const w=3+layers();if(pushed>w&&!syncing){const n=pushed-w;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);pushed=w;try{history.go(-n)}catch(e){}}},800);}}
+ else if(pushed>want&&!syncing){if(!shT)shT=setTimeout(()=>{shT=0;const w=4+layers();if(pushed>w&&!syncing){const n=pushed-w;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);pushed=w;try{history.go(-n)}catch(e){}}},800);}}
 /* a real tap/key is required before Chrome treats pushed entries as back-able */
 ['touchend','pointerup','click','keydown'].forEach(t=>addEventListener(t,()=>{act=1;sync(1)},{capture:true,passive:true}));
 new MutationObserver(()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;sync()})}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden']});
@@ -4422,13 +4432,15 @@ addEventListener('popstate',()=>{
  if(syncing){syncing=0;return}
  pushed=Math.max(0,pushed-1);
  const nw=Date.now();
+ /* v159: الرجوع جوه طبقات التطبيق (تعديل ← حواف ← كاميرا ← رئيسية) عمره ما يتحسب خروج، حتى لو اتسحب بسرعة.
+    وقت ما الكاميرا بتفتح تاني بعد الرجوع من الحواف مفيش طبقة ظاهرة لحظيًا، فنتجاهل الرجعة بدل ما تتحسب خروج. */
+ if(layers()>0){lastBk=0;if(pushed<1){try{history.pushState({tx:'r'},'');pushed++}catch(e){}}back();return}
  if(lastBk&&nw-lastBk<700){ /* رجعتين ورا بعض بسرعة = خروج: نفضّي الـentries وأي رجعة بعدها بتخرّج التطبيق */
   lastBk=0;exitUntil=nw+4000;const n=pushed;pushed=0;
   if(n>0){syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);try{history.go(-n)}catch(e){}}
   try{toast(A()?'اسحب مرة كمان للخروج':'Swipe back once more to exit')}catch(e){}
   setTimeout(()=>{try{window.close()}catch(e){}},120);return}
  lastBk=nw;
- if(layers()>0){if(pushed<1){try{history.pushState({tx:'r'},'');pushed++}catch(e){}}back();return}
  try{toast(A()?'اضغط رجوع مرة تانية للخروج':'Press back again to exit')}catch(e){}
  if(pushed>0){const n=pushed;pushed=0;syncing=1;clearTimeout(sT);sT=setTimeout(()=>{syncing=0},900);try{history.go(-n)}catch(e){}}   /* نرجع للـentry الأولى عشان الرجعة التانية تخرّج فعلًا */
 });
@@ -5051,9 +5063,10 @@ const FX=(()=>{
  };
  const play=k=>{const n=performance.now();if(n-lastT<35&&k!=='ok'&&k!=='err')return;lastT=n;try{(K[k]||K.tap)()}catch(e){}};
  const mode=()=>snd()&&hap()?'all':hap()?'hap':'off';
- return{play,mode,tone,vib,snd,hap,set:m=>{wr('tx_snd',m==='all'?'1':'0');wr('tx_hap',m==='off'?'0':'1');}};
+ return{play,mode,tone,vib,snd,hap,warm:()=>{if(!ac&&snd()){try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}},set:m=>{wr('tx_snd',m==='all'?'1':'0');wr('tx_hap',m==='off'?'0':'1');}};
 })();window.__txFX=FX;
 window.TXFX=FX;
+setTimeout(()=>{try{(window.requestIdleCallback||(f=>f()))(()=>FX.warm())}catch(e){}},2500); /* v159: تجهيز الصوت وقت الراحة عشان أول لمسة ماتتعلّقش */
 const buzz=n=>FX.vib(n);
 (()=>{ /* wiring */
  const OKB=new Set(['cropGo','doneBtn','xGo','iGo','nextBtn']),DELB=/^(delPg|clrBtn)$/;
@@ -6247,4 +6260,18 @@ window.__txPriv=open;})();
 .txlang,.txfan .lb{background-color:color-mix(in srgb,var(--surface,#0b1226) 94%,transparent)!important}
 .txls .bx,#tg .bx{box-shadow:0 -8px 28px -14px rgba(0,0,0,.6)!important}
 </style>
+<style id="perf159">
+/* v159: الأنيميشن الزخرفية على الرئيسية بتاخد وقت المعالج حتى والتطبيق ساكن، فبنوقفها وقت اللمس وطول ما أي قايمة مفتوحة */
+html.txcalm #tgBtn,html.txcalm #tgBtn::before,html.txcalm #tgBtn::after,html.txcalm #tgBtn i,html.txcalm #tgBtn svg,html.txcalm .scanbtn,html.txcalm .scanbtn::before,html.txcalm .scanbtn::after,html.txcalm .demo,html.txcalm .demo::before,html.txcalm .logo,html.txcalm .add,html.txcalm #vHome::before,html.txcalm #vHome::after,html.txcalm #vHome .top::after,html.txcalm .tool.on,html.txcalm .empty .demo::before{animation-play-state:paused!important}
+#tgBtn svg{filter:none!important}
+</style>
+<script>
+(function(){var R=document.documentElement,t=0;
+function open(){return!!document.querySelector('#mrBg.in,.txls,.mdl-bd,#scrim.on,.sheet.on,#txS,#qrOv,.txfan-open')||R.classList.contains('txfan-open')}
+function off(){if(open()){t=setTimeout(off,900);return}t=0;R.classList.remove('txcalm')}
+function calm(){if(!R.classList.contains('txcalm'))R.classList.add('txcalm');clearTimeout(t);t=setTimeout(off,1400)}
+['pointerdown','touchstart','keydown'].forEach(function(e){addEventListener(e,calm,{capture:true,passive:true})});
+addEventListener('scroll',calm,{capture:true,passive:true});
+})();
+</script>
 </body></html>
