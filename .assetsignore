@@ -4,3 +4,11 @@
 .assetsignore
 wrangler.jsonc
 node_modules
+test-edges.html
+tools
+PROGRESS.md
+ARCHITECTURE.md
+CHANGES-v155.md
+vendor/fetch-edge-model.py
+vendor/fetch-vendor.sh
+vendor/fetch-vendor.py

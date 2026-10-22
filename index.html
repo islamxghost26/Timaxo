@@ -54,8 +54,8 @@ html[dir=rtl] .txhint button{margin:-6px 0 0 -6px}
   --bg:#EDEFF2; --surface:#FFFFFF; --surface2:#E2E6EC; --ink:#0F1A2B; --ink2:#566175; --line:#D2D8E0;
   --accent:#E8501A; --accent-ink:#FFFFFF; --teal:#0E7C7B; --stage:#D8DDE4; --shadow:rgba(15,26,43,.14);
   --paper:#FBFAF6; --danger:#C62F2F;
-  --fd:'Outfit','Cairo',system-ui,sans-serif;
-  --fb:'Manrope','Cairo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --fd:'Inter','Cairo',system-ui,sans-serif;
+  --fb:'Inter','Cairo',system-ui,-apple-system,'Segoe UI',sans-serif;
   --dir:1;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -1078,9 +1078,6 @@ html:root body:has(.sheet.on) #qrFab{opacity:0!important;pointer-events:none!imp
 </style>
 </head><body>
 <title>Timaxo Scan</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -2049,15 +2046,15 @@ async function startSample(){
   x.globalAlpha=.07;for(let i=0;i<90;i++){x.fillStyle=i%2?'#fff':'#000';x.fillRect(0,(i*97)%H,W,1+(i%4));}x.globalAlpha=1;
   x.save();x.translate(W*.5,H*.52);x.transform(1,-.07,.12,1,0,0);x.rotate(-.1);
   const pw=700,ph=960;x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=46;x.shadowOffsetY=22;x.fillStyle='#f4f1e8';x.fillRect(-pw/2,-ph/2,pw,ph);x.shadowColor='transparent';
-  x.translate(-pw/2,-ph/2);x.fillStyle='#1b2434';x.font='700 44px Manrope, sans-serif';x.fillText('Invoice  #2048',48,92);
-  x.font='500 20px Manrope, sans-serif';x.fillStyle='#4a5568';x.fillText('Sample page · Timaxo scan',48,128);
-  x.fillStyle='#1b2434';x.font='600 22px Manrope, sans-serif';
+  x.translate(-pw/2,-ph/2);x.fillStyle='#1b2434';x.font='700 44px Inter, sans-serif';x.fillText('Invoice  #2048',48,92);
+  x.font='500 20px Inter, sans-serif';x.fillStyle='#4a5568';x.fillText('Sample page · Timaxo scan',48,128);
+  x.fillStyle='#1b2434';x.font='600 22px Inter, sans-serif';
   const rows=[['Studio rental, 2 days','240.00'],['Camera operator','180.00'],['Tripod and light kit','65.00'],['Voice-over recording','90.00'],['Color grading','120.00'],['Printed notes','18.50']];
-  x.fillRect(48,170,pw-96,3);rows.forEach((r,i)=>{const y=222+i*58;x.font='500 22px Manrope, sans-serif';x.fillText(r[0],48,y);x.textAlign='right';x.fillText(r[1],pw-48,y);x.textAlign='left';x.fillStyle='#c9ccd2';x.fillRect(48,y+18,pw-96,1.5);x.fillStyle='#1b2434';});
-  x.font='700 28px Manrope, sans-serif';x.fillText('Total',48,622);x.textAlign='right';x.fillText('713.50',pw-48,622);x.textAlign='left';
-  x.font='400 18px Manrope, sans-serif';x.fillStyle='#4a5568';
+  x.fillRect(48,170,pw-96,3);rows.forEach((r,i)=>{const y=222+i*58;x.font='500 22px Inter, sans-serif';x.fillText(r[0],48,y);x.textAlign='right';x.fillText(r[1],pw-48,y);x.textAlign='left';x.fillStyle='#c9ccd2';x.fillRect(48,y+18,pw-96,1.5);x.fillStyle='#1b2434';});
+  x.font='700 28px Inter, sans-serif';x.fillText('Total',48,622);x.textAlign='right';x.fillText('713.50',pw-48,622);x.textAlign='left';
+  x.font='400 18px Inter, sans-serif';x.fillStyle='#4a5568';
   ['Payment is due within 14 days of the invoice date.','Thank you for your business. Questions about this','invoice can be sent to the address printed above.'].forEach((s,i)=>x.fillText(s,48,700+i*30));
-  x.save();x.translate(pw-170,820);x.rotate(-.2);x.strokeStyle='#b53b2e';x.lineWidth=5;x.strokeRect(-90,-34,180,68);x.fillStyle='#b53b2e';x.font='700 40px Manrope, sans-serif';x.textAlign='center';x.fillText('PAID',0,14);x.restore();
+  x.save();x.translate(pw-170,820);x.rotate(-.2);x.strokeStyle='#b53b2e';x.lineWidth=5;x.strokeRect(-90,-34,180,68);x.fillStyle='#b53b2e';x.font='700 40px Inter, sans-serif';x.textAlign='center';x.fillText('PAID',0,14);x.restore();
   const sh=x.createLinearGradient(0,0,pw,ph);sh.addColorStop(0,'rgba(0,0,0,.34)');sh.addColorStop(.55,'rgba(0,0,0,.04)');sh.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=sh;x.fillRect(0,0,pw,ph);
   x.restore();
   await ingest({__cv:c}); /* v115: نمرّر الكانفس مباشرة بدل ترميز JPEG وفك ترميزه تاني */
@@ -2855,7 +2852,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='154';
+  const APPV='155';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3525,7 +3522,7 @@ if(!document.getElementById('lvcss6')){const s6=document.createElement('style');
 
 /* ===== v6: OCR (full page + region), text replace ===== */
 const VB=new URL('vendor/',document.baseURI).href; /* نسخة محلية من tesseract (مجلد vendor) — لو مش موجودة بيرجع للـCDN */
-const TU=[VB+'tesseract/tesseract.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','https://unpkg.com/tesseract.js@5/dist/tesseract.min.js','https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'];
+const TU=[VB+'tesseract/tesseract.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'];
 const loadT=async()=>{if(window.Tesseract)return window.Tesseract;for(const u of TU){try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no(new Error('script'));};document.head.appendChild(sc);});if(window.Tesseract){window.__txLocal=u.indexOf(VB)===0;return window.Tesseract;}}catch(_){}}throw new Error('script blocked or offline');};
 const WK={};let logCb=()=>{};let LOGMUTE=0;
 const FONTS=[['Tahoma',"Tahoma,'Segoe UI',Arial,sans-serif"],['نسخ',"'Noto Naskh Arabic','Traditional Arabic',Amiri,'Times New Roman',serif"],['Arial',"Arial,Helvetica,sans-serif"],['Times',"'Times New Roman',Times,serif"],['Courier',"'Courier New',monospace"],['Cairo',TFONTS.cairo[1]],['Noto Sans Arabic',TFONTS.noto[1]],['Inter',TFONTS.inter[1]]];
@@ -4339,7 +4336,7 @@ if('serviceWorker' in navigator){const show=w=>{const f=()=>window.TXU?TXU.offer
   const up=()=>reg.update().catch(()=>{});setInterval(up,30*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)up()});up();}).catch(()=>{});}
 /* ---- OCR extras: auto-name + Word/CSV/TXT ---- */
 const dl=(name,mime,txt)=>{const u=URL.createObjectURL(new Blob([txt],{type:mime}));const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
-const esc=x=>String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 window.ocrExtras=function(ta,p,T,box){
  if(!box&&state.pages[0]&&state.pages[0].id===p.id&&(!state.name||/^(Scan|مستند) \d\d-\d\d$/.test(state.name))){
   const ln=(T.split('\n').map(x=>x.replace(/[^\p{L}\p{N} \-_.]/gu,' ').replace(/\s+/g,' ').trim()).find(x=>x.length>=3)||'').slice(0,36).trim();
@@ -6211,7 +6208,9 @@ function data(){var a=ar();return [
  ['db','#1b63f0',a?'البيانات اللي بنجمعها':'Data we collect',a?'التطبيق لا يجمع ولا يرسل أي مستندات أو صور أو بيانات شخصية لأي خادم. مفيش حسابات ولا إعلانات ولا أدوات تحليل.':'The app does not collect, upload or share any documents, photos or personal data. No accounts, no ads, no analytics.'],
  ['dev','#16a34a',a?'التخزين':'Storage',a?'كل المستندات والإعدادات بتتخزن على جهازك فقط. لو مسحت بيانات التطبيق أو حذفته، المستندات بتتمسح، فاستخدم النسخة الاحتياطية جوه التطبيق.':'All documents and settings stay only on your device. If you clear app data or uninstall, documents are deleted, so use the in-app backup.'],
  ['cam','#e0527a',a?'الكاميرا':'Camera',a?'بنطلب إذن الكاميرا لتصوير المستندات وقراءة QR، والصور بتتعالج على جهازك فقط.':'Camera permission is used to scan documents and read QR codes. Images are processed on your device only.'],
- ['txt','#0891b2',a?'قراءة النص (OCR)':'Text recognition (OCR)',a?'لتشغيل OCR قد يحمّل التطبيق مكتبة القراءة وبيانات اللغة من خدمات CDN عامة (jsDelivr وunpkg). الاتصال ده بيحمّل ملفات فقط ولا يرسل مستنداتك، لكن مزوّد الخدمة قد يرى عنوان IP الخاص بك كأي موقع ويب.':'To run OCR the app may download the OCR library and language data from public CDNs (jsDelivr, unpkg). Only files are downloaded; nothing of yours is uploaded, though the CDN provider may see your IP address like any website.'],
+ ['txt','#0891b2',a?'قراءة النص (OCR)':'Text recognition (OCR)',a?'القراءة بتتم على جهازك بنماذج مرفقة مع التطبيق (عربي وإنجليزي وصيني). لبعض اللغات الإضافية قد يحمّل التطبيق ملفات لغة من jsDelivr أو Hugging Face أو GitHub. بيتم تحميل ملفات فقط ولا يُرسل أي مستند، لكن مزوّد الخدمة قد يرى عنوان IP الخاص بك كأي موقع ويب.':'Text recognition runs on your device using models bundled with the app (Arabic, English, Chinese). For some extra languages the app may download language files from jsDelivr, Hugging Face or GitHub. Only files are downloaded and no document is uploaded, though the provider may see your IP address like any website.'],
+ ['txt','#7c3aed',a?'الترجمة':'Translation',a?'الترجمة على الجهاز لا ترسل شيئاً. الترجمة عبر الإنترنت اختيارية ولا تعمل إلا بعد موافقتك الصريحة، وفيها يُرسل النص الذي تترجمه إلى Google Translate أو MyMemory حسب المتاح. لا تستخدمها مع نصوص حساسة.':'On-device translation sends nothing. Online translation is optional and runs only after your explicit consent; the text you translate is then sent to Google Translate or MyMemory. Do not use it for sensitive text.'],
+ ['shield','#475569',a?'الأمان والاستضافة':'Security and hosting',a?'القفل بالرقم السري يحمي واجهة التطبيق ولا يشفّر المستندات المخزنة. النسخة الاحتياطية مشفّرة بكلمة سر تختارها ولا نقدر نسترجعها لو نسيتها. الموقع مستضاف على Cloudflare وقد يسجّل عنوان IP لأغراض التشغيل والحماية.':'The PIN lock protects the app screen and does not encrypt stored documents. Backups are encrypted with a password you choose, and we cannot recover it if you forget it. The site is hosted on Cloudflare, which may log IP addresses for operation and protection.'],
  ['kid','#e08a1b',a?'الأطفال':'Children',a?'التطبيق لا يستهدف الأطفال ولا يجمع بيانات عنهم.':'The app is not directed at children and collects no data about them.']];}
 function close(fast){var s=sheet;if(!s)return;sheet=null;document.removeEventListener('keydown',key,true);
  var red=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -6221,10 +6220,10 @@ function close(fast){var s=sheet;if(!s)return;sheet=null;document.removeEventLis
 function key(e){if(e.key==='Escape'){e.stopPropagation();e.preventDefault();close()}}
 function open(){if(sheet)return;var a=ar(),s=document.createElement('div');s.className='txls pv';s.dir=a?'rtl':'ltr';
  var t=a?'سياسة الخصوصية':'Privacy policy',h='<div class="bx" role="dialog" aria-modal="true" aria-label="'+t+'"><div class="hd"></div>'
- +'<div class="ph"><div class="ti"><h3>'+t+'</h3><p class="tl-st">'+(a?'آخر تحديث: أكتوبر 2026':'Last updated: October 2026')+'</p></div><button type="button" class="x" aria-label="'+(a?'إغلاق':'Close')+'"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
+ +'<div class="ph"><div class="ti"><h3>'+t+'</h3><p class="tl-st">'+(a?'آخر تحديث: 21 أكتوبر 2026':'Last updated: 21 October 2026')+'</p></div><button type="button" class="x" aria-label="'+(a?'إغلاق':'Close')+'"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
  +'<div class="hero"><span class="ic">'+IC.shield+'</span><p>'+(a?'مستنداتك بتفضل على جهازك. مفيش حسابات ولا إعلانات ولا تتبع.':'Your documents stay on your device. No accounts, no ads, no tracking.')+'</p></div>';
  data().forEach(function(d){h+='<div class="it"><span class="ic" style="background:'+d[1]+'">'+IC[d[0]]+'</span><div><b>'+d[2]+'</b><p>'+d[3]+'</p></div></div>'});
- h+='<div class="ft">Timaxo Scan</div></div>';s.innerHTML=h;
+ h+='<div class="ft">Timaxo Scan · Timaxo.apps@gmail.com</div></div>';s.innerHTML=h;
  s.addEventListener('click',function(e){if(e.target===s)close()});
  s.querySelector('.x').onclick=function(e){e.stopPropagation();close()};
  document.body.appendChild(s);sheet=s;document.addEventListener('keydown',key,true);
