@@ -67,6 +67,13 @@ html body .ox-btn.pri{background:linear-gradient(135deg,#1b63f0,#22a8f5);box-sha
 html body .ox-btn.pri::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);transform:translateX(-120%);animation:txshine 3.2s ease-in-out 1s infinite}
 @keyframes txshine{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 html body .ox-btn:not(.pri){flex-direction:column;gap:3px;font-size:12.5px;min-width:76px}
+/* --- إصلاح: صف الحالة كان بيطلع بره الشاشة بالإنجليزي ويزحّف الصفحة لليسار --- */
+html .tbx{overflow-x:clip;max-width:100%;min-width:0}
+html .tbx .tbw-st{flex-wrap:wrap;row-gap:8px;min-width:0;max-width:100%;overflow:hidden}
+html .tbx .tbw-st>*{min-width:0;max-width:100%}
+html .tbx .tbw-imp{max-width:100%;white-space:nowrap}
+html .tbx .tbw-bar{min-width:0;max-width:100%;overflow:hidden}
+html .tbx .tbw-bar>*{min-width:0}
 /* --- القوائم العامة: ظهور أخف --- */
 #mrBx{animation:txin .26s cubic-bezier(.2,1,.3,1) both}
 /* --- أيقونات الشريط الرئيسي: ألوان وتفاعل --- */
@@ -88,6 +95,8 @@ var OK='#wrap,#ov,#cropSvg,#ltO,#lv,.tbx-w,#tbSrcW,[data-zoomok]';
 D.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1&&!(e.target.closest&&e.target.closest(OK)))e.preventDefault();},{passive:false});
 /* مفيش منع للضغطتين: touch-action كفاية ومايبوّظش الضغطتين السريعتين في الجدول */
 
+/* لو الصفحة اتزحزحت أفقيًا (scrollIntoView) نرجّعها */
+D.addEventListener('scroll',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains&&(t.matches('.mdl,.tbx,.sheet')||t===D.documentElement||t===D.body)&&t.scrollLeft!==0&&!t.matches('.tbw-tools,.tbw-tb'))t.scrollLeft=0;},true);
 /* ---------- 3) نبضة على زر الأداة بعد الضغط ---------- */
 D.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.tbx .tbw-tl');if(!b)return;b.classList.remove('pulse');void b.offsetWidth;b.classList.add('pulse');setTimeout(function(){b.classList.remove('pulse')},360);},true);
 
