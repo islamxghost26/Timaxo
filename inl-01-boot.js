@@ -1,0 +1,1 @@
+(function(){function r(){var p=document.getElementById("pre");if(p)p.remove()}document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(function(){requestAnimationFrame(r)})});setTimeout(r,3500)})()

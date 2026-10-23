@@ -1,0 +1,2 @@
+(function(){var g=document.getElementById('galFab');if(!g)return;g.onclick=function(){window.__txNew=window.__txMode&&window.__txMode()==='docs';document.getElementById('galIn').click();};
+function lb(){try{g.setAttribute('aria-label',lang==='ar'?'استيراد من الجهاز':'Import from device')}catch(e){}}lb();var l=document.getElementById('langBtn');if(l)l.addEventListener('click',function(){setTimeout(lb,60)});})();

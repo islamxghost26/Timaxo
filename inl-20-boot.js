@@ -1,0 +1,11 @@
+(function(){
+var IC={cam:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>',gal:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>',blank:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>'};
+window.__txNewChooser=function(){var ar=document.documentElement.lang!=='en',T=function(a,e){return ar?a:e};
+ var bg=document.createElement('div');bg.id='nwBg';var bx=document.createElement('div');bx.id='nwBx';
+ var O=[['cam','📷','#1b63f0',T('تصوير بالكاميرا','Scan with camera'),T('صوّر الورقة وهتتقص وتتحسن تلقائي','Capture a page, auto-crop and enhance')],['gal','🖼','#8a5cf0',T('من المعرض أو PDF','Gallery or PDF'),T('اختار صور أو ملف PDF من الفون','Pick photos or a PDF from your phone')],['blank','📄','#e08a1b',T('صفحة A4 فاضية','Blank A4 page'),T('ابدأ بورقة بيضا واكتب عليها','Start with a white page and annotate')]];
+ bx.innerHTML='<div style="width:42px;height:5px;border-radius:3px;background:var(--line,#8886);margin:6px auto 10px"></div><h3>'+T('مستند جديد من…','New document from…')+'</h3>';
+ O.forEach(function(o){var b=document.createElement('button');b.type='button';b.className='o';b.style.setProperty('--c',o[2]);b.innerHTML='<i>'+IC[o[0]]+'</i><span><b>'+o[3]+'</b><small>'+o[4]+'</small></span>';
+  b.onclick=function(){bg.remove();var m=document.querySelector('#fabMenu [data-a="'+o[0]+'"]');if(m)m.click();};bx.appendChild(b)});
+ var x=document.createElement('button');x.type='button';x.className='x';x.textContent=T('إلغاء','Cancel');x.onclick=function(){bg.remove()};bx.appendChild(x);
+ bg.onclick=function(e){if(e.target===bg)bg.remove()};bg.appendChild(bx);document.body.appendChild(bg);};
+})();

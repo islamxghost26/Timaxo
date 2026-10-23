@@ -1,0 +1,1 @@
+try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tx_theme3')||'blue')}catch(e){}

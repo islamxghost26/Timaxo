@@ -1,0 +1,1 @@
+window.__TIMAXO_FILES__=1;try{var _l=localStorage.getItem('tx-lang')==='en'?'en':'ar',_h=document.documentElement;_h.lang=_l;_h.dir=_l==='ar'?'rtl':'ltr'}catch(e){}

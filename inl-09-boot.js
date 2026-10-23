@@ -1,0 +1,1 @@
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-m="ocr"]');if(b&&window.TXOnnx&&TXOnnx.warm){var l="ara+eng";try{l=localStorage.getItem("tx_ol")||l;if(l.charAt(0)==="["||l.charAt(0)==="{")l="ara+eng"}catch(_){}setTimeout(function(){TXOnnx.warm(l,localStorage.getItem("tx_oq")==="fast")},60)}},true)

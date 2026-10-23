@@ -1,16 +1,4 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فحص ملفات Timaxo</title>
 <style>body{font:15px/1.7 system-ui,sans-serif;margin:0;padding:16px;background:#041044;color:#e8eefc}table{width:100%;border-collapse:collapse;font-size:13px}td{border-bottom:1px solid #22d3f533;padding:5px 4px;word-break:break-all}.ok{color:#4ade80}.bad{color:#f87171}button{font:inherit;padding:10px 16px;border-radius:10px;border:0;background:#1b63f0;color:#fff;margin:8px 0}pre{white-space:pre-wrap;direction:ltr;font-size:12px}</style></head><body>
 <h2>فحص ملفات Timaxo</h2><p id="s">بيفحص…</p><button id="c">نسخ النتيجة</button><table id="t"></table>
-<script>
-var F=["vendor/edge/ort/ort.wasm.min.js","vendor/edge/ort/ort-wasm-simd.wasm","vendor/edge/ort/ort-wasm-simd-threaded.wasm","vendor/edge/model.onnx","vendor/tesseract/tesseract.min.js","vendor/tesseract/worker.min.js","vendor/tesseract-core/tesseract-core.wasm.js","vendor/tesseract-core/tesseract-core-simd.wasm.js","vendor/tesseract-core/tesseract-core-lstm.wasm.js","vendor/tesseract-core/tesseract-core-simd-lstm.wasm.js","vendor/tessdata/fast/ara.traineddata.gz","vendor/tessdata/fast/eng.traineddata.gz","models/ocr/det.onnx","models/ocr/det-fast.onnx","models/ocr/rec-arabic.onnx","models/ocr/rec-latin.onnx","models/ocr/dict-arabic.txt","models/ocr/dict-latin.txt","sw.js","privacy.html"];
-var out=[],bad=0,t=document.getElementById("t");
-(async function(){
-for(var i=0;i<F.length;i++){var u=F[i],st,ct="",len="",ok=false;
-try{var r=await fetch(u+"?chk="+Date.now(),{cache:"no-store"});st=r.status;ct=r.headers.get("content-type")||"";len=r.headers.get("content-length")||"";ok=r.ok&&!/text\/html/i.test(ct)||u==="privacy.html"&&r.ok;try{r.body&&r.body.cancel()}catch(e){}}catch(e){st="ERR"}
-if(!ok)bad++;out.push((ok?"OK  ":"BAD ")+u+" "+st+" "+ct+" "+len);
-var tr=document.createElement("tr");tr.innerHTML="<td class='"+(ok?"ok":"bad")+"'>"+(ok?"✓":"✗")+"</td><td></td><td>"+st+"</td>";tr.children[1].textContent=u+" · "+ct+" "+len;t.appendChild(tr)}
-var sw="";try{var rg=await navigator.serviceWorker.getRegistrations();sw="SW:"+rg.length}catch(e){sw="SW:?"}
-out.push(sw+" UA:"+navigator.userAgent);
-document.getElementById("s").textContent=bad?("ناقص أو غلط: "+bad+" ملف"):"كل الملفات موجودة ✓"})();
-document.getElementById("c").onclick=function(){var s=out.join("\n");try{navigator.clipboard.writeText(s).then(function(){alert("اتنسخ")})}catch(e){prompt("انسخ:",s)}};
-</script></body></html>
+<script src="check.js"></script></body></html>
