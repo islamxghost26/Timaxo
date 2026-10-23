@@ -1414,21 +1414,28 @@ function txMaskInfo(d,W,H,ix0,iy0,ix1,iy1){
  const ring=[],inn=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=L[y*W+x];if(x<ix0||x>=ix1||y<iy0||y>=iy1)ring.push(v);else inn.push(v);}
  if(inn.length<20)return null;inn.sort((p,q)=>p-q);
  const bgL=ring.length>12?txMed(ring):inn[inn.length>>1],p5=inn[Math.floor(inn.length*.05)],p95=inn[Math.floor(inn.length*.95)],dark=(bgL-p5)>=(p95-bgL);
- const bh=iy1-iy0,r=Math.max(2,Math.min(28,Math.round(bh*.22))),B=txBlur(txFilt(L,W,H,r,dark),W,H,Math.max(1,r>>1)),D=new Float32Array(N),dv=[];
- for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++){const i=y*W+x,v=dark?B[i]-L[i]:L[i]-B[i];D[i]=v;dv.push(v);}
- dv.sort((p,q)=>p-q);const p98=dv[Math.floor(dv.length*.98)]||0;if(p98<22)return null;const thr=Math.max(14,.32*p98);
+ /* نصف قطر الفلتر أكبر من سمك أسمك خط عشان داخل الحروف السميكة يتحسب كنص */
+ const bh=iy1-iy0,r=Math.max(3,Math.min(46,Math.round(bh*.55))),B=txBlur(txFilt(L,W,H,r,dark),W,H,Math.max(1,r>>2)),D=new Float32Array(N),dv=[];
+ for(let i=0;i<N;i++)D[i]=dark?B[i]-L[i]:L[i]-B[i];
+ for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++)dv.push(D[y*W+x]);
+ dv.sort((p,q)=>p-q);const p98=dv[Math.floor(dv.length*.98)]||0;if(p98<22)return null;const thr=Math.max(10,.22*p98);
  const M=new Uint8Array(N);let cnt=0;for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++){const i=y*W+x;if(D[i]>thr){M[i]=1;cnt++;}}
  if(cnt<4)return null;
- /* حدود النص (بنتجاهل الشوائب: لازم صف/عمود فيه ٢ بكسل على الأقل) */
- const cx=new Int32Array(W),cy=new Int32Array(H);for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++)if(M[y*W+x]){cx[x]++;cy[y]++;}
- let bx0=ix1,bx1=ix0,by0=iy1,by1=iy0;for(let x=ix0;x<ix1;x++)if(cx[x]>=2){if(x<bx0)bx0=x;bx1=x+1;}for(let y=iy0;y<iy1;y++)if(cy[y]>=2){if(y<by0)by0=y;by1=y+1;}
- if(bx1<=bx0||by1<=by0){bx0=ix0;bx1=ix1;by0=iy0;by1=iy1;}
  /* لون الحبر: متوسط أقوى البكسلات */
  let sr=0,sg=0,sb=0,sn=0;const cut=.72*p98;for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++){const i=y*W+x;if(M[i]&&D[i]>=cut){sr+=d[i*4];sg+=d[i*4+1];sb+=d[i*4+2];sn++;}}
  const col=sn?[Math.round(sr/sn),Math.round(sg/sn),Math.round(sb/sn)]:null;
- /* توسيع القناع عشان يغطي حواف التنعيم */
- const dr=Math.max(1,Math.min(4,Math.round(bh*.05)));let C=M;
- for(let k=0;k<dr;k++){const O=new Uint8Array(N);for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++){const i=y*W+x;if(C[i]){O[i]=1;continue;}if((x>ix0&&C[i-1])||(x<ix1-1&&C[i+1])||(y>iy0&&C[i-W])||(y<iy1-1&&C[i+W]))O[i]=1;}C=O;}
+ /* أي بكسل قريب جدًا من لون الحبر يتحسب نص حتى لو جوه خط سميك */
+ let sim=null;if(col){const iL=.299*col[0]+.587*col[1]+.114*col[2],c=Math.abs(bgL-iL);if(c>30){const t=.4*c;sim=new Uint8Array(N);for(let i=0;i<N;i++)if(Math.abs(L[i]-iL)<=t)sim[i]=1;for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++){const i=y*W+x;if(sim[i])M[i]=1;}}}
+ /* لو حرف مقصوص بحافة التحديد: كمّل مسحه للخارج (مسافة محدودة) طالما متصل */
+ const e=Math.min(ix0,iy0,W-ix1,H-iy1),st=[];if(e>0){for(let y=iy0;y<iy1;y++)for(let x=ix0;x<ix1;x++)if(M[y*W+x])st.push(y*W+x);
+  const ok=i=>M[i]===0&&(D[i]>thr||(sim&&sim[i]));
+  while(st.length){const i=st.pop(),x=i%W,y=(i/W)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;if(nx>=ix0&&nx<ix1&&ny>=iy0&&ny<iy1)continue;const j=ny*W+nx;if(nx<ix0-e||nx>=ix1+e||ny<iy0-e||ny>=iy1+e)continue;if(ok(j)){M[j]=1;st.push(j);}}}}
+ const cx=new Int32Array(W),cy=new Int32Array(H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(M[y*W+x]){cx[x]++;cy[y]++;}
+ let bx0=W,bx1=0,by0=H,by1=0;for(let x=0;x<W;x++)if(cx[x]>=2){if(x<bx0)bx0=x;bx1=x+1;}for(let y=0;y<H;y++)if(cy[y]>=2){if(y<by0)by0=y;by1=y+1;}
+ if(bx1<=bx0||by1<=by0){bx0=ix0;bx1=ix1;by0=iy0;by1=iy1;}
+ /* توسيع القناع عشان يغطي حواف التنعيم/التمويه */
+ const dr=Math.max(2,Math.min(6,Math.round(bh*.08)));let C=M;
+ for(let k=0;k<dr;k++){const O=new Uint8Array(N);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(C[i]){O[i]=1;continue;}if((x>0&&C[i-1])||(x<W-1&&C[i+1])||(y>0&&C[i-W])||(y<H-1&&C[i+W]))O[i]=1;}C=O;}
  return{mask:C,raw:M,L:L,tb:{x0:bx0,y0:by0,x1:bx1,y1:by1},col:col,dark:dark};}
 /* ملء البكسلات المقنّعة من الجوار (push-pull): بيحافظ على تدرّج الخلفية */
 function txInpaint(d,W,H,mask){
@@ -1449,20 +1456,19 @@ function txInpaint(d,W,H,mask){
 const __txEC=new Map();
 /* بيمسح كلمات التحديد بس، وبيرجّع false لو ملقاش نص (فيرجع المسح القديم) */
 function txErase(ctx,x0,y0,x1,y1,w,h,id){
- const m=Math.max(3,Math.round(w*.008)),rx=Math.max(0,x0-m),ry=Math.max(0,y0-m),rw=Math.min(w,x1+m)-rx,rh=Math.min(h,y1+m)-ry;if(rw<6||rh<6)return false;
+ const e=Math.max(4,Math.round((y1-y0)*.12)),rx=Math.max(0,x0-e),ry=Math.max(0,y0-e),rw=Math.min(w,x1+e)-rx,rh=Math.min(h,y1+e)-ry;if(rw<6||rh<6)return false;
  const img=ctx.getImageData(rx,ry,rw,rh),d=img.data;let hs=0;for(let i=0;i<d.length;i+=4*Math.max(1,Math.floor(d.length/4/211)))hs=(hs*31+d[i]+d[i+1]*3+d[i+2]*7)>>>0;
- const key=[id,x0,y0,x1,y1,w,h,hs].join(),hit=__txEC.get(key);if(hit){if(hit==='none')return false;ctx.putImageData(new ImageData(new Uint8ClampedArray(hit),rw,rh),rx,ry);return true;}
+ const key=[id,x0,y0,x1,y1,w,h,hs,'v2'].join(),hit=__txEC.get(key);if(hit){if(hit==='none')return false;ctx.putImageData(new ImageData(new Uint8ClampedArray(hit),rw,rh),rx,ry);return true;}
  const info=txMaskInfo(d,rw,rh,x0-rx,y0-ry,x1-rx,y1-ry);if(!info){__txEC.set(key,'none');return false;}
  const F=txInpaint(d,rw,rh,info.mask),N=rw*rh,L=info.L,M=info.mask;
- /* ملمس الخلفية: شدّة الحبيبات من البكسلات السليمة */
  const Lb=txBlur(L,rw,rh,1);let s2=0,n2=0;for(let i=0;i<N;i++)if(!M[i]){const v=L[i]-Lb[i];s2+=v*v;n2++;}const sg=Math.min(9,Math.sqrt(s2/Math.max(1,n2))*1.25);
- const soft=txBlur(Float32Array.from(M),rw,rh,1);let sd=(hs^0x9e3779b9)>>>0;const rnd=()=>{sd=(sd+0x6D2B79F5)>>>0;let t=sd;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
- for(let y=Math.max(0,y0-ry);y<y1-ry&&y<rh;y++)for(let x=x0-rx;x<x1-rx&&x<rw;x++){const i=y*rw+x;if(x<0||y<0)continue;const a=M[i]?1:Math.min(1,soft[i]*1.6);if(a<=.01)continue;const nz=(rnd()*2-1)*sg*1.7;
+ const soft=txBlur(Float32Array.from(M),rw,rh,2);let sd=(hs^0x9e3779b9)>>>0;const rnd=()=>{sd=(sd+0x6D2B79F5)>>>0;let t=sd;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+ for(let i=0;i<N;i++){const a=M[i]?1:Math.min(1,soft[i]*2.2);if(a<=.01)continue;const nz=(rnd()*2-1)*sg*1.7;
   for(let c=0;c<3;c++){const v=F[i*3+c]+nz;d[i*4+c]=d[i*4+c]*(1-a)+Math.max(0,Math.min(255,v))*a;}}
  ctx.putImageData(img,rx,ry);if(__txEC.size>10)__txEC.delete(__txEC.keys().next().value);__txEC.set(key,new Uint8ClampedArray(d));return true;}
 /* قياس النص الأصلي (حدوده ولونه) من الصورة الأساسية: التحديد بالنسب 0..1 */
 function txMeasure(ctx,W,H,bb){
- const X0=Math.round(Math.min(bb.x0,bb.x1)*W),X1=Math.round(Math.max(bb.x0,bb.x1)*W),Y0=Math.round(Math.min(bb.y0,bb.y1)*H),Y1=Math.round(Math.max(bb.y0,bb.y1)*H),m=Math.max(3,Math.round(W*.008)),
+ const X0=Math.round(Math.min(bb.x0,bb.x1)*W),X1=Math.round(Math.max(bb.x0,bb.x1)*W),Y0=Math.round(Math.min(bb.y0,bb.y1)*H),Y1=Math.round(Math.max(bb.y0,bb.y1)*H),m=Math.max(4,Math.round((Y1-Y0)*.12)),
   rx=Math.max(0,X0-m),ry=Math.max(0,Y0-m),rw=Math.min(W,X1+m)-rx,rh=Math.min(H,Y1+m)-ry;if(rw<6||rh<6)return null;
  const d=ctx.getImageData(rx,ry,rw,rh).data,i=txMaskInfo(d,rw,rh,X0-rx,Y0-ry,X1-rx,Y1-ry);if(!i)return null;
  const t=i.tb;return{tb:{x0:(rx+t.x0)/W,y0:(ry+t.y0)/H,x1:(rx+t.x1)/W,y1:(ry+t.y1)/H},col:i.col?'rgb('+i.col.join(',')+')':null};}
@@ -2910,7 +2916,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   '<div class="ox-langs" id="oL"></div><div class="ox-more" id="oM" hidden></div>'+
   '<div class="ox-run" id="oRun"><div class="ox-th" id="oTh"></div><div class="ox-rt"><b id="oT1"></b><span id="oT2"></span><div class="ox-pb"><i id="oP"></i></div><div class="ox-pc" id="oPc">0%</div></div></div>'+
   '<div class="ox-res" id="oRes" hidden><div class="ox-meta" id="oMeta"></div><textarea dir="auto" rows="7"></textarea><div class="ox-note" id="oNote"></div></div>'+
-  '<div class="ox-acts" id="oActs" hidden><button type="button" class="ox-btn pri" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ النص','Copy text')+'</span></button>'+(box?'<button type="button" class="ox-btn" data-a="r">'+L2('استبدال','Replace')+'</button>':'')+'<button type="button" class="ox-btn" data-a="t">'+OX_SVG.tr+'<span>'+L2('ترجمة','Translate')+'</span></button><button type="button" class="ox-btn ic" data-a="o" aria-label="'+L2('المزيد','More')+'">'+OX_SVG.more+'<span>'+L2('المزيد','More')+'</span></button></div><div class="ox-menu" id="oMenu" hidden></div></div></div>';
+  '<div class="ox-acts" id="oActs" hidden>'+(box?'<button type="button" class="ox-btn pri" data-a="r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h12l-3-3M20 17H8l3 3"/></svg><span>'+L2('استبدال النص','Replace text')+'</span></button><button type="button" class="ox-btn" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ','Copy')+'</span></button>':'<button type="button" class="ox-btn pri" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ النص','Copy text')+'</span></button>')+'<button type="button" class="ox-btn" data-a="t">'+OX_SVG.tr+'<span>'+L2('ترجمة','Translate')+'</span></button><button type="button" class="ox-btn ic" data-a="o" aria-label="'+L2('المزيد','More')+'">'+OX_SVG.more+'<span>'+L2('المزيد','More')+'</span></button></div><div class="ox-menu" id="oMenu" hidden></div></div></div>';
  document.body.appendChild(m);
  const $m=s=>m.querySelector(s),ta=$m('textarea'),pb=$m('#oP'),t1=$m('#oT1'),t2=$m('#oT2'),res=$m('#oRes'),run=$m('#oRun'),acts=$m('#oActs'),meta=$m('#oMeta'),note=$m('#oNote'),th=$m('#oTh');
  let dead=0,rid=0,cv=null,ink='#222',deepNext=false,sk=0,sbox=null,bm=null,lastBest=null,lastDeep=false;
