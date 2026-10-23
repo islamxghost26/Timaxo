@@ -1136,6 +1136,34 @@ html body #txS .txr2 .txc,html body #textBar .txr2 .txc{min-height:38px;min-widt
 html body #txS .txr2 .txc.on,html body #textBar .txr2 .txc.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 5px rgba(0,0,0,.28)}
 html body #textBar .txr2{grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
 </style>
+<style id="ux-v166">
+/* v166: قايمة استخراج النص — النتيجة هي البطل، اللغة في زر، الأدوات واضحة بأيقونات وأسماء */
+html body .mdl.ox{background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#1b63f0) 10%,var(--surface)) 0,var(--surface) 140px)!important;gap:12px}
+html body .mdl.ox .ox-h{border:0;padding:6px 0 0;gap:12px}
+html body .mdl.ox .ox-ic{width:44px;height:44px;border-radius:14px;box-shadow:0 8px 22px -6px var(--accent,#1b63f0)}
+html body .mdl.ox .mdl-t{font-size:19px;font-weight:800}
+html body .mdl.ox #oLG{display:inline-flex;align-items:center;height:26px;margin-top:5px;padding:0 11px;border-radius:13px;background:color-mix(in srgb,var(--accent,#1b63f0) 16%,transparent);color:var(--ink);font:700 12px system-ui;cursor:pointer}
+html body .mdl.ox .ox-langs,html body .mdl.ox .ox-more{display:none}
+html body .mdl.ox.lgopen .ox-langs{display:grid}
+html body .mdl.ox.lgopen .ox-more:not([hidden]){display:flex}
+html body .mdl.ox.tbmode #oLG{display:none}
+html body .mdl.ox .ocx{display:none!important}
+html body .mdl.ox .ox-meta{gap:8px}
+html body .mdl.ox .ox-b.q{height:28px;padding:0 11px;font-weight:800}
+html body .mdl.ox .ox-b.q.g{background:color-mix(in srgb,#22c55e 18%,transparent);color:#22c55e}
+html body .mdl.ox .ox-b.q.m{background:color-mix(in srgb,#f59e0b 18%,transparent);color:#f59e0b}
+html body .mdl.ox .ox-b.q.l{background:color-mix(in srgb,#ef4444 18%,transparent);color:#ef4444}
+html body .mdl.ox .ox-b.q i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+html body .mdl.ox .ox-res textarea{min-height:210px;padding:16px 18px;border:1px solid var(--line);border-radius:20px;font-size:17px;line-height:1.85;background:color-mix(in srgb,var(--surface2) 80%,transparent)}
+html body .mdl.ox .ox-acts{border:0;padding-top:4px;gap:8px;align-items:stretch}
+html body .mdl.ox .ox-acts .ox-btn{height:58px;border-radius:18px}
+html body .mdl.ox .ox-acts .ox-btn.pri{flex:1 1 auto;min-width:0;font-size:16px;box-shadow:0 12px 26px -10px var(--accent,#1b63f0)}
+html body .mdl.ox .ox-acts .ox-btn:not(.pri){flex:0 0 68px;flex-direction:column;gap:3px;padding:0 4px;font-size:11px;font-weight:700;background:var(--surface2);color:var(--ink)}
+html body .mdl.ox .ox-acts .ox-btn[data-a=r]{flex:0 0 72px}
+html body .mdl.ox .ox-acts .ox-btn svg{width:21px;height:21px}
+html body .mdl.ox .fx-c,html body .mdl.ox .fx-a{white-space:nowrap;align-items:center;min-height:36px;display:inline-flex}
+html body .mdl.ox .ox-menu{border-radius:18px;border:1px solid var(--line);box-shadow:0 18px 40px -10px #000c}
+</style>
 </head><body>
 <title>Timaxo Scan</title>
 
@@ -2917,7 +2945,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='165';
+  const APPV='166';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -4134,11 +4162,11 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
  const lname=l=>ar?l.ar:l.en,main=OCR_LANGS.slice(0,2),extra=OCR_LANGS.slice(2);
  const m=document.createElement('div');m.className='mdl-bd';
  m.innerHTML='<div class="mdl ox" role="dialog" aria-modal="true"><div class="grab"></div>'+
-  '<div class="ox-h"><div class="ox-ic">'+OX_SVG.scan+'</div><div class="mdl-t">'+(box?L2('قراءة المنطقة المحددة','Read selected area'):L2('استخراج النص','Extract text'))+'<small>'+L2('بيقرأ عربي وإنجليزي بدقة، وبيظبط الصورة قبل القراءة','Reads Arabic & English, tuning the image first')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+L2('إغلاق','Close')+'">'+OX_SVG.x.replace('<svg','<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"')+'</button></div>'+
+  '<div class="ox-h"><div class="ox-ic">'+OX_SVG.scan+'</div><div class="mdl-t">'+(box?L2('قراءة المنطقة المحددة','Read selected area'):L2('استخراج النص','Extract text'))+'<small id="oLG" role="button" tabindex="0"></small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+L2('إغلاق','Close')+'">'+OX_SVG.x.replace('<svg','<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"')+'</button></div>'+
   '<div class="ox-langs" id="oL"></div><div class="ox-more" id="oM" hidden></div>'+
   '<div class="ox-run" id="oRun"><div class="ox-th" id="oTh"></div><div class="ox-rt"><b id="oT1"></b><span id="oT2"></span><div class="ox-pb"><i id="oP"></i></div></div></div>'+
   '<div class="ox-res" id="oRes" hidden><div class="ox-meta" id="oMeta"></div><textarea dir="auto" rows="7"></textarea><div class="ox-note" id="oNote"></div></div>'+
-  '<div class="ox-acts" id="oActs" hidden><button type="button" class="ox-btn pri" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ النص','Copy text')+'</span></button>'+(box?'<button type="button" class="ox-btn" data-a="r">'+L2('استبدال','Replace')+'</button>':'')+'<button type="button" class="ox-btn" data-a="t">'+OX_SVG.tr+'<span>'+L2('ترجمة','Translate')+'</span></button><button type="button" class="ox-btn ic" data-a="o" aria-label="'+L2('المزيد','More')+'">'+OX_SVG.more+'</button></div><div class="ox-menu" id="oMenu" hidden></div></div></div>';
+  '<div class="ox-acts" id="oActs" hidden><button type="button" class="ox-btn pri" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ النص','Copy text')+'</span></button>'+(box?'<button type="button" class="ox-btn" data-a="r">'+L2('استبدال','Replace')+'</button>':'')+'<button type="button" class="ox-btn" data-a="t">'+OX_SVG.tr+'<span>'+L2('ترجمة','Translate')+'</span></button><button type="button" class="ox-btn ic" data-a="o" aria-label="'+L2('المزيد','More')+'">'+OX_SVG.more+'<span>'+L2('المزيد','More')+'</span></button></div><div class="ox-menu" id="oMenu" hidden></div></div></div>';
  document.body.appendChild(m);
  const $m=s=>m.querySelector(s),ta=$m('textarea'),pb=$m('#oP'),t1=$m('#oT1'),t2=$m('#oT2'),res=$m('#oRes'),run=$m('#oRun'),acts=$m('#oActs'),meta=$m('#oMeta'),note=$m('#oNote'),th=$m('#oTh');
  let dead=0,rid=0,cv=null,ink='#222',deepNext=false,sk=0,sbox=null,bm=null;
@@ -4146,7 +4174,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
  const chip=(l,cls)=>'<button type="button" class="ox-chip '+(cls||'')+'" data-l="'+l.c+'">'+lname(l)+'</button>';
  const isAuto=()=>sel.length===2&&sel.includes('ara')&&sel.includes('eng');
  const paint=()=>{$m('#oL').innerHTML='<button type="button" class="ox-chip auto'+(isAuto()?' on':'')+'" data-auto="1">'+L2('تلقائي','Auto')+'</button>'+main.map(l=>chip(l,sel.includes(l.c)&&!isAuto()?'on':'')).join('')+'<button type="button" class="ox-chip more'+(sel.some(x=>extra.some(l=>l.c===x))?' on':'')+'" data-more="1">'+L2('أخرى','More')+'</button>';
-  $m('#oM').innerHTML=extra.map(l=>chip(l,sel.includes(l.c)?'on':'')).join('');};paint();
+  $m('#oM').innerHTML=extra.map(l=>chip(l,sel.includes(l.c)?'on':'')).join('');{const g=$m('#oLG');if(g)g.textContent=L2('اللغة: ','Language: ')+(isAuto()?L2('تلقائي','Auto'):sel.map(c=>lname(OCR_LANGS.find(l=>l.c===c))).join(' + '))+' ▾';}};paint();
  const lang=()=>{const o=OCR_LANGS.map(l=>l.c);return sel.slice().sort((a,b)=>o.indexOf(a)-o.indexOf(b)).join('+');};
  const stage=(i,n)=>{t1.textContent=n>1&&i>0?L2('بجرّب طريقة تانية للصورة…','Trying another image treatment…'):L2('بيظبط الصورة ويقرأ…','Tuning the image and reading…');};
  const finish=(best,deep)=>{const W=best.W,sc=best.sc;sbox=null;
@@ -4241,6 +4269,7 @@ const tbPaintSrc=()=>{const c=tbx.querySelector('#tbSrcC');if(!c||!tbSrc)return;
   h+='<div class="ox-ms"></div>'+mi('eng',I.cog,L2('المحرك الحديث','Modern engine'),on?L2('شغّال','On'):L2('متوقف','Off'))+mi('oq',I.cog,L2('جودة القراءة','Reading quality'),OQ()==='best'?L2('دقيقة','Accurate'):L2('سريعة','Fast'));
   mEl.innerHTML=h;mEl.hidden=false;const mr=m.querySelector('.mdl').getBoundingClientRect(),ar2=acts.getBoundingClientRect();mEl.style.bottom=Math.max(8,mr.bottom-ar2.top+8)+'px';};
  m.onclick=async e=>{if(e.target===m){dead=1;m.remove();return;}
+   {const mm=m.querySelector('.mdl');if(e.target.closest('#oLG')){mm.classList.toggle('lgopen');return;}if(e.target.closest('[data-l],[data-auto]'))mm.classList.remove('lgopen');}
    if(!mEl.hidden&&!e.target.closest('#oMenu,[data-a=o]'))mEl.hidden=true;
   const t=e.target.closest('[data-l],[data-a],[data-auto],[data-more]');if(!t)return;const a=t.dataset.a;
   if(t.dataset.more){const mm=$m('#oM');mm.hidden=!mm.hidden;return;}
