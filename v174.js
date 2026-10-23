@@ -69,6 +69,11 @@ html body .ox-btn.pri::after{content:"";position:absolute;inset:0;background:lin
 html body .ox-btn:not(.pri){flex-direction:column;gap:3px;font-size:12.5px;min-width:76px}
 /* --- إصلاح: صف الحالة كان بيطلع بره الشاشة بالإنجليزي ويزحّف الصفحة لليسار --- */
 html .tbx{overflow-x:clip;max-width:100%;min-width:0}
+/* v180: زرار نسخ النص ما يتقصّش مع الإنجليزي */
+html body .mdl.ox .ox-acts{gap:6px}
+html body .mdl.ox .ox-acts .ox-btn.pri{flex:1 0 auto;min-width:0;padding:0 14px;font-size:15px;white-space:nowrap}
+html body .mdl.ox .ox-acts .ox-btn.pri span{white-space:nowrap;overflow:visible}
+html body .mdl.ox .ox-acts .ox-btn:not(.pri){flex:1 1 0;min-width:0;max-width:74px;font-size:10.5px}
 html .tbx .tbw-st{flex-wrap:wrap;row-gap:8px;min-width:0;max-width:100%;overflow:hidden}
 html .tbx .tbw-st>*{min-width:0;max-width:100%}
 html .tbx .tbw-imp{max-width:100%;white-space:nowrap}
