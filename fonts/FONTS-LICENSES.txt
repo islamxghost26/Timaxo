@@ -1,0 +1,4 @@
+Subsetted (Latin / Arabic only) copies of fonts supplied by the project owner.
+Almarai, IBM Plex Sans Arabic, Google Sans: SIL Open Font License 1.1.
+General Sans, Clash Display, Satoshi: Fontshare (Indian Type Foundry) Free Font License.
+Polt, Alteix Sans (demo): check the license that came with your download before commercial release.
