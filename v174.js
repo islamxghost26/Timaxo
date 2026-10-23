@@ -72,6 +72,11 @@ html .tbx{overflow-x:clip;max-width:100%;min-width:0}
 html .tbx .tbw-st{flex-wrap:wrap;row-gap:8px;min-width:0;max-width:100%;overflow:hidden}
 html .tbx .tbw-st>*{min-width:0;max-width:100%}
 html .tbx .tbw-imp{max-width:100%;white-space:nowrap}
+/* v176: منع تداخل زرار تحسين الدقة مع عدّاد الصفوف/الأعمدة — كل عنصر ياخد مساحته كاملة، ولو مفيش مكان ينزل سطر جديد */
+html .tbx .tbw-st{overflow:visible}
+html .tbx .tbw-st>.tbw-q,html .tbx .tbw-st>.tbw-sz,html .tbx .tbw-st>.tbw-imp{min-width:auto;max-width:none;flex:0 0 auto;white-space:nowrap}
+html .tbx .tbw-st>.tbw-sz{flex:1 1 auto}
+html .tbx .tbw-st>.tbw-imp{margin-inline-start:auto}
 html .tbx .tbw-bar{min-width:0;max-width:100%;overflow:hidden}
 html .tbx .tbw-bar>*{min-width:0}
 /* --- القوائم العامة: ظهور أخف --- */
