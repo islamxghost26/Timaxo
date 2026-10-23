@@ -493,14 +493,21 @@ function toneCanvas(base,f,br,ct,sat){
 /* ---------- annotations ---------- */
 const mctx=mk(2,2).getContext('2d');
 const isRtl=s=>/[֐-ࣿ]/.test(s);
-const TFONTS={cairo:['Cairo',"Cairo,Inter,system-ui,sans-serif"],noto:['Noto Sans Arabic',"'Noto Sans Arabic',Inter,system-ui,sans-serif"],inter:['Inter',"Inter,Cairo,system-ui,sans-serif"],manrope:['Manrope','Manrope,Cairo,system-ui,sans-serif'],outfit:['Outfit','Outfit,Cairo,system-ui,sans-serif'],serif:['Serif',"Georgia,'Times New Roman',Cairo,serif"],mono:['Mono','ui-monospace,Menlo,Consolas,Cairo,monospace']};
-const TPICK=['cairo','noto','inter'],TSAMP={cairo:'أبجد Aa',noto:'أبجد Aa',inter:'Abc 123'};
+const TFONTS={cairo:['Cairo',"Cairo,Inter,system-ui,sans-serif"],noto:['Noto Sans Arabic',"'Noto Sans Arabic',Inter,system-ui,sans-serif"],inter:['Inter',"Inter,Cairo,system-ui,sans-serif"],manrope:['Manrope','Manrope,Cairo,system-ui,sans-serif'],outfit:['Outfit','Outfit,Cairo,system-ui,sans-serif'],serif:['Serif',"Georgia,'Times New Roman',Cairo,serif"],mono:['Mono','ui-monospace,Menlo,Consolas,Cairo,monospace'],
+ almarai:['Almarai',"Almarai,Cairo,Inter,system-ui,sans-serif"],plex:['IBM Plex Arabic',"'IBM Plex Sans Arabic',Cairo,Inter,system-ui,sans-serif"],
+ gsans:['Google Sans',"'Google Sans',Inter,Cairo,system-ui,sans-serif"],satoshi:['Satoshi',"Satoshi,Inter,Cairo,system-ui,sans-serif"],general:['General Sans',"'General Sans',Inter,Cairo,system-ui,sans-serif"],
+ clash:['Clash Display',"'Clash Display',Inter,Cairo,system-ui,sans-serif"],polt:['Polt',"Polt,Inter,Cairo,system-ui,sans-serif"],alteix:['Alteix Sans',"'Alteix Sans',Inter,Cairo,system-ui,sans-serif"]};
+const TPICK=['cairo','noto','inter','almarai','plex','gsans','satoshi','general','clash','polt','alteix'], /* الترتيب ثابت (الفهرس بيتحفظ في المشاريع) — ترتيب العرض بيتغيّر حسب لغة الواجهة */
+ TAR=['cairo','noto','almarai','plex'],TEN=['inter','gsans','satoshi','general','clash','polt','alteix'],
+ TSAMP={cairo:'أبجد Aa',noto:'أبجد Aa',almarai:'أبجد Aa',plex:'أبجد Aa',inter:'Abc 123',gsans:'Abc 123',satoshi:'Abc 123',general:'Abc 123',clash:'Abc 123',polt:'Abc 123',alteix:'Abc 123'};
+const __txFL={};function txEnsure(css,w){try{const m=String(css).match(/^\s*['"]?([^,'"]+)/);if(!m||!document.fonts)return;const fam=m[1].trim(),k=fam+'|'+w;if(__txFL[k])return;__txFL[k]=1;const q=w+' 20px "'+fam+'"';if(!document.fonts.check(q))document.fonts.load(q).then(()=>{try{redrawOv()}catch(_){}}).catch(()=>{});}catch(_){}}
 const TWTS=[[400,'عادي','Regular'],[600,'متوسط','Medium'],[800,'عريض','Bold']];
 window.TXFONTS=(document.readyState==='complete'?Promise.resolve():new Promise(r=>addEventListener('load',r,{once:true}))).then(function(){try{const a=[];[['Cairo','أبجد Aa'],['Noto Sans Arabic','أبجد Aa'],['Inter','Abc 123']].forEach(f=>[400,600,800].forEach(w=>a.push(document.fonts.load(w+' 20px "'+f[0]+'"',f[1]).catch(()=>0))));return Promise.all(a).then(()=>{try{redrawOv()}catch(_){}});}catch(e){return Promise.resolve();}});
 function fontCards(host,cur,pick){host.innerHTML='';host.className='fcards';host.setAttribute('role','radiogroup');
-  TPICK.forEach(k=>{const b=document.createElement('button');b.type='button';b.className='fcard';b.dataset.k=k;b.setAttribute('role','radio');b.setAttribute('aria-label',TFONTS[k][0]);
+  const isAr=(typeof lang==='undefined'||lang==='ar'),grp=[[TAR,isAr?'خطوط عربية':'Arabic fonts'],[TEN,isAr?'خطوط إنجليزية':'English fonts']];if(!isAr)grp.reverse();
+  grp.forEach(g=>{const h=document.createElement('div');h.className='fgrp';h.textContent=g[1];host.appendChild(h);g[0].forEach(k=>{const b=document.createElement('button');b.type='button';b.className='fcard';b.dataset.k=k;b.setAttribute('role','radio');b.setAttribute('aria-label',TFONTS[k][0]);
     const a=document.createElement('span');a.className='fs';a.textContent=TSAMP[k];a.style.fontFamily=TFONTS[k][1];const n=document.createElement('span');n.className='fn';n.textContent=TFONTS[k][0].replace('Noto Sans Arabic','Noto Arabic');
-    b.append(a,n);b.onclick=()=>pick(k);host.appendChild(b);});fontCardsSet(host,cur);}
+    b.append(a,n);b.onclick=()=>pick(k);host.appendChild(b);});});fontCardsSet(host,cur);}
 function fontCardsSet(host,cur){host.querySelectorAll('.fcard').forEach(b=>{const on=b.dataset.k===cur;b.classList.toggle('on',on);b.setAttribute('aria-checked',on?'true':'false');});}
 function wtSeg(host,cur,pick){const ar=(typeof lang==='undefined'||lang==='ar');host.innerHTML='';host.className='wseg';host.setAttribute('role','radiogroup');
   TWTS.forEach(w=>{const b=document.createElement('button');b.type='button';b.dataset.w=w[0];b.textContent=ar?w[1]:w[2];b.style.fontWeight=w[0];b.setAttribute('role','radio');b.onclick=()=>pick(w[0]);host.appendChild(b);});wtSet(host,cur);}
@@ -510,7 +517,7 @@ function drawSel(x,w,h){const a=E.sel;if(!a||!E.page||(!E.page.ann.includes(a)&&
   const L=layoutText(mctx,w,a),q=tpos(L,w,h,a),m=w*.01;x.save();x.setLineDash([w*.012,w*.008]);x.lineWidth=Math.max(1.5,w*.003);x.strokeStyle='#1B63F0';x.strokeRect(q[0]-m,q[1]-m,L.bw+m*2,L.bh+m*2);x.restore();}
 function layoutText(ctx,w,a){
   const fs=a.s*w,pad=a.t==='note'?fs*.6:0,maxW=(a.t==='note'?.42:.8)*w-pad*2;
-  ctx.font=`${a.w||600} ${fs}px ${(TFONTS[a.f]||TFONTS.manrope)[1]}`;
+  try{txEnsure((TFONTS[a.f]||TFONTS.manrope)[1],a.w||600);}catch(_){}ctx.font=`${a.w||600} ${fs}px ${(TFONTS[a.f]||TFONTS.manrope)[1]}`;
   const lines=[];
   for(const para of String(a.txt).split('\n')){const words=para.split(/\s+/);let cur='';
     for(const wd of words){const tr=cur?cur+' '+wd:wd;if(ctx.measureText(tr).width>maxW&&cur){lines.push(cur);cur=wd;}else cur=tr;}
@@ -2338,10 +2345,10 @@ const VB=new URL('vendor/',document.baseURI).href; /* نسخة محلية من t
 const TU=[VB+'tesseract/tesseract.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'];
 const loadT=async()=>{if(window.Tesseract)return window.Tesseract;for(const u of TU){try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no(new Error('script'));};document.head.appendChild(sc);});if(window.Tesseract){window.__txLocal=u.indexOf(VB)===0;return window.Tesseract;}}catch(_){}}throw new Error('script blocked or offline');};
 const WK={};let logCb=()=>{};let LOGMUTE=0;
-const FONTS=[['Tahoma',"Tahoma,'Segoe UI',Arial,sans-serif"],['نسخ',"'Noto Naskh Arabic','Traditional Arabic',Amiri,'Times New Roman',serif"],['Arial',"Arial,Helvetica,sans-serif"],['Times',"'Times New Roman',Times,serif"],['Courier',"'Courier New',monospace"],['Cairo',TFONTS.cairo[1]],['Noto Sans Arabic',TFONTS.noto[1]],['Inter',TFONTS.inter[1]]];
+const FONTS=[['Tahoma',"Tahoma,'Segoe UI',Arial,sans-serif"],['نسخ',"'Noto Naskh Arabic','Traditional Arabic',Amiri,'Times New Roman',serif"],['Arial',"Arial,Helvetica,sans-serif"],['Times',"'Times New Roman',Times,serif"],['Courier',"'Courier New',monospace"]].concat(TPICK.map(k=>[TFONTS[k][0],TFONTS[k][1]]));
 function txtDraw(ctx,w,h,a){let bx=Math.min(a.x0,a.x1)*w,by=Math.min(a.y0,a.y1)*h,bw=Math.abs(a.x1-a.x0)*w,bh=Math.abs(a.y1-a.y0)*h;const cx0=bx+bw/2,cy0=by+bh/2,rt=a.rot||0;let rotd=0;
  if(Math.abs(rt)>.008){const cc=Math.abs(Math.cos(rt)),sn=Math.abs(Math.sin(rt)),dd=cc*cc-sn*sn;if(dd>.3){const L2=(bw*cc-bh*sn)/dd,H2=(bh*cc-bw*sn)/dd;if(L2>4&&H2>3){bw=L2;bh=H2;bx=-bw/2;by=-bh/2;rotd=1;}}}
- const L=a.txt.split('\n').filter(x=>x.trim()),n=Math.max(1,L.length),rtl=/[\u0600-\u06FF]/.test(a.txt),ff=(FONTS[a.ff==null?5:a.ff]||FONTS[5])[1],wt=(a.w||(a.b?800:400))+' ';
+ const L=a.txt.split('\n').filter(x=>x.trim()),n=Math.max(1,L.length),rtl=/[\u0600-\u06FF]/.test(a.txt),ff=(FONTS[a.ff==null?5:a.ff]||FONTS[5])[1],wt=(a.w||(a.b?800:400))+' ';try{txEnsure(ff,a.w||(a.b?800:400));}catch(_){}
  let lx=rtl?bx+bw:bx,top=by,lh=bh/n,fs=bh/n*.8;if(a.tb&&!rotd){const t=a.tb,X0=Math.min(t.x0,t.x1)*w,X1=Math.max(t.x0,t.x1)*w,Y0=Math.min(t.y0,t.y1)*h,Y1=Math.max(t.y0,t.y1)*h;lh=(Y1-Y0)/n;top=Y0;fs=lh*1.12;lx=rtl?X1:X0;}lx+=(a.dx||0)*w;top+=(a.dy||0)*h;ctx.save();if(rotd){ctx.translate(cx0,cy0);ctx.rotate(rt);}ctx.font=wt+fs+'px '+ff;const mx=Math.max(1,...L.map(l=>ctx.measureText(l).width));if(mx>bw*.98)fs*=bw*.98/mx;fs*=(a.sz||1);ctx.font=wt+fs+'px '+ff;
  ctx.direction=rtl?'rtl':'ltr';ctx.textAlign=rtl?'right':'left';ctx.textBaseline='middle';ctx.fillStyle=ctx.shadowColor=a.c;ctx.globalAlpha=.92;ctx.shadowBlur=fs*(a.bl==null?3:a.bl)*.012;
  L.forEach((l,i)=>ctx.fillText(l,lx,top+lh*(i+.5)));ctx.restore();}

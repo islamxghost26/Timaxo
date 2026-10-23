@@ -74,6 +74,21 @@ html body .mdl.ox .ox-acts{gap:6px}
 html body .mdl.ox .ox-acts .ox-btn.pri{flex:1 0 auto;min-width:0;padding:0 14px;font-size:15px;white-space:nowrap}
 html body .mdl.ox .ox-acts .ox-btn.pri span{white-space:nowrap;overflow:visible}
 html body .mdl.ox .ox-acts .ox-btn:not(.pri){flex:1 1 0;min-width:0;max-width:74px;font-size:10.5px}
+/* v182: خطوط إضافية (بتتحمّل عند الاستخدام بس) */
+@font-face{font-family:Almarai;src:url(fonts/Almarai-400.woff) format('woff');font-weight:400;font-display:swap}
+@font-face{font-family:Almarai;src:url(fonts/Almarai-800.woff) format('woff');font-weight:600 900;font-display:swap}
+@font-face{font-family:'IBM Plex Sans Arabic';src:url(fonts/IBMPlexArabic-400.woff) format('woff');font-weight:100 500;font-display:swap}
+@font-face{font-family:'IBM Plex Sans Arabic';src:url(fonts/IBMPlexArabic-700.woff) format('woff');font-weight:600 900;font-display:swap}
+@font-face{font-family:'Google Sans';src:url(fonts/GoogleSans-var.woff) format('woff');font-weight:400 700;font-display:swap}
+@font-face{font-family:'General Sans';src:url(fonts/GeneralSans-var.woff) format('woff');font-weight:200 700;font-display:swap}
+@font-face{font-family:'Clash Display';src:url(fonts/ClashDisplay-var.woff) format('woff');font-weight:200 700;font-display:swap}
+@font-face{font-family:Satoshi;src:url(fonts/Satoshi-var.woff) format('woff');font-weight:300 900;font-display:swap}
+@font-face{font-family:Polt;src:url(fonts/Polt-400.woff) format('woff');font-weight:100 500;font-display:swap}
+@font-face{font-family:Polt;src:url(fonts/Polt-800.woff) format('woff');font-weight:600 900;font-display:swap}
+@font-face{font-family:'Alteix Sans';src:url(fonts/AlteixSans-400.woff) format('woff');font-weight:100 900;font-display:swap}
+html .fcards{max-height:236px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}
+html .fcards .fgrp{grid-column:1/-1;font:800 11.5px/1.2 system-ui,sans-serif;letter-spacing:.04em;color:var(--ink2);padding:6px 4px 0;text-transform:uppercase}
+html .fcards .fgrp:first-child{padding-top:0}
 html .tbx .tbw-st{flex-wrap:wrap;row-gap:8px;min-width:0;max-width:100%;overflow:hidden}
 html .tbx .tbw-st>*{min-width:0;max-width:100%}
 html .tbx .tbw-imp{max-width:100%;white-space:nowrap}
