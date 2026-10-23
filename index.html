@@ -1095,6 +1095,47 @@ html body .mdl.ox.tbmode .tbx{flex:1 1 0;min-height:0;gap:8px;overflow:hidden}
 .tbx .tbx-a{grid-template-columns:repeat(4,1fr)}.tbx .tbx-a .ox-btn{height:44px;padding:0 4px;font-size:13px}.tbx .tbx-a .ox-btn.pri span{display:none}.tbx .tbx-a .ox-btn.pri{gap:0}
 .tbx .tbx-a2{flex-wrap:wrap}.tbx .tbx-a2 .ox-btn{height:38px;font-size:12px;padding:0 6px;min-width:0}.tbx .tbx-a2 .ox-btn[data-t=wt]{flex:1 1 100%}
 </style>
+<style id="ux-v165">
+/* v165: تصميم أهدى لقايمة استخراج النص وقايمة استبدال/كتابة النص */
+html body .mdl.ox{overflow:visible;gap:12px;padding:8px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+html body .mdl.ox .ox-h{padding:4px 0 12px;border-bottom:1px solid var(--line)}
+html body .mdl.ox .ox-ic{width:38px;height:38px;border-radius:12px}
+html body .mdl.ox .ox-langs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:3px;margin:0;border-radius:14px;background:var(--surface2);overflow:visible}
+html body .mdl.ox .ox-langs .ox-chip{min-height:38px;padding:0 6px;justify-content:center;border:0;border-radius:11px;background:transparent;color:var(--ink2);font-size:13px}
+html body .mdl.ox .ox-langs .ox-chip.on,html body .mdl.ox .ox-langs .ox-chip.auto.on{background:var(--accent,#1b63f0);color:#fff}
+html body .mdl.ox .ox-langs .ox-chip.more{border:0}
+html body .mdl.ox .ox-run{padding:12px;border-radius:16px}
+html body .mdl.ox .ox-res{flex:1 1 auto;min-height:0;overflow:auto;gap:12px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+html body .mdl.ox .ox-meta{gap:8px;align-items:center}
+html body .mdl.ox .ox-b{height:auto;padding:0;background:none;font-size:12px}
+html body .mdl.ox .ox-b.q{height:26px;padding:0 10px}
+html body .mdl.ox .ox-meta [data-tv]{order:-1;flex:1 1 40%;justify-content:center;min-height:34px;padding:0 12px;font-size:13px;border-radius:11px}
+html body .mdl.ox .ox-meta .ox-b.mu{margin-inline-start:auto}
+html body .mdl.ox .ox-res textarea{min-height:170px;padding:14px 16px;border-radius:16px;line-height:1.75;background:var(--surface2)}
+html body .mdl.ox .ox-note{padding:0 2px}
+html body .mdl.ox .ocx{gap:6px;margin:0}
+html body .mdl.ox .ocx::before{font-size:12px;font-weight:700;opacity:.8}
+html body .mdl.ox .ocx .btn{min-height:36px;padding:0 12px;font-size:12.5px;border-radius:10px}
+html body .mdl.ox .fx{margin:0}
+html body .mdl.ox .fx-t{font-weight:700;opacity:.8}
+html body .mdl.ox .fx-l{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+html body .mdl.ox .fx-l::-webkit-scrollbar{display:none}
+html body .mdl.ox .fx-c,html body .mdl.ox .fx-a{flex:none;background:var(--surface2);border-color:transparent}
+html body .mdl.ox .ox-acts{flex:none;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+html body .mdl.ox .ox-acts .ox-btn{height:48px;border-radius:14px}
+html body .mdl.ox .ox-acts .ox-btn.pri{flex:2 1 0}
+html body .mdl.ox .ox-acts .ox-btn:not(.pri){background:var(--surface2);box-shadow:none}
+/* استبدال النص */
+#txS.txdock{padding:10px 14px 14px;gap:10px;border-radius:22px}
+#txS .txhd{flex:1 1 100%;display:flex;align-items:center;gap:8px}
+#txS .txhd .txcap{flex:1;font:800 14px system-ui;color:var(--ink)}
+#txS .txhd .txc{min-height:36px;min-width:36px;padding:0;border:0;background:var(--surface2);color:var(--danger,#e5322d)}
+#txS .txr1 .txc.pri{min-height:44px;border-radius:14px}
+html body #txS .txr2,html body #textBar .txr2{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:3px;border-radius:14px;background:var(--surface2);overflow:visible;flex-wrap:nowrap}
+html body #txS .txr2 .txc,html body #textBar .txr2 .txc{min-height:38px;min-width:0;padding:0 4px;border:0;border-radius:11px;background:transparent;color:var(--ink2)}
+html body #txS .txr2 .txc.on,html body #textBar .txr2 .txc.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 5px rgba(0,0,0,.28)}
+html body #textBar .txr2{grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+</style>
 </head><body>
 <title>Timaxo Scan</title>
 
@@ -2876,7 +2917,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='164';
+  const APPV='165';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3563,9 +3604,9 @@ function txtSheet(a){const p=E.page,old=document.getElementById('txS');if(old)ol
  const SWB=['#FFFFFF','#F6F1E4','#EDEDED','#FFF6BF','#DDEBFF','#222222'];
  const seg=g=>'<div class="mdl-seg" data-g="'+g+'"><button type="button" data-m="a">'+(ar?'تلقائي':'Auto')+'</button><button type="button" data-m="m">'+(ar?'أنا أختار':'Manual')+'</button></div>';
  const sws=(g,arr)=>'<div class="cgs" data-s="'+g+'" hidden>'+arr.map(c=>'<button type="button" class="sw2" data-c="'+c+'" style="background:'+c+'" aria-label="'+c+'"></button>').join('')+'<label class="sw2 cus" aria-label="'+(ar?'لون مخصص':'Custom')+'"><input type="color" data-k="'+g+'" value="#ffffff"></label>'+(g==='bg'?'<button type="button" class="txc" data-pick="1">'+(ar?'التقاط من الصفحة':'Pick from page')+'</button>':'')+'</div>';
- m.innerHTML='<div class="txcap">'+(ar?'استبدال النص في الصورة':'Replace text in image')+'</div>'+
+ m.innerHTML='<div class="txhd"><div class="txcap">'+(ar?'استبدال النص في الصورة':'Replace text in image')+'</div><button type="button" class="txc" data-x="d" aria-label="'+(ar?'حذف':'Delete')+'"><svg class="i" style="width:18px;height:18px"><use href="#i-trash"/></svg></button></div>'+
  '<div class="txr1"><textarea dir="auto" rows="2"></textarea><button type="button" class="txc pri" data-x="k" style="min-height:44px;padding:0 18px">'+(ar?'تم':'Done')+'</button></div>'+
- '<div class="txr2"><button type="button" class="txc" data-p="f"><span class="txf"></span></button><button type="button" class="txc" data-p="s">'+(ar?'الحجم':'Size')+'</button><button type="button" class="txc" data-p="b">'+(ar?'التنعيم':'Blur')+'</button><button type="button" class="txc" data-p="c">'+(ar?'الألوان':'Colors')+'</button><span style="flex:1"></span><button type="button" class="txc" data-x="d" aria-label="'+(ar?'حذف':'Delete')+'"><svg class="i" style="width:18px;height:18px"><use href="#i-trash"/></svg></button></div>'+
+ '<div class="txr2"><button type="button" class="txc" data-p="f"><span class="txf"></span></button><button type="button" class="txc" data-p="s">'+(ar?'الحجم':'Size')+'</button><button type="button" class="txc" data-p="b">'+(ar?'التنعيم':'Blur')+'</button><button type="button" class="txc" data-p="c">'+(ar?'الألوان':'Colors')+'</button></div>'+
  '<div class="txpop" hidden><div class="pp" data-pp="f"><div id="txF"></div><div id="txW" style="margin-top:8px"></div></div><div class="pp" data-pp="s"><label class="tfs"><span>'+(ar?'الحجم':'Size')+'</span><input type="range" min="50" max="170" data-r="sz"></label></div><div class="pp" data-pp="b"><label class="tfs"><span>'+(ar?'التنعيم':'Blur')+'</span><input type="range" min="0" max="10" step=".5" data-r="bl"></label></div>'+
  '<div class="pp" data-pp="c"><div class="cg"><div class="cgt">'+(ar?'لون الخلفية':'Background')+'<small>'+(ar?'بيغطّي النص القديم':'covers the old text')+'</small></div>'+seg('bg')+sws('bg',SWB)+'</div><div class="cg" style="margin-top:12px"><div class="cgt">'+(ar?'لون النص':'Text color')+'</div>'+seg('tx')+sws('tx',COLORS.concat(['#FFFFFF']))+'</div></div></div>';
  document.body.appendChild(m);const ta=m.querySelector('textarea'),sz=m.querySelector('[data-r=sz]'),bl=m.querySelector('[data-r=bl]'),fb=m.querySelector('.txf');ta.value=a.txt;sz.value=(a.sz||1)*100;bl.value=a.bl==null?3:a.bl;
