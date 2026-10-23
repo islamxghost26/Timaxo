@@ -1352,6 +1352,8 @@ html body .mdl.ox .ox-pb i::after{content:'';position:absolute;inset:0;backgroun
 @keyframes oxsh{to{transform:translateX(100%)}}
 html body .mdl.ox .ox-pc{margin-top:10px;font:800 14px system-ui;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.3px}
 @media (prefers-reduced-motion:reduce){html body .mdl.ox .ox-th,html body .mdl.ox .ox-pb i::after{animation:none}}
+
+.tbx .tbx-alt{margin:2px 4px;padding:4px 12px;border-radius:14px;background:color-mix(in srgb,var(--accent,#1b63f0) 18%,transparent);color:var(--ink);font:700 12.5px system-ui;max-width:46%}
 </style>
 </head><body>
 <title>Timaxo Scan</title>
@@ -3134,7 +3136,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='170';
+  const APPV='171';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -4091,15 +4093,29 @@ async function tbRefine(cv,tb,lang,q,prog,isDead){const wk=await getW(lang,q);tr
     txt=ocrText(await wk.recognize(c),25);}}
   o.push(txt.replace(/\s*\n\s*/g,sh>mh*2.2?'\n':' ').trim());n++;prog(n/tot);await new Promise(r=>setTimeout(r,0));}out.push(o);}
  return out;}
-/* v170: re-read ONE cell from the full-resolution image (fast + accurate) */
+/* v171: re-read ONE cell with 2 engines (modern ONNX on original+flat crops, Tesseract), pick best by confidence, keep the others as alternatives */
 const TBFLAT=new WeakMap();
-async function tbRefineOne(cv,b0,tb,lang,q,pcw){const wk=await getW(lang,q);let f=TBFLAT.get(cv);if(!f){f=ocrPrep(cv,'flat');TBFLAT.set(cv,f);}
- const sc=pcw&&Math.abs(f.width/pcw-1)>.02?f.width/pcw:1,b={x0:b0.x0*sc,y0:b0.y0*sc,x1:b0.x1*sc,y1:b0.y1*sc},fx=f.getContext('2d'),ins=4*sc,x0=Math.max(0,Math.round(b.x0+ins)),y0=Math.max(0,Math.round(b.y0+ins)),sw=Math.min(Math.round(b.x1-b.x0-ins*2),f.width-x0),sh=Math.min(Math.round(b.y1-b.y0-ins*2),f.height-y0);
- if(sw<10||sh<8)return '';const dd=fx.getImageData(x0,y0,sw,sh).data;let dk=0;for(let i=0;i<dd.length;i+=4)if(dd[i]<130)dk++;if(dk<=sw*sh*.003)return '';
- const mh=tbMedian(tb.boxes.map(r=>(r[0].y1-r[0].y0)*sc)),multi=sh>mh*1.7,k=Math.max(1.5,Math.min(5,130/sh)),pd=18,c=document.createElement('canvas');c.width=Math.round(sw*k)+pd*2;c.height=Math.round(sh*k)+pd*2;
- const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality='high';x.drawImage(f,x0,y0,sw,sh,pd,pd,sw*k,sh*k);
- const rd=async m=>{try{await wk.setParameters({tessedit_pageseg_mode:m,preserve_interword_spaces:'1',user_defined_dpi:'300'});}catch(_){}return ocrText(await wk.recognize(c),20);};
- let t=await rd(multi?'6':'7');if(!t&&!multi)t=await rd('6');return t.replace(/\s*\n\s*/g,multi?'\n':' ').trim();}
+async function tbRefineOne(cv,b0,tb,lang,q,pcw){let f=TBFLAT.get(cv);if(!f){f=ocrPrep(cv,'flat');TBFLAT.set(cv,f);}
+ const sc=pcw&&Math.abs(cv.width/pcw-1)>.02?cv.width/pcw:1,b={x0:b0.x0*sc,y0:b0.y0*sc,x1:b0.x1*sc,y1:b0.y1*sc},ins=Math.max(4,Math.min(b.x1-b.x0,b.y1-b.y0)*.05),
+  x0=Math.max(0,Math.round(b.x0+ins)),y0=Math.max(0,Math.round(b.y0+ins)),sw=Math.min(Math.round(b.x1-b.x0-ins*2),f.width-x0),sh=Math.min(Math.round(b.y1-b.y0-ins*2),f.height-y0);
+ if(sw<10||sh<8)return{t:'',alts:[]};
+ const fx=f.getContext('2d'),dd=fx.getImageData(x0,y0,sw,sh).data;let dk=0;for(let i=0;i<dd.length;i+=4)if(dd[i]<130)dk++;if(dk<=sw*sh*.003)return{t:'',alts:[]};
+ const mh=tbMedian(tb.boxes.map(r=>(r[0].y1-r[0].y0)*sc)),multi=sh>mh*1.7;
+ const mk=(src,k,pd)=>{const c=document.createElement('canvas');c.width=Math.round(sw*k)+pd*2;c.height=Math.round(sh*k)+pd*2;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality='high';x.drawImage(src,x0,y0,sw,sh,pd,pd,sw*k,sh*k);return c;};
+ const fin=t=>{t=String(t||'').replace(/\s*\n\s*/g,multi?'\n':' ').trim();try{if(window.TXFields&&t)t=TXFields.fixDigits(t);}catch(_){}return t;};
+ const C=[];
+ /* 1) المحرك الحديث على الأصل ثم على النسخة المسوّاة */
+ try{if(window.TXOnnx&&localStorage.getItem('tx_onnx')!=='0'){const sd=await TXOnnx.pickScript(lang);if(sd){const k=Math.max(1,Math.min(4,120/sh)),pd=Math.round(Math.max(20,sh*k*.25));
+   for(const [src,nm] of [[cv,'orig'],[f,'flat']]){try{const r=await TXOnnx.run(mk(src,k,pd),sd,{fast:q==='fast'});if(r&&r.T&&r.T.trim())C.push({t:fin(r.T),conf:(r.sc&&r.sc.mean)||0,e:'onnx-'+nm});}catch(e){console.warn('cell onnx',e);}}}}}catch(e){console.warn(e);}
+ /* 2) Tesseract على النسخة المسوّاة (السطر الواحد ثم الكتلة) */
+ try{const wk=await getW(lang,q),k=Math.max(1.5,Math.min(5,130/sh)),c=mk(f,k,18);
+  const rd=async m=>{try{await wk.setParameters({tessedit_pageseg_mode:m,preserve_interword_spaces:'1',user_defined_dpi:'300'});}catch(_){}const r=await wk.recognize(c);return{t:fin(ocrText(r,20)),conf:(r&&r.data&&r.data.confidence)||0};};
+  let r=await rd(multi?'6':'7');if(!r.t&&!multi)r=await rd('6');if(r.t)C.push({t:r.t,conf:r.conf,e:'tess'});}catch(e){console.warn('cell tess',e);}
+ if(!C.length)return{t:'',alts:[]};
+ /* الاتفاق بين محركين يرفع الثقة، والمحرك الحديث له أفضلية بسيطة */
+ const norm=x=>x.replace(/\s+/g,'').toLowerCase();C.forEach(x=>{x.s=x.conf+(x.e.startsWith('onnx')?6:0)+C.filter(y=>y!==x&&norm(y.t)===norm(x.t)).length*8;});
+ C.sort((u,v)=>v.s-u.s);const alts=[];C.forEach(x=>{if(x.t&&x.t!==C[0].t&&!alts.includes(x.t))alts.push(x.t);});
+ return{t:C[0].t,alts:alts.slice(0,3)};}
 /* ---- file writers (no libraries: tiny store-only ZIP so .xlsx / .docx work offline) ---- */
 const TBCRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
 const tbCrc=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=TBCRC[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
@@ -4388,7 +4404,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   try{ocrIdx(p,T,box);ocrExtras(ta,p,T,box)}catch(_){}try{ocrFields(res,T,ar)}catch(e){console.warn('fx',e)}{const ox=ta.nextElementSibling;if(ox&&ox.classList.contains('ocx'))ox.dataset.l=L2('تصدير كـ','Export as');}
   if(!T)ta.hidden=true;else ta.hidden=false;deepNext=!deep;try{tblInit(best)}catch(e){console.warn('tbl',e)}};
  const tbx=document.createElement('div');tbx.className='tbx';tbx.hidden=true;res.appendChild(tbx);
- let TB=null,tbTok=0,tbSrc=null,tbCrop=null,tbCmp=localStorage.getItem('tx_tbcmp')!=='0',tbZ=1,tbEdOpen=false,tbCpOpen=false,tbRC=0,tbCv=null,tbQ=null,tbSplit=0,tbHist=[],tbWt=localStorage.getItem('tx_tbwt')!=='0';
+ let TB=null,tbTok=0,tbSrc=null,tbCrop=null,tbCmp=localStorage.getItem('tx_tbcmp')!=='0',tbZ=1,tbEdOpen=false,tbCpOpen=false,tbAlt=null,tbRC=0,tbCv=null,tbQ=null,tbSplit=0,tbHist=[],tbWt=localStorage.getItem('tx_tbwt')!=='0';
  const tbSave=(n,b)=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
  const tbRows=()=>{if(TB&&TB.engine===2&&TB.nR){const M2=Array.from({length:TB.nR},()=>Array(TB.nC).fill(''));tbx.querySelectorAll('.tbx-t td[data-r]').forEach(td=>{M2[+td.dataset.r][+td.dataset.c]=td.innerText.replace(/\u00a0/g,' ').trim();});return M2;}return Array.from(tbx.querySelectorAll('.tbx-t tr')).map(tr=>Array.from(tr.children).map(td=>td.innerText.replace(/\u00a0/g,' ').trim()));};
  const tbEd=()=>{if(!(TB&&TB.engine===2))return'';const sw=['','FFF2CC','DDEBFF','E2F0D9','FCE4D6','D9D9D9','93B2DE'];
@@ -4431,11 +4447,11 @@ const tbReadCell=async()=>{if(!TB||TB.engine!==2||!TB.boxes)return;if(!tbCur){to
   for(let i=r;i<Math.min(TB.nR,r+rs);i++)for(let j=c;j<Math.min(TB.nC,c+cs);j++){const q=TB.boxes[i]&&TB.boxes[i][j];if(q&&q.x1>q.x0)b=b?{x0:Math.min(b.x0,q.x0),y0:Math.min(b.y0,q.y0),x1:Math.max(b.x1,q.x1),y1:Math.max(b.y1,q.y1)}:{x0:q.x0,y0:q.y0,x1:q.x1,y1:q.y1};}
   if(!b){toast(L2('مش قادر أحدد مكان الخلية في الصورة','Cannot locate the cell in the image'));return;}
   const my=++tbTok,td=tbx.querySelector('td[data-r="'+r+'"][data-c="'+c+'"]'),hint=tbx.querySelector('#tbN');tbRC=1;if(td)td.classList.add('tbx-rd');tbx.classList.add('rding');if(hint)hint.textContent=L2('بقرأ الخلية دي بس من الصورة الأصلية…','Reading just this cell from the original image…');
-  let txt=null;try{txt=await tbRefineOne(tbCv||cv,b,TB,lang(),OQ(),tbSrc&&tbSrc.pc&&tbSrc.pc.width);}catch(err){console.error(err);toast(L2('تعذّرت قراءة الخلية: ','Failed: ')+String(err&&err.message||err).slice(0,60));}
+  let txt=null,alts=[];try{const rr=await tbRefineOne(tbCv||cv,b,TB,lang(),OQ(),tbSrc&&tbSrc.pc&&tbSrc.pc.width);txt=rr.t;alts=rr.alts||[];}catch(err){console.error(err);toast(L2('تعذّرت قراءة الخلية: ','Failed: ')+String(err&&err.message||err).slice(0,60));}
   tbRC=0;tbx.classList.remove('rding');if(td)td.classList.remove('tbx-rd');if(dead||my!==tbTok)return;
   if(txt==null){return;}if(!txt){toast(L2('ملقتش نص في الخلية دي','No text found in this cell'));if(hint)hint.textContent=L2('ملقتش نص في الخلية دي','No text found in this cell');return;}
   TB.rows=tbRows();const old=TB.rows[r]&&TB.rows[r][c];if(old===txt){toast(L2('نفس النتيجة — القراءة الحالية صح غالبًا','Same result — current text is probably right'));return;}
-  tbHist.push(tbSnap());if(tbHist.length>30)tbHist.shift();TB.rows[r][c]=txt;tbDraw();const n2=tbx.querySelector('#tbN');if(n2)n2.textContent=L2('اتقرأت الخلية ✓ راجع النتيجة (تراجع لو مش مظبوطة)','Cell read ✓ check it (Undo if wrong)');};
+  tbHist.push(tbSnap());if(tbHist.length>30)tbHist.shift();TB.rows[r][c]=txt;tbAlt={r:r,c:c,l:alts};tbDraw();const n2=tbx.querySelector('#tbN');if(n2){n2.textContent=L2('اتقرأت الخلية ✓ ','Cell read ✓ ')+(alts.length?L2('لو مش مظبوطة جرّب بديل:','If wrong try:'):L2('راجع النتيجة','check it'));alts.forEach((a,i)=>{const bt=document.createElement('button');bt.type='button';bt.className='tbx-alt';bt.dataset.alt=i;bt.textContent=a.length>26?a.slice(0,26)+'…':a;n2.appendChild(bt);});}};
  tbx.addEventListener('change',e=>{const ci=e.target.closest&&e.target.closest('.tbw-cc');if(ci)tbApply('bg',String(ci.value||'').replace('#','').toUpperCase());});
 const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy';o.innerHTML='<div class="tbw-bc"><div class="tbw-ring" style="--p:0"><b>0%</b></div><div class="tbw-bt">'+title+'</div><small>'+L2('ممكن ياخد دقيقة. تقدر تلغي في أي وقت','May take a minute. You can cancel anytime')+'</small><button type="button">'+L2('إلغاء','Cancel')+'</button></div>';
   m.querySelector('.mdl').appendChild(o);o.querySelector('button').onclick=()=>{tbTok++;o.remove();toast(L2('اتلغت القراءة','Cancelled'));};
@@ -4471,7 +4487,7 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   {const a=tbx.querySelector('.tbw-tools'),b=tbx.querySelector('.tbx-w'),c=tbx.querySelector('#tbSrcW'),d=tbx.querySelector('.tbw-main');if(a){a.scrollLeft=SV.tl;a.dispatchEvent(new Event('scroll'));}if(b){b.scrollTop=SV.wt;b.scrollLeft=SV.wl;}if(c){c.scrollTop=SV.st;c.scrollLeft=SV.sl;}if(d)d.scrollTop=SV.mt;}};
  tbx.addEventListener('focusin',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td&&TB&&TB.engine===2){const n={r:+td.dataset.r,c:+td.dataset.c};if(!tbCur||tbCur.r!==n.r||tbCur.c!==n.c){tbx.querySelectorAll('td.tbx-sel').forEach(x=>x.classList.remove('tbx-sel'));td.classList.add('tbx-sel');}tbCur=n;tbx.classList.add('hascur');tbHlShow(n.r,n.c,true);}});
  tbx.addEventListener('focusout',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td)td.contentEditable='false';});
- tbx.onclick=async e=>{const scb=e.target.closest('[data-sc]');if(scb){const t0=tbx.querySelector('.tbw-tools');if(t0)t0.scrollBy({left:+scb.dataset.sc*190,behavior:'smooth'});return;}const tv=e.target.closest('[data-tv2]');if(tv){tbView(tv.dataset.tv2);return;}const ud=e.target.closest('[data-undo]');if(ud){tbUndo();return;}const rc=e.target.closest('[data-rc]');if(rc){tbReadCell();return;}const cp=e.target.closest('[data-cp]');if(cp){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}tbCpOpen=!tbCpOpen;tbx.classList.toggle('cpo',tbCpOpen);const pp=tbx.querySelector('.tbw-cp');if(pp)pp.hidden=!tbCpOpen;return;}const tdc=e.target.closest('td[data-r]');if(tdc&&TB&&TB.engine===2){tbTap(tdc);return;}const cm=e.target.closest('[data-cm]');if(cm){tbCmp=cm.dataset.cm==='1';try{localStorage.setItem('tx_tbcmp',tbCmp?'1':'0');}catch(_){}try{TB.rows=tbRows();}catch(_){}tbDraw();return;}const zm=e.target.closest('[data-zm]');if(zm){tbZ=Math.max(1,Math.min(4,tbZ+(+zm.dataset.zm)*.5));const sc=tbx.querySelector('#tbSc');if(sc)sc.style.width=Math.round(tbZ*100)+'%';if(tbCur)setTimeout(()=>tbHlShow(tbCur.r,tbCur.c,true),30);return;}if(e.target.closest('#tbSc')){tbPick(e);return;}const et=e.target.closest('[data-et]');if(et){tbEdOpen=!tbEdOpen;tbx.classList.toggle('edo',tbEdOpen);return;}const ed=e.target.closest('[data-ed]');if(ed&&TB&&TB.engine===2){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}const k=ed.dataset.ed;TB.rows=tbRows();tbHist.push(tbSnap());if(tbHist.length>30)tbHist.shift();const ok=TXExport.op(TB,tbCur,k.startsWith('sz')?'sz':k,k==='sz+'?1:k==='sz-'?-1:ed.dataset.v);if(!ok)toast(L2('مش ينفع هنا','Not possible here'));tbDraw();return;}const sw=e.target.closest('[data-tt]');if(sw&&TB&&TB.all){const nt=TB.all[+sw.dataset.tt];if(nt&&nt!==TB){try{TB.rows=tbRows();}catch(_){}TB=nt;tbDraw();}return;}const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t;{const mn=tbx.querySelector('.tbw-ex');if(k==='exp'){if(mn)mn.hidden=!mn.hidden;return;}if(mn&&k!=='wt')mn.hidden=true;}const rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
+ tbx.onclick=async e=>{const scb=e.target.closest('[data-sc]');if(scb){const t0=tbx.querySelector('.tbw-tools');if(t0)t0.scrollBy({left:+scb.dataset.sc*190,behavior:'smooth'});return;}const tv=e.target.closest('[data-tv2]');if(tv){tbView(tv.dataset.tv2);return;}const ud=e.target.closest('[data-undo]');if(ud){tbUndo();return;}const al=e.target.closest('[data-alt]');if(al&&tbAlt&&TB){const v=tbAlt.l[+al.dataset.alt];if(v!=null){TB.rows=tbRows();tbHist.push(tbSnap());TB.rows[tbAlt.r][tbAlt.c]=v;const old=TB.rows[tbAlt.r][tbAlt.c];tbAlt.l=tbAlt.l.filter(x=>x!==v);tbDraw();toast(L2('اتبدّلت للبديل','Switched to alternative'));}return;}const rc=e.target.closest('[data-rc]');if(rc){tbReadCell();return;}const cp=e.target.closest('[data-cp]');if(cp){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}tbCpOpen=!tbCpOpen;tbx.classList.toggle('cpo',tbCpOpen);const pp=tbx.querySelector('.tbw-cp');if(pp)pp.hidden=!tbCpOpen;return;}const tdc=e.target.closest('td[data-r]');if(tdc&&TB&&TB.engine===2){tbTap(tdc);return;}const cm=e.target.closest('[data-cm]');if(cm){tbCmp=cm.dataset.cm==='1';try{localStorage.setItem('tx_tbcmp',tbCmp?'1':'0');}catch(_){}try{TB.rows=tbRows();}catch(_){}tbDraw();return;}const zm=e.target.closest('[data-zm]');if(zm){tbZ=Math.max(1,Math.min(4,tbZ+(+zm.dataset.zm)*.5));const sc=tbx.querySelector('#tbSc');if(sc)sc.style.width=Math.round(tbZ*100)+'%';if(tbCur)setTimeout(()=>tbHlShow(tbCur.r,tbCur.c,true),30);return;}if(e.target.closest('#tbSc')){tbPick(e);return;}const et=e.target.closest('[data-et]');if(et){tbEdOpen=!tbEdOpen;tbx.classList.toggle('edo',tbEdOpen);return;}const ed=e.target.closest('[data-ed]');if(ed&&TB&&TB.engine===2){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}const k=ed.dataset.ed;TB.rows=tbRows();tbHist.push(tbSnap());if(tbHist.length>30)tbHist.shift();const ok=TXExport.op(TB,tbCur,k.startsWith('sz')?'sz':k,k==='sz+'?1:k==='sz-'?-1:ed.dataset.v);if(!ok)toast(L2('مش ينفع هنا','Not possible here'));tbDraw();return;}const sw=e.target.closest('[data-tt]');if(sw&&TB&&TB.all){const nt=TB.all[+sw.dataset.tt];if(nt&&nt!==TB){try{TB.rows=tbRows();}catch(_){}TB=nt;tbDraw();}return;}const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t;{const mn=tbx.querySelector('.tbw-ex');if(k==='exp'){if(mn)mn.hidden=!mn.hidden;return;}if(mn&&k!=='wt')mn.hidden=true;}const rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
   if(k==='copy'){let ok=false;try{if(window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([TB.engine===2&&window.TXExport?TXExport.html(Object.assign({},TB,{rows})):tbHtml(rows,TB.rtl)],{type:'text/html'}),'text/plain':new Blob([tbTsv(rows)],{type:'text/plain'})})]);ok=true;}}catch(_){}
    if(!ok){try{await navigator.clipboard.writeText(tbTsv(rows));ok=true;}catch(_){}}
    toast(ok?L2('اتنسخ الجدول — الصقه في Word أو Excel','Table copied — paste it into Word or Excel'):L2('تعذّر النسخ','Copy failed'));}
