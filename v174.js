@@ -47,6 +47,26 @@ html .tbx .tbw-ec.pri i{background:linear-gradient(150deg,rgba(255,255,255,.34),
 html .tbx .tbw-ec.pri i svg{stroke-width:1.7}html .tbx .tbw-ec.pri i svg .d{fill:rgba(255,255,255,.3)}
 html .tbx .tbw-eg .tbw-ec{gap:8px;padding:12px 6px 11px}
 html .tbx .tbw-er em{transition:background .2s,color .2s}
+/* --- قايمة استخراج النص (.ox) --- */
+html body .mdl.ox{animation:txsheet .36s cubic-bezier(.22,1.18,.36,1) both;will-change:transform;background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 92%,var(--accent,#1b63f0)),var(--surface) 38%);box-shadow:0 -22px 60px -20px #000c,inset 0 1px 0 rgba(255,255,255,.08)}
+html body .mdl.ox>*{animation:txrise .4s cubic-bezier(.2,.9,.3,1) both}
+html body .mdl.ox>*:nth-child(3){animation-delay:.04s}html body .mdl.ox>*:nth-child(4){animation-delay:.08s}html body .mdl.ox>*:nth-child(5){animation-delay:.12s}html body .mdl.ox>*:nth-child(n+6){animation-delay:.16s}
+html body .ox-ic{width:46px;height:46px;border-radius:16px;background:linear-gradient(145deg,#4f8dff,#7a5cff);box-shadow:0 10px 22px -8px rgba(99,102,241,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+html body .ox-ic svg{stroke-width:1.8}
+html body .ox-chip{min-height:40px;border-width:1px;font-weight:750;transition:background .2s,border-color .2s,color .2s,transform .22s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
+html body .ox-chip.on{background:linear-gradient(145deg,#4f93ff,#2f6df0);box-shadow:0 8px 18px -8px rgba(47,109,240,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+html body .ox-chip:not(.on):active{background:var(--surface2)}
+html body .ox-b{height:30px;padding:0 12px;border-radius:15px;font-weight:750;box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 18%,transparent)}
+html body .ox-res>*:first-child,html body .ox-res .ocx,html body .ox-res textarea{border-radius:22px}
+html body .ox-btn{border-radius:18px;height:54px;font-weight:800;gap:8px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--line) 80%,transparent);transition:transform .22s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
+html body .ox-btn:active{transform:scale(.94)}
+html body .ox-btn svg{width:22px;height:22px;stroke-width:1.7;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+html body .ox-btn:active svg{transform:scale(1.18) rotate(-6deg)}
+html body .ox-btn:not(.pri) svg{color:var(--accent,#3d8bff)}
+html body .ox-btn.pri{background:linear-gradient(135deg,#1b63f0,#22a8f5);box-shadow:0 12px 26px -10px rgba(27,99,240,.95),inset 0 1px 0 rgba(255,255,255,.35)}
+html body .ox-btn.pri::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);transform:translateX(-120%);animation:txshine 3.2s ease-in-out 1s infinite}
+@keyframes txshine{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+html body .ox-btn:not(.pri){flex-direction:column;gap:3px;font-size:12.5px;min-width:76px}
 /* --- القوائم العامة: ظهور أخف --- */
 #mrBx{animation:txin .26s cubic-bezier(.2,1,.3,1) both}
 /* --- أيقونات الشريط الرئيسي: ألوان وتفاعل --- */
