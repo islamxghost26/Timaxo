@@ -1354,6 +1354,17 @@ html body .mdl.ox .ox-pc{margin-top:10px;font:800 14px system-ui;color:var(--ink
 @media (prefers-reduced-motion:reduce){html body .mdl.ox .ox-th,html body .mdl.ox .ox-pb i::after{animation:none}}
 
 .tbx .tbx-alt{margin:2px 4px;padding:4px 12px;border-radius:14px;background:color-mix(in srgb,var(--accent,#1b63f0) 18%,transparent);color:var(--ink);font:700 12.5px system-ui;max-width:46%}
+
+.tbx .tbw-tools{gap:6px}
+.tbx .tbw-tl{width:68px;min-height:64px;gap:5px;position:relative;overflow:hidden;transition:background .18s,opacity .18s,transform .14s cubic-bezier(.3,1.4,.5,1)}
+.tbx .tbw-tl svg,.tbx .tbw-tl .tbw-t{width:38px;height:30px;padding:4px 8px;box-sizing:border-box;border-radius:11px;background:color-mix(in srgb,var(--accent,#1b63f0) 14%,transparent);fill:none;stroke:var(--accent,#1b63f0);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;color:var(--accent,#1b63f0);display:grid;place-items:center;transition:background .18s,transform .18s,stroke .18s}
+.tbx .tbw-tl .tbw-t{font:900 15px/22px system-ui;text-align:center}
+.tbx .tbw-tl:active{transform:scale(.9);background:transparent}
+.tbx .tbw-tl:active svg,.tbx .tbw-tl:active .tbw-t{background:var(--accent,#1b63f0);stroke:#fff;color:#fff;transform:scale(1.06)}
+.tbx .tbw-tl span{font:700 10.5px/1.15 system-ui;color:var(--ink)}
+.tbx .tbw-tl.need{opacity:.4}.tbx.hascur .tbw-tl.need{opacity:1}
+.tbx .tbx-t td.tbx-pop{animation:tbpop .36s ease-out}
+@keyframes tbpop{0%{box-shadow:inset 0 0 0 0 rgba(27,99,240,.55)}40%{box-shadow:inset 0 0 0 9px rgba(27,99,240,.28)}100%{box-shadow:inset 0 0 0 0 rgba(27,99,240,0)}}
 </style>
 </head><body>
 <title>Timaxo Scan</title>
@@ -2631,7 +2642,7 @@ async function commitPage(){
   if(E.isDraft){state.pages.push(p);E.isDraft=false;state.draft=null;}
   p.thumb=await makeThumb(p);await persist(p);await persistMeta();
 }
-$('#doneBtn').onclick=async()=>{closeEditDocks();busy(true);await commitPage();const id=E.page&&E.page.id;busy(false);E.page=null;if(!nextQueued())goHome(id);};
+$('#doneBtn').onclick=async()=>{try{if(E.page)OCRMEM.delete(E.page.id);}catch(_){}closeEditDocks();busy(true);await commitPage();const id=E.page&&E.page.id;busy(false);E.page=null;if(!nextQueued())goHome(id);};
 $('#nextBtn').onclick=async()=>{
   closeEditDocks();$('#camIn').click();
   await commitPage();const id=E.page&&E.page.id;E.page=null;goHome(id);
@@ -3136,7 +3147,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='171';
+  const APPV='172';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3919,6 +3930,7 @@ async function ocrRec(wk,pc,lang,q,psm){
   return{data:{text,lines,words}};
  }finally{LOGMUTE=0;}}
 /* runs 1-2 passes (more in deep mode) over differently prepared copies of the image and keeps the one Tesseract trusts most */
+const OCRMEM=new Map();
 async function ocrRun(cv,lang,q,psm,deep,stage,isDead){
  const wk=await getW(lang,q),sp=psm==='6'?'6':'11',R=[];let pc1=null,idx=0;
  const plan=deep?[{m:'flat',k:1,p:psm},{m:'plain',k:1,p:psm},{m:'flat',k:.4,p:sp},{m:'flat',k:.22,p:sp},{m:'inv',k:1,p:sp},{m:'bin',k:.5,p:sp},{m:'flat40',k:1,p:psm},{m:'chB',k:1,p:psm}]:[];
@@ -4104,16 +4116,15 @@ async function tbRefineOne(cv,b0,tb,lang,q,pcw){let f=TBFLAT.get(cv);if(!f){f=oc
  const mk=(src,k,pd)=>{const c=document.createElement('canvas');c.width=Math.round(sw*k)+pd*2;c.height=Math.round(sh*k)+pd*2;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality='high';x.drawImage(src,x0,y0,sw,sh,pd,pd,sw*k,sh*k);return c;};
  const fin=t=>{t=String(t||'').replace(/\s*\n\s*/g,multi?'\n':' ').trim();try{if(window.TXFields&&t)t=TXFields.fixDigits(t);}catch(_){}return t;};
  const C=[];
- /* 1) المحرك الحديث على الأصل ثم على النسخة المسوّاة */
+ /* 1) نفس مسار «قراءة الصفحة» العميق (تعدد تمريرات + دمج) بس على الخلية لوحدها: ده الأدق */
+ try{const k=Math.max(1,Math.min(4,120/sh)),pd=Math.round(Math.max(24,sh*k*.3)),c=mk(cv,k,pd),r=await ocrRun(c,lang,q,'6',true,()=>{},()=>false);
+  if(r){const t=fin(r.T!=null?r.T:ocrText(r.r,25));if(t)C.push({t:t,conf:(r.sc&&r.sc.mean)||0,e:'deep'});}}catch(e){console.warn('cell deep',e);}
+ /* 2) المحرك الحديث على قصّة الأصل (للمقارنة) */
  try{if(window.TXOnnx&&localStorage.getItem('tx_onnx')!=='0'){const sd=await TXOnnx.pickScript(lang);if(sd){const k=Math.max(1,Math.min(4,120/sh)),pd=Math.round(Math.max(20,sh*k*.25));
-   for(const [src,nm] of [[cv,'orig'],[f,'flat']]){try{const r=await TXOnnx.run(mk(src,k,pd),sd,{fast:q==='fast'});if(r&&r.T&&r.T.trim())C.push({t:fin(r.T),conf:(r.sc&&r.sc.mean)||0,e:'onnx-'+nm});}catch(e){console.warn('cell onnx',e);}}}}}catch(e){console.warn(e);}
- /* 2) Tesseract على النسخة المسوّاة (السطر الواحد ثم الكتلة) */
- try{const wk=await getW(lang,q),k=Math.max(1.5,Math.min(5,130/sh)),c=mk(f,k,18);
-  const rd=async m=>{try{await wk.setParameters({tessedit_pageseg_mode:m,preserve_interword_spaces:'1',user_defined_dpi:'300'});}catch(_){}const r=await wk.recognize(c);return{t:fin(ocrText(r,20)),conf:(r&&r.data&&r.data.confidence)||0};};
-  let r=await rd(multi?'6':'7');if(!r.t&&!multi)r=await rd('6');if(r.t)C.push({t:r.t,conf:r.conf,e:'tess'});}catch(e){console.warn('cell tess',e);}
+   const r=await TXOnnx.run(mk(cv,k,pd),sd,{fast:q==='fast'});if(r&&r.T&&r.T.trim())C.push({t:fin(r.T),conf:(r.sc&&r.sc.mean)||0,e:'onnx'});}}}catch(e){console.warn('cell onnx',e);}
  if(!C.length)return{t:'',alts:[]};
- /* الاتفاق بين محركين يرفع الثقة، والمحرك الحديث له أفضلية بسيطة */
- const norm=x=>x.replace(/\s+/g,'').toLowerCase();C.forEach(x=>{x.s=x.conf+(x.e.startsWith('onnx')?6:0)+C.filter(y=>y!==x&&norm(y.t)===norm(x.t)).length*8;});
+ /* القراءة العميقة لها أفضلية، واتفاق محركين يرفع الثقة */
+ const norm=x=>x.replace(/\s+/g,'').toLowerCase();C.forEach(x=>{x.s=x.conf+(x.e==='deep'?14:0)+C.filter(y=>y!==x&&norm(y.t)===norm(x.t)).length*8;});
  C.sort((u,v)=>v.s-u.s);const alts=[];C.forEach(x=>{if(x.t&&x.t!==C[0].t&&!alts.includes(x.t))alts.push(x.t);});
  return{t:C[0].t,alts:alts.slice(0,3)};}
 /* ---- file writers (no libraries: tiny store-only ZIP so .xlsx / .docx work offline) ---- */
@@ -4383,7 +4394,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
   '<div class="ox-acts" id="oActs" hidden><button type="button" class="ox-btn pri" data-a="c">'+OX_SVG.copy+'<span>'+L2('نسخ النص','Copy text')+'</span></button>'+(box?'<button type="button" class="ox-btn" data-a="r">'+L2('استبدال','Replace')+'</button>':'')+'<button type="button" class="ox-btn" data-a="t">'+OX_SVG.tr+'<span>'+L2('ترجمة','Translate')+'</span></button><button type="button" class="ox-btn ic" data-a="o" aria-label="'+L2('المزيد','More')+'">'+OX_SVG.more+'<span>'+L2('المزيد','More')+'</span></button></div><div class="ox-menu" id="oMenu" hidden></div></div></div>';
  document.body.appendChild(m);
  const $m=s=>m.querySelector(s),ta=$m('textarea'),pb=$m('#oP'),t1=$m('#oT1'),t2=$m('#oT2'),res=$m('#oRes'),run=$m('#oRun'),acts=$m('#oActs'),meta=$m('#oMeta'),note=$m('#oNote'),th=$m('#oTh');
- let dead=0,rid=0,cv=null,ink='#222',deepNext=false,sk=0,sbox=null,bm=null;
+ let dead=0,rid=0,cv=null,ink='#222',deepNext=false,sk=0,sbox=null,bm=null,lastBest=null,lastDeep=false;
  /* v141: «تحديد النص من الصورة» انتقل لقايمة الإعدادات (⚙) */
  const chip=(l,cls)=>'<button type="button" class="ox-chip '+(cls||'')+'" data-l="'+l.c+'">'+lname(l)+'</button>';
  const isAuto=()=>sel.length===2&&sel.includes('ara')&&sel.includes('eng');
@@ -4396,7 +4407,7 @@ async function ocrModal(p,box){const ar=AR(),L2=(a,b)=>ar?a:b;
     if(n){const cx=x=>((x-bm.pd)/bm.k+bm.sx)/bm.fw,cy=y=>((y-bm.pd)/bm.k+bm.sy)/bm.fh,px=2/bm.fw,py=2/bm.fh;
      const nb={x0:Math.max(box.x0,cx(ax)-px),y0:Math.max(box.y0,cy(ay)-py),x1:Math.min(box.x1,cx(bx)+px),y1:Math.min(box.y1,cy(by)+py)};
      const ar0=(box.x1-box.x0)*(box.y1-box.y0),ar1=(nb.x1-nb.x0)*(nb.y1-nb.y0);if(nb.x1>nb.x0&&nb.y1>nb.y0&&ar1/ar0>=.15)sbox=nb;}}}catch(_){} /* v141: تضييق مربع الاستبدال على حدود النص الفعلية */let T=best.T!=null?best.T:ocrText(best.r,35);try{if(window.TXFields)T=TXFields.fixDigits(T)}catch(_){}
-  ta.value=T;res.hidden=false;acts.hidden=false;run.hidden=true;th.classList.add('done');
+  lastBest=best;lastDeep=!!deep;ta.value=T;res.hidden=false;acts.hidden=false;run.hidden=true;th.classList.add('done');
   const pct=Math.round(sc.mean),qc=pct>=85?'g':pct>=70?'m':'l',ql=pct>=85?L2('دقة عالية','High accuracy'):pct>=70?L2('دقة جيدة','Good accuracy'):L2('راجع النص','Please review');
   tbQ={pct:pct,qc:qc,ql:ql};const nw=T.split(/\s+/).filter(Boolean).length,nl=T.split('\n').filter(Boolean).length;
   meta.innerHTML=T?'<span class="ox-b q '+qc+'"><i></i>'+ql+' · '+pct+'%</span><span class="ox-b mu">'+nw+' '+L2('كلمة','words')+' · '+nl+' '+L2('سطر','lines')+'</span>':'';
@@ -4476,9 +4487,9 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   '<div class="tbx-w"><table class="tbx-t" dir="'+(TB.rtl?'rtl':'ltr')+'">'+tbBody()+'</table></div></div>'+
   '<div class="tbw-hint" id="tbN">'+(eng2?L2('اضغط على خلية لاختيارها · اضغط مرة تانية للكتابة فيها','Tap a cell to select · tap again to type'):L2('اضغط على أي خلية لتعديلها','Tap any cell to edit'))+'</div>'+
   (eng2?'<div class="tbw-cp"'+(tbCpOpen?'':' hidden')+'>'+sw.map(c=>'<button type="button" class="tbx-sw2'+(curBg===c?' on':'')+'" data-ed="bg" data-v="'+c+'" style="background:'+(c?'#'+c:'transparent')+'" aria-label="color"></button>').join('')+'<label class="tbx-sw2 cu" aria-label="custom color"><input type="color" class="tbw-cc" value="#'+(curBg||'ffd966')+'"></label></div>'+
-  '<div class="tbw-tw"><div class="tbw-tools">'+TL('data-undo="1"',IC('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>'),L2('تراجع','Undo'),0)+TL('data-rc="1"',IC('<rect x="3" y="5" width="12" height="10" rx="1.6"/><circle cx="16.5" cy="16.5" r="3.6"/><path d="M19.2 19.2l2.3 2.3M6.5 10h5"/>'),L2('قراءة الخلية','Read cell'),1)+'<i class="tbw-g"></i>'+
-   ED('mr',IC('<path d="M4 6v12M20 6v12M8 12h8M8 12l3-3M8 12l3 3M16 12l-3-3M16 12l-3 3"/>'),L2('دمج جنب','Merge →'))+ED('md',IC('<path d="M6 4h12M6 20h12M12 8v8M12 8l-3 3M12 8l3 3M12 16l-3-3M12 16l3-3"/>'),L2('دمج تحت','Merge ↓'))+ED('un',IC('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 4v16M4 12h16"/>'),L2('فك الدمج','Split'))+'<i class="tbw-g"></i>'+
-   ED('b','<b class="tbw-t">B</b>',L2('عريض','Bold'))+ED('sz+','<b class="tbw-t">A+</b>',L2('تكبير','Larger'))+ED('sz-','<b class="tbw-t sm">A\u2212</b>',L2('تصغير','Smaller'))+TL('data-cp="1"',IC('<path d="M12 3l6 7a6 6 0 1 1-12 0z"/>'),L2('لون الخلية','Fill'),1)+'<i class="tbw-g"></i>'+
+  '<div class="tbw-tw"><div class="tbw-tools">'+TL('data-undo="1"',IC('<path d="M9 6.5L4.5 11 9 15.5"/><path d="M4.5 11H14a5.5 5.5 0 0 1 0 11h-2.5"/>'),L2('تراجع','Undo'),0)+TL('data-rc="1"',IC('<rect x="3" y="5" width="12" height="10" rx="1.6"/><circle cx="16.5" cy="16.5" r="3.6"/><path d="M19.2 19.2l2.3 2.3M6.5 10h5"/>'),L2('قراءة الخلية','Read cell'),1)+'<i class="tbw-g"></i>'+
+   ED('mr',IC('<rect x="3" y="6" width="18" height="12" rx="2.6"/><path d="M12 6v3M12 15v3M7.5 12h9M7.5 12l2.2-2.2M7.5 12l2.2 2.2M16.5 12l-2.2-2.2M16.5 12l-2.2 2.2"/>'),L2('دمج جنب','Merge →'))+ED('md',IC('<rect x="6" y="3" width="12" height="18" rx="2.6"/><path d="M6 12h3M15 12h3M12 7.5v9M12 7.5l-2.2 2.2M12 7.5l2.2 2.2M12 16.5l-2.2-2.2M12 16.5l2.2-2.2"/>'),L2('دمج تحت','Merge ↓'))+ED('un',IC('<rect x="3.5" y="4.5" width="17" height="15" rx="2.6"/><path d="M12 4.5v15M3.5 12h17"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>'),L2('فك الدمج','Split'))+'<i class="tbw-g"></i>'+
+   ED('b','<b class="tbw-t">B</b>',L2('عريض','Bold'))+ED('sz+','<b class="tbw-t">A+</b>',L2('تكبير','Larger'))+ED('sz-','<b class="tbw-t sm">A\u2212</b>',L2('تصغير','Smaller'))+TL('data-cp="1"',IC('<path d="M12 3.2s6 6 6 10.2a6 6 0 0 1-12 0C6 9.2 12 3.2 12 3.2z"/><path d="M9.2 14a3 3 0 0 0 2.2 2.6"/>'),L2('لون الخلية','Fill'),1)+'<i class="tbw-g"></i>'+
    TL('data-t="deep"',IC('<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'),L2('قراءة الصفحة','Read page'),0)+'</div><button type="button" class="tbw-ar l" data-sc="-1" aria-label="scroll left">\u2039</button><button type="button" class="tbw-ar r" data-sc="1" aria-label="scroll right">\u203A</button></div>':'<div class="tbw-tools"><button type="button" class="tbw-tl" data-t="deep">'+IC('<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>')+'<span>'+L2('قراءة أدق','Deep read')+'</span></button></div>')+
   '<div class="tbw-ex" hidden><div class="tbw-scrim" data-t="exp"></div><div class="tbw-ep"><i class="tbw-gr"></i><div class="tbw-eh">'+L2('تصدير الجدول','Export table')+'</div><div class="tbw-es">'+L2('اختار الصيغة المناسبة','Choose a format')+'</div>'+
   XB('copy','pri',L2('نسخ الجدول','Copy table'),L2('الصقه مباشرة في Word أو Excel','Paste straight into Word or Excel'))+'<div class="tbw-eg">'+XB('xlsx','x','Excel',L2('بالدمج والألوان','Merges & colors'))+XB('docx','w','Word',L2('جاهز للطباعة','Ready to print'))+XB('csv','c','CSV',L2('نص بسيط','Plain text'))+'</div>'+
@@ -4487,7 +4498,7 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   {const a=tbx.querySelector('.tbw-tools'),b=tbx.querySelector('.tbx-w'),c=tbx.querySelector('#tbSrcW'),d=tbx.querySelector('.tbw-main');if(a){a.scrollLeft=SV.tl;a.dispatchEvent(new Event('scroll'));}if(b){b.scrollTop=SV.wt;b.scrollLeft=SV.wl;}if(c){c.scrollTop=SV.st;c.scrollLeft=SV.sl;}if(d)d.scrollTop=SV.mt;}};
  tbx.addEventListener('focusin',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td&&TB&&TB.engine===2){const n={r:+td.dataset.r,c:+td.dataset.c};if(!tbCur||tbCur.r!==n.r||tbCur.c!==n.c){tbx.querySelectorAll('td.tbx-sel').forEach(x=>x.classList.remove('tbx-sel'));td.classList.add('tbx-sel');}tbCur=n;tbx.classList.add('hascur');tbHlShow(n.r,n.c,true);}});
  tbx.addEventListener('focusout',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td)td.contentEditable='false';});
- tbx.onclick=async e=>{const scb=e.target.closest('[data-sc]');if(scb){const t0=tbx.querySelector('.tbw-tools');if(t0)t0.scrollBy({left:+scb.dataset.sc*190,behavior:'smooth'});return;}const tv=e.target.closest('[data-tv2]');if(tv){tbView(tv.dataset.tv2);return;}const ud=e.target.closest('[data-undo]');if(ud){tbUndo();return;}const al=e.target.closest('[data-alt]');if(al&&tbAlt&&TB){const v=tbAlt.l[+al.dataset.alt];if(v!=null){TB.rows=tbRows();tbHist.push(tbSnap());TB.rows[tbAlt.r][tbAlt.c]=v;const old=TB.rows[tbAlt.r][tbAlt.c];tbAlt.l=tbAlt.l.filter(x=>x!==v);tbDraw();toast(L2('اتبدّلت للبديل','Switched to alternative'));}return;}const rc=e.target.closest('[data-rc]');if(rc){tbReadCell();return;}const cp=e.target.closest('[data-cp]');if(cp){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}tbCpOpen=!tbCpOpen;tbx.classList.toggle('cpo',tbCpOpen);const pp=tbx.querySelector('.tbw-cp');if(pp)pp.hidden=!tbCpOpen;return;}const tdc=e.target.closest('td[data-r]');if(tdc&&TB&&TB.engine===2){tbTap(tdc);return;}const cm=e.target.closest('[data-cm]');if(cm){tbCmp=cm.dataset.cm==='1';try{localStorage.setItem('tx_tbcmp',tbCmp?'1':'0');}catch(_){}try{TB.rows=tbRows();}catch(_){}tbDraw();return;}const zm=e.target.closest('[data-zm]');if(zm){tbZ=Math.max(1,Math.min(4,tbZ+(+zm.dataset.zm)*.5));const sc=tbx.querySelector('#tbSc');if(sc)sc.style.width=Math.round(tbZ*100)+'%';if(tbCur)setTimeout(()=>tbHlShow(tbCur.r,tbCur.c,true),30);return;}if(e.target.closest('#tbSc')){tbPick(e);return;}const et=e.target.closest('[data-et]');if(et){tbEdOpen=!tbEdOpen;tbx.classList.toggle('edo',tbEdOpen);return;}const ed=e.target.closest('[data-ed]');if(ed&&TB&&TB.engine===2){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}const k=ed.dataset.ed;TB.rows=tbRows();tbHist.push(tbSnap());if(tbHist.length>30)tbHist.shift();const ok=TXExport.op(TB,tbCur,k.startsWith('sz')?'sz':k,k==='sz+'?1:k==='sz-'?-1:ed.dataset.v);if(!ok)toast(L2('مش ينفع هنا','Not possible here'));tbDraw();return;}const sw=e.target.closest('[data-tt]');if(sw&&TB&&TB.all){const nt=TB.all[+sw.dataset.tt];if(nt&&nt!==TB){try{TB.rows=tbRows();}catch(_){}TB=nt;tbDraw();}return;}const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t;{const mn=tbx.querySelector('.tbw-ex');if(k==='exp'){if(mn)mn.hidden=!mn.hidden;return;}if(mn&&k!=='wt')mn.hidden=true;}const rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
+ tbx.onclick=async e=>{const scb=e.target.closest('[data-sc]');if(scb){const t0=tbx.querySelector('.tbw-tools');if(t0)t0.scrollBy({left:+scb.dataset.sc*190,behavior:'smooth'});return;}const tv=e.target.closest('[data-tv2]');if(tv){tbView(tv.dataset.tv2);return;}const ud=e.target.closest('[data-undo]');if(ud){tbUndo();return;}const al=e.target.closest('[data-alt]');if(al&&tbAlt&&TB){const v=tbAlt.l[+al.dataset.alt];if(v!=null){TB.rows=tbRows();tbHist.push(tbSnap());TB.rows[tbAlt.r][tbAlt.c]=v;const old=TB.rows[tbAlt.r][tbAlt.c];tbAlt.l=tbAlt.l.filter(x=>x!==v);tbDraw();toast(L2('اتبدّلت للبديل','Switched to alternative'));}return;}const rc=e.target.closest('[data-rc]');if(rc){tbReadCell();return;}const cp=e.target.closest('[data-cp]');if(cp){if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}tbCpOpen=!tbCpOpen;tbx.classList.toggle('cpo',tbCpOpen);const pp=tbx.querySelector('.tbw-cp');if(pp)pp.hidden=!tbCpOpen;return;}const tdc=e.target.closest('td[data-r]');if(tdc&&TB&&TB.engine===2){tbTap(tdc);return;}const cm=e.target.closest('[data-cm]');if(cm){tbCmp=cm.dataset.cm==='1';try{localStorage.setItem('tx_tbcmp',tbCmp?'1':'0');}catch(_){}try{TB.rows=tbRows();}catch(_){}tbDraw();return;}const zm=e.target.closest('[data-zm]');if(zm){tbZ=Math.max(1,Math.min(4,tbZ+(+zm.dataset.zm)*.5));const sc=tbx.querySelector('#tbSc');if(sc)sc.style.width=Math.round(tbZ*100)+'%';if(tbCur)setTimeout(()=>tbHlShow(tbCur.r,tbCur.c,true),30);return;}if(e.target.closest('#tbSc')){tbPick(e);return;}const et=e.target.closest('[data-et]');if(et){tbEdOpen=!tbEdOpen;tbx.classList.toggle('edo',tbEdOpen);return;}const ed=e.target.closest('[data-ed]');if(ed&&TB&&TB.engine===2){try{navigator.vibrate&&navigator.vibrate(8);}catch(_){}if(!tbCur){toast(L2('اضغط على خلية الأول','Tap a cell first'));return;}const k=ed.dataset.ed;TB.rows=tbRows();tbHist.push(tbSnap());if(tbHist.length>30)tbHist.shift();const ok=TXExport.op(TB,tbCur,k.startsWith('sz')?'sz':k,k==='sz+'?1:k==='sz-'?-1:ed.dataset.v);if(!ok)toast(L2('مش ينفع هنا','Not possible here'));tbDraw();{const sd=tbx.querySelector('td.tbx-sel');if(sd){sd.classList.add('tbx-pop');setTimeout(()=>sd.classList.remove('tbx-pop'),360);}}return;}const sw=e.target.closest('[data-tt]');if(sw&&TB&&TB.all){const nt=TB.all[+sw.dataset.tt];if(nt&&nt!==TB){try{TB.rows=tbRows();}catch(_){}TB=nt;tbDraw();}return;}const b=e.target.closest('[data-t]');if(!b||!TB)return;const k=b.dataset.t;{const mn=tbx.querySelector('.tbw-ex');if(k==='exp'){if(mn)mn.hidden=!mn.hidden;return;}if(mn&&k!=='wt')mn.hidden=true;}const rows=tbRows(),nm=(state.name||'Timaxo').replace(/[\\/:*?"<>|]/g,'_')+L2('-جدول','-table');
   if(k==='copy'){let ok=false;try{if(window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([TB.engine===2&&window.TXExport?TXExport.html(Object.assign({},TB,{rows})):tbHtml(rows,TB.rtl)],{type:'text/html'}),'text/plain':new Blob([tbTsv(rows)],{type:'text/plain'})})]);ok=true;}}catch(_){}
    if(!ok){try{await navigator.clipboard.writeText(tbTsv(rows));ok=true;}catch(_){}}
    toast(ok?L2('اتنسخ الجدول — الصقه في Word أو Excel','Table copied — paste it into Word or Excel'):L2('تعذّر النسخ','Copy failed'));}
@@ -4535,14 +4546,14 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   if(exBtn(t=>/→/.test(t)))h+=mi('xi',I.tbl,L2('فاتورة → CSV','Invoice → CSV'));
   h+='<div class="ox-ms"></div>'+mi('eng',I.cog,L2('المحرك الحديث','Modern engine'),on?L2('شغّال','On'):L2('متوقف','Off'))+mi('oq',I.cog,L2('جودة القراءة','Reading quality'),OQ()==='best'?L2('دقيقة','Accurate'):L2('سريعة','Fast'));
   mEl.innerHTML=h;mEl.hidden=false;const mr=m.querySelector('.mdl').getBoundingClientRect(),ar2=acts.getBoundingClientRect();mEl.style.bottom=Math.max(8,mr.bottom-ar2.top+8)+'px';};
- m.onclick=async e=>{if(e.target===m){dead=1;m.remove();return;}
+ m.onclick=async e=>{if(e.target===m){saveMem();dead=1;m.remove();return;}
    {const mm=m.querySelector('.mdl');if(e.target.closest('#oLG')){mm.classList.toggle('lgopen');return;}if(e.target.closest('[data-l],[data-auto]'))mm.classList.remove('lgopen');}
    if(!mEl.hidden&&!e.target.closest('#oMenu,[data-a=o]'))mEl.hidden=true;
   const t=e.target.closest('[data-l],[data-a],[data-auto],[data-more]');if(!t)return;const a=t.dataset.a;
   if(t.dataset.more){const mm=$m('#oM');mm.hidden=!mm.hidden;return;}
   if(t.dataset.auto){sel=['ara','eng'];localStorage.setItem('tx_ol',lang());paint();go();return;}
      if(t.dataset.l){const c=t.dataset.l,isMain=main.some(l=>l.c===c);if(isMain){if(sel.length===1&&sel[0]===c)return;sel=[c];}else{const i=sel.indexOf(c);if(i>=0){if(sel.length>1)sel.splice(i,1);}else sel.push(c);}try{localStorage.setItem('tx_ol',lang());}catch(_){}paint();clearTimeout(m._lt);m._lt=setTimeout(()=>go(),350);return;}
-  if(a==='x'){dead=1;m.remove();}
+  if(a==='x'){saveMem();dead=1;m.remove();}
   else if(a==='c'){try{await navigator.clipboard.writeText(ta.value);}catch(_){ta.select();document.execCommand('copy');}toast(L2('اتنسخ','Copied'));}
   else if(a==='s'){try{await navigator.share({text:ta.value});}catch(_){}}
      else if(a==='h'){mEl.hidden=true;go(true);}
@@ -4554,7 +4565,10 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
    else if(a==='oq'){try{localStorage.setItem('tx_oq',OQ()==='best'?'fast':'best');}catch(_){}menuOpen();toast(OQ()==='best'?L2('جودة دقيقة','Accurate quality'):L2('جودة سريعة','Fast quality'));}
   else if(a==='d'){const u=URL.createObjectURL(new Blob(['﻿'+ta.value],{type:'text/plain;charset=utf-8'})),q=document.createElement('a');q.href=u;q.download='scan.txt';q.click();setTimeout(()=>URL.revokeObjectURL(u),3000);}
      else if(a==='r'&&ta.value.trim()){doRep(ta.value);}};
- go();}
+ const saveMem=()=>{if(box||!lastBest)return;try{if(TB&&!tbx.hidden){try{TB.rows=tbRows();}catch(_){}}OCRMEM.set(p.id,{lang:lang(),q:OQ(),sig:(p.a&&p.a.length)||0,best:lastBest,deep:lastDeep,cv:cv,ink:ink,sk:sk,bm:bm,text:ta.value,tb:TB?tbSnap():null,tbOn:!tbx.hidden});}catch(e){console.warn('mem',e);}};
+ const mem=!box&&OCRMEM.get(p.id);
+ if(mem&&mem.lang===lang()&&mem.q===OQ()&&mem.sig===((p.a&&p.a.length)||0)){try{cv=mem.cv;ink=mem.ink;sk=mem.sk;bm=mem.bm;finish(mem.best,mem.deep);ta.value=mem.text;if(TB&&mem.tb){Object.assign(TB,JSON.parse(mem.tb));tbDraw();}tbView(mem.tbOn&&TB?'tb':'t');}catch(e){console.warn('restore',e);OCRMEM.delete(p.id);go();}}
+ else go();}
 /* ---- small, deliberate suggestion: appears only when the opened page looks like it has text ---- */
 const oHintOn=()=>{try{return localStorage.getItem('tx_ohint')!=='0';}catch(e){return true;}};
 const oHinted=new Set();
