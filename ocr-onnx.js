@@ -378,6 +378,7 @@
   g.TXOnnx = {
     tryRun, warm, run, pickScript, buildChars, ctcDecode, ctcSteps, mergeScripts, arabicReorder, tidy, dbBoxes, orderBoxes, splitWords, wordsFromSteps, toTensor, rotate,
     _chars(script, C) { const k = script + ':' + C; return (S._ck = S._ck || {})[k] || (S._ck[k] = buildChars(S.chars[script], C)); },
+    free() { /* v174: تحرير الذاكرة لما التطبيق يروح الخلفية */ for (const grp of [S.det, S.rec]) { for (const k in grp) { try { const x = grp[k]; x && x.release && x.release(); } catch (e) { } delete grp[k]; } } S.chars = {}; S._ck = {}; S._warm = 0; },
     _state: S, DEF
   };
   if (typeof module !== 'undefined') module.exports = g.TXOnnx;

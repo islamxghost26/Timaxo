@@ -1,4 +1,4 @@
-<!doctype html><html><head><script>window.__TIMAXO_FILES__=1;try{var _l=localStorage.getItem('tx-lang')==='en'?'en':'ar',_h=document.documentElement;_h.lang=_l;_h.dir=_l==='ar'?'rtl':'ltr'}catch(e){}</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style id="app-css">
+<!doctype html><html><head><script>window.__TIMAXO_FILES__=1;try{var _l=localStorage.getItem('tx-lang')==='en'?'en':'ar',_h=document.documentElement;_h.lang=_l;_h.dir=_l==='ar'?'rtl':'ltr'}catch(e){}</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style id="pre-bg">html{background:var(--bg,#050C26);touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}</style><style id="app-css">
 /* ---- base ---- */
 :root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* ---- v29css ---- */
@@ -2469,6 +2469,9 @@ function fitWrap(){
   const wr=$('#wrap');wr.style.width=w+'px';wr.style.height=h+'px';
 }
 new ResizeObserver(()=>{if(V.cur==='vEdit')fitWrap();}).observe($('#editStage'));
+/* v174: بعد الرجوع من الخلفية الأندرويد ممكن يمسح الكانفس (الصفحة بيضا) — نعيد بناءه */
+{let hid=0,rb=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hid=Date.now();return;}
+ if(V.cur!=='vEdit'||!E.page||rb||Date.now()-hid<2500)return;rb=1;(async()=>{try{await buildBases();fitWrap();renderEdit();}catch(e){console.warn('resume',e);}finally{rb=0;}})();});}
 function renderEdit(fast){
   if(!E.base||!E.page)return;const p=E.page,f=E.orig?'original':p.filter,B=fast&&E.pbase?E.pbase:E.base,tc=toneCanvas(B,f,E.orig?0:p.br,E.orig?0:p.ct,E.orig?0:p.sat);
   const cx=$('#cvBase').getContext('2d');if(B!==E.base){cx.drawImage(tc,0,0,E.base.w,E.base.h);redrawOv();return;} /* معاينة سريعة: بدون fills، والكامل بيتبعها */
@@ -3149,7 +3152,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='173';
+  const APPV='174';
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3933,7 +3936,9 @@ async function ocrRec(wk,pc,lang,q,psm){
  }finally{LOGMUTE=0;}}
 /* runs 1-2 passes (more in deep mode) over differently prepared copies of the image and keeps the one Tesseract trusts most */
 const OCRMEM=new Map();
-async function ocrRun(cv,lang,q,psm,deep,stage,isDead){
+window.__txOB=0;async function ocrRun(cv,lang,q,psm,deep,stage,isDead){window.__txOB++;try{return await ocrRun0(cv,lang,q,psm,deep,stage,isDead);}finally{window.__txOB--;}}
+window.__txFreeOcr=function(){if(window.__txOB>0)return false;for(const k in WK){try{const w=WK[k];delete WK[k];w&&w.terminate&&w.terminate();}catch(_){}}try{window.TXOnnx&&TXOnnx.free&&TXOnnx.free();}catch(_){}return true;};
+async function ocrRun0(cv,lang,q,psm,deep,stage,isDead){
  const wk=await getW(lang,q),sp=psm==='6'?'6':'11',R=[];let pc1=null,idx=0;
  const plan=deep?[{m:'flat',k:1,p:psm},{m:'plain',k:1,p:psm},{m:'flat',k:.4,p:sp},{m:'flat',k:.22,p:sp},{m:'inv',k:1,p:sp},{m:'bin',k:.5,p:sp},{m:'flat40',k:1,p:psm},{m:'chB',k:1,p:psm}]:[];
  const run=async v=>{if(isDead())return false;stage(idx++,deep?plan.length:3);
@@ -3942,7 +3947,12 @@ async function ocrRun(cv,lang,q,psm,deep,stage,isDead){
   const r=await ocrRec(wk,pc,lang,q,v.p);if(isDead())return false;
   const W=ocrWords(r);R.push({r,W,N:ocrNorm(W,v.k,0),sc:ocrScore(W),v:v.m,k:v.k});return true;};
  const top=()=>R.reduce((a,x)=>!a||x.sc.tot>a.sc.tot?x:a,null);
- if(deep){for(const v of plan)if(!await run(v))return null;}
+ if(deep){const t0=Date.now();let k=0;for(const v of plan){
+   if(k>=2){const b=top();if(b){const ms=Date.now()-t0,miss=ocrMiss(pc1,b.N);
+    if(b.sc.mean>=88&&b.sc.n>=8&&miss<.04)break; /* v174: ثقة عالية = كفاية */
+    if(k>=3&&b.sc.mean>=80&&miss<.08)break;
+    if(ms>16000&&b.sc.mean>=70)break; /* ميزانية وقت */}}
+   if(!await run(v))return null;k++;}}
  else{
   if(!await run({m:'flat',k:1,p:psm}))return null;
   let b=top(),miss=ocrMiss(pc1,b.N),weak=b.sc.mean<82||b.sc.n<10;const hs=b.N.map(w=>w.y1-w.y0).sort((x,y)=>x-y),small=psm!=='6'&&hs.length>5&&hs[hs.length>>1]<17&&cv.width<2600;
@@ -4480,26 +4490,36 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   const sw=['','FFF2CC','FFE699','DDEBFF','BDD7EE','E2F0D9','C6E0B4','FCE4D6','F8CBAD','F4CCCC','E4D7F5','D9D9D9','93B2DE','1F4E79'];
   const eng2=TB.engine===2;
   const cs0=tbCur&&TB.st&&TB.st[tbCur.r]&&TB.st[tbCur.r][tbCur.c],curBg=(cs0&&cs0.bg)||'';
-  const XI={copy:'<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/>',xlsx:'<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5V20M15 9.5V20"/>',docx:'<path d="M7 3.5h7.5L19 8v11a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 6 19V5a1.5 1.5 0 0 1 1-1.5z"/><path d="M14 3.5V8h5M9 12.5h6M9 16h6"/>',csv:'<path d="M5 7h14M5 12h14M5 17h9"/><circle cx="18" cy="17" r="1.3"/>'};
-  const XB=(k,cl,nm,ds)=>'<button type="button" class="tbw-ec '+cl+'" data-t="'+k+'"><i>'+IC(XI[k])+'</i><span><b>'+nm+'</b><small>'+ds+'</small></span></button>';
+  const XI={copy:'<rect class="d" x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/>',xlsx:'<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5V20M15 9.5V20"/>',docx:'<path d="M7 3.5h7.5L19 8v11a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 6 19V5a1.5 1.5 0 0 1 1-1.5z"/><path d="M14 3.5V8h5M9 12.5h6M9 16h6"/>',csv:'<path d="M5 7h14M5 12h14M5 17h9"/><circle cx="18" cy="17" r="1.3"/>'};
+  const XM={
+ xlsx:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gxl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d889"/><stop offset="1" stop-color="#0c7a43"/></linearGradient></defs><rect x="15" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M27 15h11M27 22h11M27 29h11M27 36h11" stroke="#1d9a5b" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="10" width="26" height="28" rx="6" fill="url(#gxl)"/><path d="M10.5 18l11 12M21.5 18l-11 12" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/></svg>',
+ docx:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gwd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5aa2ff"/><stop offset="1" stop-color="#1747b8"/></linearGradient></defs><rect x="15" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M27 15h11M27 22h11M27 29h11M27 36h11" stroke="#2f6ae0" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="10" width="26" height="28" rx="6" fill="url(#gwd)"/><path d="M8.5 18.5l3.3 11 4.2-8.5 4.2 8.5 3.3-11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ csv:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gcv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb84d"/><stop offset="1" stop-color="#e2680c"/></linearGradient></defs><rect x="15" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M27 15h11M27 22h11M27 29h11M27 36h11" stroke="#f08a24" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="10" width="26" height="28" rx="6" fill="url(#gcv)"/><text x="16" y="29.5" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="10.5" fill="#fff">CSV</text></svg>'};
+  const XB=(k,cl,nm,ds)=>'<button type="button" class="tbw-ec '+cl+'" data-t="'+k+'"><i'+(XM[k]?' class="mk">'+XM[k]:'>'+IC(XI[k]))+'</i><span><b>'+nm+'</b><small>'+ds+'</small></span></button>';
   tbx.innerHTML=
   '<div class="tbw-bar"><button type="button" class="tbw-x" data-a="x" aria-label="'+L2('إغلاق','Close')+'">\u2715</button><div class="tbw-seg"><button type="button" data-tv2="t">'+L2('النص','Text')+'</button><button type="button" class="on" data-tv2="tb">'+L2('جدول','Table')+'</button></div><button type="button" class="tbw-exp" data-t="exp">'+IC('<path d="M12 3v12M7 8l5-5 5 5M5 21h14"/>')+'<span>'+L2('تصدير','Export')+'</span></button></div>'+
-  '<div class="tbw-st"><span class="tbw-q '+q.qc+'"><i></i>'+(q.ql||'')+(q.pct?' · '+q.pct+'%':'')+'</span><span class="tbw-sz">'+R.length+' '+L2('صف','rows')+' × '+nC+' '+L2('عمود','cols')+'</span><button type="button" class="tbw-imp" data-t="refine">'+IC('<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>')+'<span>'+L2('تحسين الدقة','Improve accuracy')+'</span></button></div>'+
+  '<div class="tbw-st"><span class="tbw-q '+q.qc+'"><i></i>'+(q.ql||'')+(q.pct?' · '+q.pct+'%':'')+'</span><span class="tbw-sz">'+R.length+' '+L2('صف','rows')+' × '+nC+' '+L2('عمود','cols')+'</span><button type="button" class="tbw-imp" data-t="refine">'+IC('<path class="d" d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>')+'<span>'+L2('تحسين الدقة','Improve accuracy')+'</span></button></div>'+
   (TB.all&&TB.all.length>1?'<div class="tbx-sw">'+TB.all.map((x,i)=>'<button type="button" class="ox-chip'+(x===TB?' on':'')+'" data-tt="'+i+'">'+L2('جدول ','Table ')+(i+1)+'</button>').join('')+'</div>':'')+
   '<div class="tbw-main">'+
   (tbSrc?(tbCmp?'<div class="tbw-sp" id="tbSrcP"><div class="tbx-src" id="tbSrcW" dir="ltr"><div class="tbx-sc" id="tbSc"><canvas id="tbSrcC"></canvas><i class="tbx-hl" id="tbHl" hidden></i></div></div><div class="tbw-fz"><button type="button" data-zm="1" aria-label="+">+</button><button type="button" data-zm="-1" aria-label="-">\u2212</button><button type="button" data-cm="0">'+L2('إخفاء الأصل','Hide')+'</button></div><span class="tbw-tag">'+L2('الأصل','Original')+'</span></div><div class="tbw-dv" id="tbDv" role="separator" aria-label="'+L2('اسحب لتغيير الحجم','Drag to resize')+'"><i></i></div>':'<button type="button" class="tbx-showsrc" data-cm="1">'+L2('قارن مع الأصل','Compare with original')+'</button>'):'')+
   '<div class="tbx-w"><table class="tbx-t" dir="'+(TB.rtl?'rtl':'ltr')+'">'+tbBody()+'</table></div></div>'+
   '<div class="tbw-hint" id="tbN">'+(eng2?L2('اضغط لاختيار الخلية · ضغطتين سريعتين أو ضغطة مطوّلة للكتابة','Tap to select · double-tap or long-press to type'):L2('اضغط على أي خلية لتعديلها','Tap any cell to edit'))+'</div>'+
   (eng2?'<div class="tbw-cp"'+(tbCpOpen?'':' hidden')+'>'+sw.map(c=>'<button type="button" class="tbx-sw2'+(curBg===c?' on':'')+'" data-ed="bg" data-v="'+c+'" style="background:'+(c?'#'+c:'transparent')+'" aria-label="color"></button>').join('')+'<label class="tbx-sw2 cu" aria-label="custom color"><input type="color" class="tbw-cc" value="#'+(curBg||'ffd966')+'"></label></div>'+
-  '<div class="tbw-tw"><div class="tbw-tools">'+TL('data-undo="1"',IC('<path d="M9 6.5L4.5 11 9 15.5"/><path d="M4.5 11H14a5.5 5.5 0 0 1 0 11h-2.5"/>'),L2('تراجع','Undo'),0)+TL('data-rc="1"',IC('<rect x="3" y="5" width="12" height="10" rx="1.6"/><circle cx="16.5" cy="16.5" r="3.6"/><path d="M19.2 19.2l2.3 2.3M6.5 10h5"/>'),L2('قراءة الخلية','Read cell'),1)+'<i class="tbw-g"></i>'+
-   ED('mr',IC('<rect x="3" y="6" width="18" height="12" rx="2.6"/><path d="M12 6v3M12 15v3M7.5 12h9M7.5 12l2.2-2.2M7.5 12l2.2 2.2M16.5 12l-2.2-2.2M16.5 12l-2.2 2.2"/>'),L2('دمج جنب','Merge →'))+ED('md',IC('<rect x="6" y="3" width="12" height="18" rx="2.6"/><path d="M6 12h3M15 12h3M12 7.5v9M12 7.5l-2.2 2.2M12 7.5l2.2 2.2M12 16.5l-2.2-2.2M12 16.5l2.2-2.2"/>'),L2('دمج تحت','Merge ↓'))+ED('un',IC('<rect x="3.5" y="4.5" width="17" height="15" rx="2.6"/><path d="M12 4.5v15M3.5 12h17"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>'),L2('فك الدمج','Split'))+'<i class="tbw-g"></i>'+
-   ED('b','<b class="tbw-t">B</b>',L2('عريض','Bold'))+ED('sz+','<b class="tbw-t">A+</b>',L2('تكبير','Larger'))+ED('sz-','<b class="tbw-t sm">A\u2212</b>',L2('تصغير','Smaller'))+TL('data-cp="1"',IC('<path d="M12 3.2s6 6 6 10.2a6 6 0 0 1-12 0C6 9.2 12 3.2 12 3.2z"/><path d="M9.2 14a3 3 0 0 0 2.2 2.6"/>'),L2('لون الخلية','Fill'),1)+'<i class="tbw-g"></i>'+
-   TL('data-t="deep"',IC('<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'),L2('قراءة الصفحة','Read page'),0)+'</div><button type="button" class="tbw-ar l" data-sc="-1" aria-label="scroll left">\u2039</button><button type="button" class="tbw-ar r" data-sc="1" aria-label="scroll right">\u203A</button></div>':'<div class="tbw-tools"><button type="button" class="tbw-tl" data-t="deep">'+IC('<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>')+'<span>'+L2('قراءة أدق','Deep read')+'</span></button></div>')+
+  '<div class="tbw-tw"><div class="tbw-tools">'+TL('data-undo="1"',IC('<path d="M9 6.5L4.5 11 9 15.5"/><path d="M4.5 11H14a5.5 5.5 0 0 1 0 11h-2.5"/>'),L2('تراجع','Undo'),0)+TL('data-rc="1"',IC('<rect class="d" x="3" y="5" width="12" height="10" rx="1.6"/><circle cx="16.5" cy="16.5" r="3.6"/><path d="M19.2 19.2l2.3 2.3M6.5 10h5"/>'),L2('قراءة الخلية','Read cell'),1)+'<i class="tbw-g"></i>'+
+   ED('mr',IC('<rect class="d" x="3" y="6" width="18" height="12" rx="2.6"/><path d="M12 6v3M12 15v3M7.5 12h9M7.5 12l2.2-2.2M7.5 12l2.2 2.2M16.5 12l-2.2-2.2M16.5 12l-2.2 2.2"/>'),L2('دمج جنب','Merge →'))+ED('md',IC('<rect class="d" x="6" y="3" width="12" height="18" rx="2.6"/><path d="M6 12h3M15 12h3M12 7.5v9M12 7.5l-2.2 2.2M12 7.5l2.2 2.2M12 16.5l-2.2-2.2M12 16.5l2.2-2.2"/>'),L2('دمج تحت','Merge ↓'))+ED('un',IC('<rect class="d" x="3.5" y="4.5" width="17" height="15" rx="2.6"/><path d="M12 4.5v15M3.5 12h17"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>'),L2('فك الدمج','Split'))+'<i class="tbw-g"></i>'+
+   ED('b','<b class="tbw-t">B</b>',L2('عريض','Bold'))+ED('sz+','<b class="tbw-t">A+</b>',L2('تكبير','Larger'))+ED('sz-','<b class="tbw-t sm">A\u2212</b>',L2('تصغير','Smaller'))+TL('data-cp="1"',IC('<path class="d" d="M12 3.2s6 6 6 10.2a6 6 0 0 1-12 0C6 9.2 12 3.2 12 3.2z"/><path d="M9.2 14a3 3 0 0 0 2.2 2.6"/>'),L2('لون الخلية','Fill'),1)+'<i class="tbw-g"></i>'+
+   TL('data-t="deep"',IC('<path class="d" d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'),L2('قراءة الصفحة','Read page'),0)+'</div><button type="button" class="tbw-ar l" data-sc="-1" aria-label="scroll left">\u2039</button><button type="button" class="tbw-ar r" data-sc="1" aria-label="scroll right">\u203A</button></div>':'<div class="tbw-tools"><button type="button" class="tbw-tl" data-t="deep">'+IC('<path class="d" d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>')+'<span>'+L2('قراءة أدق','Deep read')+'</span></button></div>')+
   '<div class="tbw-ex" hidden><div class="tbw-scrim" data-t="exp"></div><div class="tbw-ep"><i class="tbw-gr"></i><div class="tbw-eh">'+L2('تصدير الجدول','Export table')+'</div><div class="tbw-es">'+L2('اختار الصيغة المناسبة','Choose a format')+'</div>'+
   XB('copy','pri',L2('نسخ الجدول','Copy table'),L2('الصقه مباشرة في Word أو Excel','Paste straight into Word or Excel'))+'<div class="tbw-eg">'+XB('xlsx','x','Excel',L2('بالدمج والألوان','Merges & colors'))+XB('docx','w','Word',L2('جاهز للطباعة','Ready to print'))+XB('csv','c','CSV',L2('نص بسيط','Plain text'))+'</div>'+
   '<button type="button" class="tbw-er tgl'+(tbWt?'':' off')+'" data-t="wt"><span><b>'+L2('نص برا الجدول في Word','Text outside the table in Word')+'</b><small>'+L2('العناوين والملاحظات اللي حوالين الجدول','Titles and notes around the table')+'</small></span><em>'+(tbWt?L2('شغّال','On'):L2('متوقف','Off'))+'</em></button></div></div>';
   if(tbCmp&&tbSrc)tbPaintSrc();tbWire();
   {const a=tbx.querySelector('.tbw-tools'),b=tbx.querySelector('.tbx-w'),c=tbx.querySelector('#tbSrcW'),d=tbx.querySelector('.tbw-main');if(a){a.scrollLeft=SV.tl;a.dispatchEvent(new Event('scroll'));}if(b){b.scrollTop=SV.wt;b.scrollLeft=SV.wl;}if(c){c.scrollTop=SV.st;c.scrollLeft=SV.sl;}if(d)d.scrollTop=SV.mt;}};
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!tbx.hidden&&tbSrc){setTimeout(()=>{try{tbPaintSrc();}catch(_){}} ,120);}});
+ /* v174: زوم بصباعين جوه الجدول/الأصل بس */
+ {let d0=0,z0=1,on=0;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  tbx.addEventListener('touchstart',e=>{if(e.touches.length===2&&e.target.closest&&e.target.closest('.tbx-w,#tbSrcW')){d0=dist(e.touches);z0=tbZ;on=1;}},{passive:true});
+  tbx.addEventListener('touchmove',e=>{if(!on||e.touches.length!==2)return;e.preventDefault();const z=Math.max(1,Math.min(4,z0*dist(e.touches)/d0));if(Math.abs(z-tbZ)>.02){tbZ=z;const sc=tbx.querySelector('#tbSc');if(sc)sc.style.width=Math.round(tbZ*100)+'%';}},{passive:false});
+  ['touchend','touchcancel'].forEach(n=>tbx.addEventListener(n,e=>{if(on&&e.touches.length<2){on=0;if(tbCur)setTimeout(()=>tbHlShow(tbCur.r,tbCur.c,true),30);}}));}
  tbx.addEventListener('focusin',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td&&TB&&TB.engine===2){const n={r:+td.dataset.r,c:+td.dataset.c};if(!tbCur||tbCur.r!==n.r||tbCur.c!==n.c){tbx.querySelectorAll('td.tbx-sel').forEach(x=>x.classList.remove('tbx-sel'));td.classList.add('tbx-sel');}tbCur=n;tbx.classList.add('hascur');tbHlShow(n.r,n.c,true);}});
  tbx.addEventListener('focusout',e=>{const td=e.target.closest&&e.target.closest('td[data-r]');if(td)td.contentEditable='false';});
  {let lt=null,lx=0,ly=0;const clr=()=>{clearTimeout(lt);lt=null;};
@@ -5569,7 +5589,7 @@ if(typeof window.show==='function'){var o=window.show;window.show=function(){try
   go()}
  window.TXU={offer:offer};
  async function check(){if(!navigator.onLine||shown||recent())return;try{var hh=await fresh(),o=localStorage.getItem(K);if(!o){localStorage.setItem(K,hh);return}if(o!==hh)offer(hh)}catch(e){}}
- addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden)check()})})();</script>
+ addEventListener('load',function(){setTimeout(check,800)});document.addEventListener('visibilitychange',function(){if(!document.hidden){var n=Date.now();if(n-(window.__txLc||0)<900000)return;window.__txLc=n;setTimeout(check,4000)}})})();</script>
 
 
 <script>
@@ -6694,4 +6714,5 @@ function calm(){if(!R.classList.contains('txcalm'))R.classList.add('txcalm');cle
 addEventListener('scroll',calm,{capture:true,passive:true});
 })();
 </script>
+<script src="v174.js"></script>
 </body></html>

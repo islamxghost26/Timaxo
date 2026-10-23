@@ -1,7 +1,7 @@
-const CACHE='timaxo-v173';
+const CACHE='timaxo-v174';
 const VCACHE='timaxo-vendor-v2'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
 const VENDOR_PRE=['vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tessdata/fast/ara.traineddata.gz','vendor/tessdata/fast/eng.traineddata.gz','vendor/edge/blaze_face_short_range.onnx']; // الباقي (core وبيانات best) بيتخزن أول استخدام
-const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js','edge-learn.js','filters.js','fields.js','ocr-models.js','ocr-onnx.js','table-engine.js','table-export.js','translate.js','tool-order.js','ui-polish.js','assistant.js','assistant-face.js','bg-dark.jpg','bg-black.jpg','bg-light.jpg'];
+const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js','edge-learn.js','filters.js','fields.js','ocr-models.js','ocr-onnx.js','table-engine.js','table-export.js','translate.js','tool-order.js','ui-polish.js','v174.js','assistant.js','assistant-face.js','bg-dark.jpg','bg-black.jpg','bg-light.jpg'];
 const badRes=r=>!r||!r.ok||/text\/html/i.test(r.headers.get('content-type')||''); // v159: الـSPA fallback بيرجّع index.html بكود 200 لأي ملف ناقص، وكان بيتخزّن في الكاش للأبد
 self.addEventListener('install',e=>e.waitUntil(Promise.all([caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))),caches.open(VCACHE).then(c=>Promise.all(VENDOR_PRE.map(u=>c.match(u).then(h=>h||fetch(u).then(r=>{if(!badRes(r))return c.put(u,r)})).catch(()=>{}))))])));            // مفيش skipWaiting تلقائي: البانر هو اللي بيطلبه
 self.addEventListener('message',e=>{if(e.data==='skip')self.skipWaiting()});
@@ -20,9 +20,12 @@ self.addEventListener('fetch',e=>{
   if(same&&new URL(r.url).pathname.indexOf('/vendor/')>=0){ // ملفات OCR المحلية: الكاش الأول بدون تحديث في الخلفية (ملفات كبيرة)
     e.respondWith(caches.open(VCACHE).then(async c=>{const m=await c.match(r);if(m&&!badRes(m))return m;if(m)await c.delete(r);const res=await fetch(r);if(!badRes(res))c.put(r,res.clone());return res;}));return;
   }
-  if(same){ // ملفات التطبيق: النت الأول، والكاش للأوفلاين
-    e.respondWith(caches.match(r).then(m=>{const net=fetch(r,{cache:'no-cache'}).then(res=>{if(res&&res.ok){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));}return res}).catch(()=>m||caches.match('index.html'));
-      return m||net;})); // الكاش الأول (فتح فوري) + تحديث في الخلفية
+  if(same){ // ملفات التطبيق: الكاش أولًا (فتح فوري). v174: التحديث في الخلفية للملفات الصغيرة بس؛ الملفات الكبيرة (wasm/نماذج/خطوط/صور) ماتتنزّلش تاني كل مرة
+    const heavy=/\.(wasm|onnx|mjs|woff2?|jpe?g|png|gz|traineddata)$/i.test(new URL(r.url).pathname);
+    e.respondWith(caches.match(r).then(m=>{if(m&&heavy)return m;
+      const net=fetch(r,{cache:'no-cache'}).then(res=>{if(res&&res.ok){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c)).catch(()=>{});}return res}).catch(()=>m||caches.match('index.html'));
+      if(m){e.waitUntil(net.catch(()=>{}));return m;}
+      return net;}));
   }else{ // خطوط ومكتبات خارجية: الكاش الأول
     e.respondWith(caches.match(r).then(m=>m||fetch(r).then(res=>{if(res&&(res.ok||res.type==='opaque')){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c))}return res})));
   }
