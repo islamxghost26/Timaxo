@@ -1,4 +1,4 @@
-const CACHE='timaxo-v194';
+const CACHE='timaxo-v195';
 const VCACHE='timaxo-vendor-v2'; // مكتبة OCR وبيانات اللغة: كاش منفصل عشان ميتمسحش مع كل تحديث
 const VENDOR_PRE=['vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js','vendor/tessdata/fast/ara.traineddata.gz','vendor/tessdata/fast/eng.traineddata.gz','vendor/edge/blaze_face_short_range.onnx']; // الباقي (core وبيانات best) بيتخزن أول استخدام
 const SHELL=['./','index.html','manifest.webmanifest','favicon.png','icon-192.png','font-Cairo.woff','font-NotoSansArabic.woff','font-Inter.woff','apple-touch-icon.png','edge-model.js','edge-hybrid.js','edge-learn.js','filters.js','fields.js','ocr-models.js','ocr-onnx.js','table-engine.js','table-export.js','translate.js','tool-order.js','ui-polish.js','v174.js','csp-log.js','inl-00-boot.js','inl-01-boot.js','inl-02-boot.js','inl-09-boot.js','inl-14-main.js','inl-15-boot.js','inl-16-boot.js','inl-17-boot.js','inl-18-boot.js','inl-19-boot.js','inl-20-boot.js','inl-21-boot.js','inl-22-boot.js','inl-23-v49.js','inl-24-v51.js','inl-25-v60.js','inl-26-boot.js','inl-27-tx108js.js','inl-28-tx109js.js','inl-29-tx111js.js','inl-30-tx113js.js','inl-31-tx114js.js','inl-32-tx116js.js','inl-33-boot.js','inl-34-boot.js','drive-sync.js','drive-callback.html','drive-callback.js','assistant.js','assistant-face.js','bg-dark.jpg','bg-black.jpg','bg-light.jpg'];
@@ -10,6 +10,7 @@ self.addEventListener('activate',e=>e.waitUntil(
 self.addEventListener('fetch',e=>{
   const r=e.request;
   if(/(^|\.)(googleapis\.com|google\.com)$/.test(new URL(r.url).hostname))return; // Google Drive/OAuth: مباشر من غير كاش أبدًا (توكن + بيانات المستخدم)
+  if(/\/drive-callback\.(html|js)$/.test(new URL(r.url).pathname))return; // صفحة رجوع تسجيل الدخول: من الشبكة مباشرة، من غير تدخّل الـService Worker
   if(r.method==='POST'&&new URL(r.url).searchParams.get('share')==='1'){e.respondWith((async()=>{try{const fd=await r.formData(),fs=fd.getAll('media').filter(f=>f&&f.size),c=await caches.open('timaxo-share');for(const k of await c.keys())await c.delete(k);let i=0;for(const f of fs)await c.put('/__share/'+(i++),new Response(f,{headers:{'Content-Type':f.type||'image/jpeg'}}));}catch(x){}return Response.redirect('./?shared=1',303);})());return;}
   if(r.method!=='GET')return;
   const same=new URL(r.url).origin===location.origin;
