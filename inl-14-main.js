@@ -2006,7 +2006,7 @@ html.txcam,html.txcam body{overscroll-behavior:none}
   tgl.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';grp.prepend(wrap);grp.prepend(tgl);
   let col=localStorage.getItem('tx_tbc')==='1';const ap=()=>{wrap.style.display=col?'none':'flex';tgl.style.transform=col?'rotate(180deg)':'none';};ap();
   tgl.onclick=()=>{col=!col;try{localStorage.setItem('tx_tbc',col?'1':'0')}catch(e){}ap();};}}
- let tool='',xpaint=null,qrOn=false,qrShown=0,qrQ=null,qrDet=null,lastOb=null,segA=0,cvDirty=false,calmT=0,lastHs=0,mu0=localStorage.getItem('tx_multi')==='1',fbk=localStorage.getItem('tx_fb')==='1',helpAuto=null,gdOn=localStorage.getItem('tx_grid')==='1';
+ let tool=(window.__txTool&&window.__txTool.id)||'',xpaint=null,qrOn=false,qrShown=0,qrQ=null,qrDet=null,lastOb=null,segA=0,cvDirty=false,calmT=0,lastHs=0,mu0=localStorage.getItem('tx_multi')==='1',fbk=localStorage.getItem('tx_fb')==='1',helpAuto=null,gdOn=localStorage.getItem('tx_grid')==='1';
  const segGo=(sg,to)=>{cancelAnimationFrame(segA);const a=sg.scrollLeft,d=to-a;if(Math.abs(d)<2)return;const t0=performance.now(),D=130,st=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sg.scrollLeft=a+d*e;if(k<1)segA=requestAnimationFrame(st);};segA=requestAnimationFrame(st);};
  let uiM='doc',amu=0,mode=(uiM==='id'?'id':'doc'),multi=localStorage.getItem('tx_multi')==='1',auto=localStorage.getItem('tx_auto')==='1',snd=localStorage.getItem('tx_snd')!=='0';
  let stable=0,last=null,lastGood=null,alive=true,gb=0,armed=true,torch=false,trk=null,files=[],bz=0,lockT=0,dtm=0,raf=0,backs=[],bi=0,hk='',fm=localStorage.getItem('tx_fm')||'off',tmv=0,cnt=0,cntI=0,fmTry=0,sugN=0,sugT=0,galFn=null,flyFn=null,sugFn=null;
