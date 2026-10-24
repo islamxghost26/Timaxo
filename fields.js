@@ -154,8 +154,28 @@
   // تصحيح أخطاء الأرقام الشائعة في الـOCR (O→0، l→1، S→5…) داخل الكلمات اللي أغلبها أرقام فقط.
   // متحفّظ: لازم رقمين حقيقيين على الأقل، وعدد الحروف المشبوهة ما يزيدش عن عدد الأرقام، وكل الحروف الباقية رموز أرقام (. , : / - + ()).
   const CONF = { O: '0', o: '0', I: '1', l: '1', '|': '1', S: '5', B: '8', Z: '2' };
+
+  /** تصحيح الأرقام الشرقية: الصفر العربي (٠) نقطة صغيرة في خط البطاقات فالنموذج بيقرأه "." أو "·".
+      بنصلّح بس لما الناتج يطلع رقم قومي مصري (14 رقم، تاريخ ميلاد صحيح) أو موبايل مصري (11 رقم) — عشان منبوّظش تواريخ/كسور عادية. */
+  function fixEasternDigits(s) {
+    if (!s) return s;
+    const E2W = c => String.fromCharCode(c.charCodeAt(0) - 0x660 + 48);
+    return String(s).replace(/[\u0660-\u0669][\u0660-\u0669.\u00B7\u2022'\u066B\s]*[\u0660-\u0669]/g, run => {
+      if (!/[.\u00B7\u2022'\u066B]/.test(run)) return run;
+      const z = run.replace(/\s+/g, '').replace(/[.\u00B7\u2022'\u066B]/g, '\u0660');
+      const w = z.replace(/[\u0660-\u0669]/g, E2W);
+      if (w.length === 14 && /^[23]\d{13}$/.test(w)) {
+        const m = +w.slice(3, 5), d = +w.slice(5, 7);
+        if (m >= 1 && m <= 12 && d >= 1 && d <= 31) return z;
+      }
+      if (w.length === 11 && /^01[0125]\d{8}$/.test(w)) return z;
+      return run;
+    });
+  }
+
   function fixDigits(text) {
     if (!text) return text;
+    text = fixEasternDigits(text);
     return String(text).replace(/\S+/g, tok => {
       let d = 0, c = 0;
       for (const ch of tok) {
@@ -168,6 +188,6 @@
     });
   }
 
-  g.TXFields = { extract, suggest, norm, fixDigits };
+  g.TXFields = { extract, suggest, norm, fixDigits, fixEasternDigits };
   if (typeof module !== 'undefined') module.exports = g.TXFields;
 })(typeof window !== 'undefined' ? window : globalThis);

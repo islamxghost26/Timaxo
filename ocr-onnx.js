@@ -101,6 +101,25 @@
     return out.reverse().join('').replace(/\u0001/g, ': ');
   }
 
+
+  /** تصحيح الأرقام الشرقية: الصفر العربي (٠) نقطة صغيرة في خط البطاقات فالنموذج بيقرأه "." أو "·".
+      بنصلّح بس لما الناتج يطلع رقم قومي مصري (14 رقم، تاريخ ميلاد صحيح) أو موبايل مصري (11 رقم) — عشان منبوّظش تواريخ/كسور عادية. */
+  function fixEasternDigits(s) {
+    if (!s) return s;
+    const E2W = c => String.fromCharCode(c.charCodeAt(0) - 0x660 + 48);
+    return String(s).replace(/[\u0660-\u0669][\u0660-\u0669.\u00B7\u2022'\u066B\s]*[\u0660-\u0669]/g, run => {
+      if (!/[.\u00B7\u2022'\u066B]/.test(run)) return run;
+      const z = run.replace(/\s+/g, '').replace(/[.\u00B7\u2022'\u066B]/g, '\u0660');
+      const w = z.replace(/[\u0660-\u0669]/g, E2W);
+      if (w.length === 14 && /^[23]\d{13}$/.test(w)) {
+        const m = +w.slice(3, 5), d = +w.slice(5, 7);
+        if (m >= 1 && m <= 12 && d >= 1 && d <= 31) return z;
+      }
+      if (w.length === 11 && /^01[0125]\d{8}$/.test(w)) return z;
+      return run;
+    });
+  }
+
   /** تنظيف خفيف للسطر: مسافات مكررة، مسافة قبل علامة ترقيم */
   function tidy(s) {
     return String(s).replace(/[ \t]{2,}/g, ' ').replace(/\s+([،؛؟!.,:;])/g, '$1').trim();
@@ -180,7 +199,7 @@
     flush();
     const px = t => region.sx + t / Tn * region.sw;
     return words.map(w => {
-      const vis = w.map(s => s.c).join(''), isAr = ARL.test(vis);
+      const vis = fixEasternDigits(w.map(s => s.c).join('')), isAr = ARL.test(vis);
       const x0 = Math.max(box.x0, px(w[0].t - WA)), x1 = Math.min(box.x1, px(w[w.length - 1].t + WB));
       return { t: isAr ? arabicReorder(vis) : vis, x0, y0: box.y0, x1: Math.max(x1, x0 + 2), y1: box.y1, c: (w.reduce((a, s) => a + s.p, 0) / w.length) * 100 };
     }).filter(w => w.t);
@@ -328,6 +347,7 @@
         const r = await readBox(cv, b, script, opt, ort);
         done++; prog(0.4 + 0.6 * done / Math.max(1, total)); await tick();
         if (!r || !r.vis.trim()) continue;
+        r.vis = fixEasternDigits(r.vis);
         const arLine = ARL.test(r.vis);
         let text = tidy(arLine ? arabicReorder(r.vis) : r.vis);
         if (!text || (r.conf < 0.3 && text.length < 3)) continue; // ضوضاء
@@ -376,7 +396,7 @@
   }
 
   g.TXOnnx = {
-    tryRun, warm, run, pickScript, buildChars, ctcDecode, ctcSteps, mergeScripts, arabicReorder, tidy, dbBoxes, orderBoxes, splitWords, wordsFromSteps, toTensor, rotate,
+    tryRun, warm, run, pickScript, buildChars, ctcDecode, ctcSteps, mergeScripts, arabicReorder, fixEasternDigits, tidy, dbBoxes, orderBoxes, splitWords, wordsFromSteps, toTensor, rotate,
     _chars(script, C) { const k = script + ':' + C; return (S._ck = S._ck || {})[k] || (S._ck[k] = buildChars(S.chars[script], C)); },
     free() { /* v174: تحرير الذاكرة لما التطبيق يروح الخلفية */ for (const grp of [S.det, S.rec]) { for (const k in grp) { try { const x = grp[k]; x && x.release && x.release(); } catch (e) { } delete grp[k]; } } S.chars = {}; S._ck = {}; S._warm = 0; },
     _state: S, DEF
