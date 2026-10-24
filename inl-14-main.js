@@ -1143,6 +1143,12 @@ async function renderFinal(p,edge){
   const src=p.src||await decodeBlob(p.blob),w=warpRot(src,p,edge),b=makeBase(w),tc=toneCanvas(b,p.filter,p.br,p.ct,p.sat);
   applyFills(tc.getContext('2d'),tc.width,tc.height,p.ann,p);drawAnn(tc.getContext('2d'),tc.width,tc.height,p.ann);return stampOut(tc,p);
 }
+/* v188: صورة نضيفة ثابتة للـOCR — من غير فلتر/سطوع/تباين/علامات تحرير، عشان القراءة تطلع نفسها كل مرة */
+async function renderOcr(p,edge){
+  try{await window.TXFONTS}catch(_){}
+  const src=p.src||await decodeBlob(p.blob),w=warpRot(src,p,edge),b=makeBase(w);
+  return toneCanvas(b,'original',0,0,0);
+}
 function u32(n){return[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255];}
 function u16(n){return[n&255,(n>>>8)&255];}
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
@@ -2826,7 +2832,7 @@ function ocrLtWords(M,W,H){const ws=M.filter(w=>w.c>=40&&(w.y1-w.y0)>4),out=[];l
  for(const l of tbLines(ws).sort((a,b)=>a.cy-b.cy)){const r=tbIsAr(l.w.map(w=>w.t).join(' '));
   for(const w of l.w.slice().sort((p,q)=>r?q.x0-p.x0:p.x0-q.x0))out.push({t:w.t,x0:w.x0/W,y0:w.y0/H,x1:w.x1/W,y1:w.y1/H,l:li,r:r?1:0});li++;}
  return out;}
-function ltSig(p,lg){try{return lg+'|'+JSON.stringify(p,(k,v)=>(k==='src'||k==='blob'||k==='th'||k==='thumb'||k==='id'||(typeof v==='string'&&v.length>300)||(typeof Blob!=='undefined'&&v instanceof Blob)||(typeof HTMLCanvasElement!=='undefined'&&v instanceof HTMLCanvasElement)||(typeof ImageBitmap!=='undefined'&&v instanceof ImageBitmap))?undefined:v);}catch(e){return lg+'|'+Date.now();}}
+function ltSig(p,lg){try{return lg+'|v188|'+JSON.stringify([p.corners,p.rot]);}catch(e){return lg+'|'+Date.now();}}
 function ltStore(p,cv,M,sig){try{LTC[p.id]={ar:cv.width/cv.height,sig:sig,ws:ocrLtWords(M,cv.width,cv.height)};}catch(e){}}
 function ltText(ws,a,b){let o='',pl=-1;for(let i=a;i<=b;i++){const w=ws[i];if(pl>=0)o+=w.l===pl?' ':'\n';o+=w.t;pl=w.l;}return o;}
 /* v60: smart background rebuild, skew detection, button-fit safety net */
@@ -2943,7 +2949,7 @@ async function liveText(p){
   const sig=ltSig(p,lg.join('+'));let c=LTC[p.id];const asp=cb.width/cb.height;
   if(!c||c.sig!==sig||Math.abs(c.ar-asp)/asp>.01){o.classList.add('scan');
    logCb=x=>{if(S.dead)return;if(x.status==='recognizing text'){const v=Math.round(x.progress*100);if(v>S.pr){S.pr=v;drawBar();}}};
-   try{const f=await renderFinal(p,2200);if(S.dead)return;
+   try{const f=await renderOcr(p,2200);if(S.dead)return;
     let best=null;try{best=await TXOnnx.tryRun(f,lg.join('+'),pr=>{if(!S.dead){const v=Math.round(pr*100);if(v>S.pr){S.pr=v;drawBar();}}},()=>S.dead,{skew:ocrSkew,fast:OQ()==='fast'});}catch(_){}if(S.dead)return;if(!best)best=await ocrRun(f,lg.join('+'),OQ(),'3',false,()=>{},()=>S.dead);if(S.dead||!best)return;ltStore(p,f,best.M,sig);c=LTC[p.id];}
    catch(err){console.error(err);if(!S.dead){toast(T('تعذّرت القراءة — محتاج إنترنت أول مرة','Could not read — needs internet the first time'));ltExit();}return;}}
   if(S.dead)return;o.classList.remove('scan');S.busy=false;S.ws=(c&&c.ws)||[];
@@ -3190,7 +3196,7 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   const pcl=$m('#oPc'),setPb=v=>{const cur=parseFloat(pb.style.width)||0;if(v>cur)pb.style.width=Math.min(100,v).toFixed(1)+'%';if(pcl)pcl.textContent=Math.round(parseFloat(pb.style.width)||0)+'%';};setPb(6);
   const crp=setInterval(()=>{if(dead||id!==rid){clearInterval(crp);return;}const w=parseFloat(pb.style.width)||0;if(w>0&&w<93)setPb(w+(95-w)*.045+.12);},500);
   let sg='render';
-  try{if(!cv){const f=await renderFinal(p,2200);if(!box)cv=f;else{const sx=Math.round(box.x0*f.width),sy=Math.round(box.y0*f.height),cw=Math.max(8,Math.round((box.x1-box.x0)*f.width)),ch=Math.max(8,Math.round((box.y1-box.y0)*f.height)),k=clamp(110/ch,1,3),pd=12;
+  try{if(!cv){const f=await renderOcr(p,2200);if(!box)cv=f;else{const sx=Math.round(box.x0*f.width),sy=Math.round(box.y0*f.height),cw=Math.max(8,Math.round((box.x1-box.x0)*f.width)),ch=Math.max(8,Math.round((box.y1-box.y0)*f.height)),k=clamp(110/ch,1,3),pd=12;
     const d=f.getContext('2d').getImageData(sx,sy,Math.min(cw,f.width-sx),Math.min(ch,f.height-sy)).data,Y=[];for(let i=0;i<d.length;i+=4)Y.push([d[i]*.3+d[i+1]*.59+d[i+2]*.11,i]);Y.sort((a,b)=>a[0]-b[0]);const nk=Math.max(1,Y.length*.06|0);let r=0,g=0,b=0;for(let i=0;i<nk;i++){r+=d[Y[i][1]];g+=d[Y[i][1]+1];b+=d[Y[i][1]+2];}ink=`rgb(${r/nk|0},${g/nk|0},${b/nk|0})`;
     cv=document.createElement('canvas');cv.width=cw*k+pd*2;cv.height=ch*k+pd*2;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.imageSmoothingQuality='high';x.drawImage(f,sx,sy,cw,ch,pd,pd,cw*k,ch*k);bm={sx:sx,sy:sy,k:k,pd:pd,fw:f.width,fh:f.height};sk=ocrSkew(cv);if(Math.abs(sk)>.012)cv=ocrRot(cv,-sk);else sk=0;}
     const tc=document.createElement('canvas');tc.width=124;tc.height=164;const kk=Math.max(124/cv.width,164/cv.height);tc.getContext('2d').drawImage(cv,(124-cv.width*kk)/2,0,cv.width*kk,cv.height*kk);th.innerHTML='';th.appendChild(tc);}
@@ -3276,7 +3282,7 @@ async function bgOcr(){
     if(!p||!p.id||bgTried.has(p.id)||OI()[p.id]!==undefined)continue;
    bgTried.add(p.id);
    try{
-    const cv=await renderFinal(p,1600);if(!cv)continue;
+    const cv=await renderOcr(p,1600);if(!cv)continue;
     const wk=await getW('ara+eng');await wk.setParameters({tessedit_pageseg_mode:'3'});
     const r=await wk.recognize(cv);const Ls=r.data.lines;let T=(r.data.text||'').trim();
     if(Ls&&Ls.length)T=Ls.map(l=>(l.words||[]).filter(w=>w.confidence>=50).map(w=>w.text).join(' ').trim()).filter(Boolean).join('\n');
