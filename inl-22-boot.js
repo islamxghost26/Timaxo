@@ -44,6 +44,7 @@ const D=[
  p:[['مستنداتي|ثبّت وصنّف وابحث','My documents|Pin, tag and search','docs'],
  ['سلة المحذوفات|المحذوف بيفضل ٣٠ يوم وتقدر تسترجعه','Trash|Deleted items stay 30 days and can be restored'],
  ['نسخة احتياطية|ملف واحد ترجّعه وقت ما تحب','Backup|One file you can restore any time','more:مستنداتي والنسخ الاحتياطي|Documents & backup'],
+ ['Google Drive|اربط حسابك مرة، والمصدَّر والمحذوف والمفتوح بيتحفظوا تلقائيًا','Google Drive|Link once; exported, deleted and open docs are saved automatically','more:Google Drive|Google Drive'],
  ['قفل التطبيق|رقم سري أو بصمة','App lock|PIN or fingerprint','more:قفل التطبيق|App lock']]},
 {c:['#16a34a','#4ade80'],i:ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'),
  t:['الإعدادات والأدوات','Settings & tools'],s:['ثيم، لغة، QR وأوفلاين','Theme, language, QR & offline'],w:['الكبسولة فوق · ⚙ الإعدادات','Top capsule · ⚙ Settings'],

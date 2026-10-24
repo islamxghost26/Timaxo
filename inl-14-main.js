@@ -1233,6 +1233,13 @@ window.__txQuickPdf=async function(r){
   }catch(e){console.error(e);toast(t('saveFail'));}
   if(!r.isCur)pages.forEach(p=>{p.src=null;});busy(false);
 };
+
+/* ===== Google Drive: جسر بين التطبيق وموديول drive-sync.js ===== */
+window.__txDrvHost={toast:m=>toast(m),
+ docs:async()=>{const a=await allSaved(),c=curRec();return(c?[{...c,isCur:true}]:[]).concat(a);},
+ pdf:async r=>{const pages=r.isCur?state.pages.slice():(r.rows||[]);if(!pages.length)return null;const Q=QUAL.medium,items=[];
+  for(let k=0;k<pages.length;k++){const c=await renderFinal(pages[k],Q.edge);const blob=await toBlob(c,'image/jpeg',Q.q);items.push({blob,w:c.width,h:c.height,bytes:new Uint8Array(await blob.arrayBuffer())});await sleep(10);}
+  if(!r.isCur)pages.forEach(p=>{p.src=null;});return buildPDF(items,'fit');}};
 async function saveFile(blob,filename){
   if(DL){try{await DL.save({filename,data:blob});return'saved';}catch(e){if(e&&e.code==='declined')return'cancelled';}}
   const hosted=!!(window.claude&&window.claude.use),act=X.act||'save';X.act='save';
@@ -1244,7 +1251,7 @@ async function saveFile(blob,filename){
 }
 async function deliver(blob,filename,kind){
   const r=await saveFile(blob,filename);
-  if(r==='saved'){toast(t('saved'));closeSheet();return;}
+  if(r==='saved'){try{window.__txDrive&&window.__txDrive.onExport(blob,filename)}catch(e){}toast(t('saved'));closeSheet();return;}
   if(r==='cancelled'){toast(t('cancelled'));return;}
   const fb=$('#xFb'),url=URL.createObjectURL(blob);fb.hidden=false;
   fb.innerHTML=(kind==='img'?`<img alt="" src="${url}"><div>${t('fbImg')}</div>`:`<div>${t('saveFail')}</div>`)+`<a href="${url}" target="_blank" rel="noopener" download="${filename}">${t('fbOpen')}</a>`;
@@ -1298,7 +1305,7 @@ async function renderLib0(){const box=$('#libList');box.innerHTML='';const saved
     {const ex=expiryOf(r);if(ex){const past=new Date(ex+'T23:59:59Z')<new Date(),el=document.createElement('small');el.style.cssText='display:block;opacity:.85';el.textContent=(past?Lg('منتهي: ','Expired: '):Lg('ينتهي: ','Expires: '))+ex;$('.tx',b).appendChild(el);
      if(!past){const eb=document.createElement('button');eb.type='button';eb.textContent=Lg('⏰ ذكّرني','⏰ Remind me');eb.style.cssText='margin:4px 6px 0 0;padding:2px 10px;border-radius:10px;border:1px solid #8886;background:transparent;color:inherit;font-size:12px';eb.onclick=e=>{e.stopPropagation();expiryIcs(r,ex);};$('.tx',b).appendChild(eb);}}}let arm=0;const del=$('.libdel',b);
     del.onclick=async e=>{e.stopPropagation();if(!arm){arm=1;del.classList.add('arm');del.textContent=Lg('تأكيد الحذف','Confirm');setTimeout(()=>{arm=0;del.classList.remove('arm');del.innerHTML='<svg class="i"><use href="#i-trash"/></svg>';},2600);return;}
-      if(isCur){{const rr=curRec();if(rr)await tx('docs','readwrite',s=>s.put({...rr,trashed:Date.now()}));}state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}else{await tx('docs','readwrite',s=>s.put({...r,trashed:Date.now()}));toast(Lg('اتنقل لسلة المحذوفات (٣٠ يوم)','Moved to Trash (30 days)'));}
+      if(isCur){{const rr=curRec();if(rr){await tx('docs','readwrite',s=>s.put({...rr,trashed:Date.now()}));try{window.__txDrive&&window.__txDrive.onDelete(rr)}catch(e){}}}state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}else{await tx('docs','readwrite',s=>s.put({...r,trashed:Date.now()}));try{window.__txDrive&&window.__txDrive.onDelete(r)}catch(e){}toast(Lg('اتنقل لسلة المحذوفات (٣٠ يوم)','Moved to Trash (30 days)'));}
       renderHome();await renderLib();};
     b.onclick=async()=>{if(isCur){closeLib();return;}await snapDoc();await loadRec(r);closeLib();stagNext=true;renderHome();toast(Lg('تم فتح: ','Opened: ')+r.name);};
     b.onkeydown=e=>{if(e.key==='Enter')b.onclick();};box.appendChild(b);};
@@ -1775,6 +1782,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
     ocr:'<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M8 9h8M8 12.5h8M8 16h5"/>',
     idx:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2M9 11h4M11 9v4"/>',
     off:'<path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5 4 4 0 0 1 17 18"/><path d="M12 11v7M9 15l3 3 3-3"/>',
+    drv:'<path d="M8.6 3h6.8l6.1 10.6-3.4 5.9H5.9L2.5 13.6z"/><path d="M8.6 3l6.1 10.6M15.4 3L9.3 13.6M5.9 19.5l3.4-5.9h12.2"/>',
     lib:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     lng:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
     rot:'<rect x="2.5" y="7" width="19" height="10" rx="2.5"/><path d="M18.5 12h.01M7 3.6A9 9 0 0 1 12 2.2M17 20.4a9 9 0 0 1-5 1.4"/>',
@@ -1852,6 +1860,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
    /* 6) البيانات */
    const g5=grp(T('البيانات','Data'));
    row(g5,{ic:'lib',c:'#1b63f0',t:T('مستنداتي والنسخ الاحتياطي','Documents & backup'),s:T('المكتبة والاستعادة والتصدير','Library, restore and export'),fn:()=>{const l=document.getElementById('libBtn');if(l)l.click();}});
+   {const dv=window.__txDrive,bd=dv?dv.badge():{v:'',ok:false};row(g5,{ic:'drv',c:'#1fa463',t:T('Google Drive','Google Drive'),s:T('نسخة تلقائية من المصدَّر والمفتوح والمحذوف','Auto-copy exports, open & deleted docs'),v:bd.v,ok:bd.ok,keep:1,fn:()=>{dv&&dv.open();}});}
    /* 7) عن التطبيق */
    const ib=document.querySelector('button.inst'),g6=grp(T('عن التطبيق','About'));
    if(ib&&!ib.hidden)row(g6,{ic:'inst',c:'#0ea5e9',t:T('تثبيت التطبيق','Install the app'),s:T('أضفه للشاشة الرئيسية وافتحه أوفلاين','Add to home screen, works offline'),fn:()=>{ib.click();}});
@@ -3771,8 +3780,8 @@ var DS=window.__txDS||(window.__txDS={on:false,ids:{}});
 var DELI='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 async function trashRecs(list){
   for(var i=0;i<list.length;i++){var r=list[i];
-    if(r.isCur){var rr=curRec();if(rr)await tx('docs','readwrite',function(s){s.put(Object.assign({},rr,{trashed:Date.now()}))});state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}
-    else await tx('docs','readwrite',function(s){s.put(Object.assign({},r,{trashed:Date.now()}))});}
+    if(r.isCur){var rr=curRec();if(rr){await tx('docs','readwrite',function(s){s.put(Object.assign({},rr,{trashed:Date.now()}))});try{window.__txDrive&&window.__txDrive.onDelete(rr)}catch(e){}}state.pages=[];state.id=newId();state.name=defName();$('#docName').value=state.name;await clearStore();await persistMeta();}
+    else{await tx('docs','readwrite',function(s){s.put(Object.assign({},r,{trashed:Date.now()}))});try{window.__txDrive&&window.__txDrive.onDelete(r)}catch(e){}}}
   toast(Lg(list.length===1?'اتنقل لسلة المحذوفات (٣٠ يوم)':'اتنقل '+list.length+' مستند لسلة المحذوفات (٣٠ يوم)',list.length===1?'Moved to Trash (30 days)':list.length+' documents moved to Trash (30 days)'));}
 async function renderDocs(){
   var my=++rdT,saved=await allSaved(),cur=null;
