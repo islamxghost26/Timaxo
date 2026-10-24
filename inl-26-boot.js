@@ -4,22 +4,27 @@
 lb.addEventListener('click',function(){lb.classList.remove('ignite');void lb.offsetWidth;lb.classList.add('ignite');try{navigator.vibrate&&navigator.vibrate([14,40,22])}catch(_){}},true)}catch(e){}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,400)});else setTimeout(go,400)})();
 
-/* v189: إشعار مصباح المساعد (#asgBtn): نقطة تنبيه + وميض لما الواجهة تقعد ساكنة */
+/* v189: إشعار زرار الدليل «؟» (#tgBtn): نقطة تنبيه + وميض لما الواجهة تقعد ساكنة */
 (function(){
   var IDLE=15000,REPEAT=7000,st=document.createElement('style');
-  st.textContent='#asgBtn .asgDot{position:absolute;top:-4px;inset-inline-end:-4px;width:13px;height:13px;border-radius:50%;background:#ff3b5c;border:2px solid #04245a;box-shadow:0 0 8px rgba(255,59,92,.9);pointer-events:none;z-index:3;animation:asgDotP 1.6s ease-in-out infinite}'
+  st.textContent='#tgBtn .asgDot{position:absolute;top:3px;inset-inline-end:3px;width:12px;height:12px;border-radius:50%;background:#ff3b5c;border:2px solid #04245a;box-shadow:0 0 8px rgba(255,59,92,.9);pointer-events:none;z-index:3;animation:asgDotP 1.6s ease-in-out infinite}'
    +'@keyframes asgDotP{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}'
-   +'@media (prefers-reduced-motion:reduce){#asgBtn .asgDot{animation:none}}';
+   +'html:root body #vHome .hdock>#tgBtn{position:relative}'
+   +'html:root body #vHome .hdock>#tgBtn.tgFlash{animation:tgFl .9s ease-in-out}'
+   +'html:root body #vHome .hdock>#tgBtn.tgFlash svg{animation:tgWg .9s ease-in-out}'
+   +'@keyframes tgFl{0%,100%{box-shadow:0 0 0 0 rgba(255,214,10,0)}40%{box-shadow:0 0 0 2px rgba(255,214,10,.9),0 0 26px 6px rgba(255,214,10,.75)}}'
+   +'@keyframes tgWg{0%,100%{transform:none;filter:none}25%{transform:scale(1.18) rotate(-14deg);filter:drop-shadow(0 0 8px #ffd60a)}55%{transform:scale(1.1) rotate(10deg);filter:drop-shadow(0 0 10px #ffd60a)}80%{transform:scale(1.05) rotate(-4deg)}}'
+   +'@media (prefers-reduced-motion:reduce){#tgBtn .asgDot{animation:none}}';
   document.head.appendChild(st);
   var reduced=false;try{reduced=matchMedia('(prefers-reduced-motion:reduce)').matches}catch(_){}
-  function init(){
-    var lb=document.getElementById('asgBtn'),vh=document.getElementById('vHome');
-    if(!lb||!vh)return setTimeout(init,400);
+  var tries=0;function init(){
+    var lb=document.getElementById('tgBtn'),vh=document.getElementById('vHome');
+    if(!lb||!vh){if(++tries<60)setTimeout(init,500);return}
     var idleT=0,repT=0,wasOn=false;
     var homeOn=function(){return vh.classList.contains('on')&&!document.hidden};
     function showDot(){if(!lb.querySelector('.asgDot')){var d=document.createElement('span');d.className='asgDot';lb.appendChild(d)}}
     function hideDot(){var d=lb.querySelector('.asgDot');if(d)d.remove()}
-    function flash(){lb.classList.remove('ignite');void lb.offsetWidth;lb.classList.add('ignite')}
+    function flash(){lb.classList.remove('tgFlash');void lb.offsetWidth;lb.classList.add('tgFlash')}
     function stopFlash(){clearTimeout(idleT);clearInterval(repT);idleT=repT=0}
     function armIdle(){
       stopFlash();if(reduced||!homeOn())return;
