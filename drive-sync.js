@@ -3,7 +3,7 @@
    - مفيش سيرفر وسيط: الرفع من جهازك مباشرة لـ Google Drive بتاعك.
    - الرفع بيتم بطابور على الجهاز: لو النت وقع بيكمّل لوحده لما يرجع. */
 (function(){'use strict';
-var CLIENT_ID=''; /* ← حط هنا الـOAuth Client ID (Web) من Google Cloud Console. أو يتحط من نافذة Drive نفسها. */
+var CLIENT_ID='607626214799-nmldlhm95213igctns081ik9h1k23i78.apps.googleusercontent.com'; /* ← حط هنا الـOAuth Client ID (Web) من Google Cloud Console. أو يتحط من نافذة Drive نفسها. */
 var SCOPE='https://www.googleapis.com/auth/drive.file',API='https://www.googleapis.com/',LS=localStorage;
 var ar=function(){return document.documentElement.lang!=='en'},L=function(a,e){return ar()?a:e};
 var J=function(k,d){try{var v=JSON.parse(LS.getItem(k));return v==null?d:v}catch(e){return d}};
