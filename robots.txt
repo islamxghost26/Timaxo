@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /check.html
+Disallow: /drive-callback.html
+
+Sitemap: https://timaxo.islamxghost26.workers.dev/sitemap.xml
