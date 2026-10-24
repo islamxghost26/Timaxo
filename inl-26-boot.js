@@ -35,7 +35,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var homeOn=function(){return vh.classList.contains('on')&&!document.hidden&&!lb.classList.contains('open')};
 
     function attnOn(){if(homeOn())lb.classList.add('tgAttn')}
-    function attnOff(){lb.classList.remove('tgAttn')}
+    function attnOff(){if(lb.classList.contains('tgAttn'))lb.classList.remove('tgAttn')}
 
     function noteHide(){clearTimeout(tHide);if(!note)return;var n=note;note=null;n.classList.remove('on');setTimeout(function(){n.remove()},350)}
     function noteShow(){
@@ -92,7 +92,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if(on&&!wasOn)opened();else if(!on){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}
       wasOn=on;
     }).observe(vh,{attributes:true,attributeFilter:['class']});
-    new MutationObserver(function(){if(lb.classList.contains('open')){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}}).observe(lb,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(function(){if(lb.classList.contains('open')&&(lb.classList.contains('tgAttn')||note)){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}}).observe(lb,{attributes:true,attributeFilter:['class']});
     wasOn=vh.classList.contains('on');opened();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(init,600)});else setTimeout(init,600);
