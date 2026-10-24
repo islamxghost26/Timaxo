@@ -138,6 +138,10 @@ html body .mdl.ox .ox-menu .ox-mi svg{flex:none;width:42px;height:42px;padding:1
 html body .mdl.ox .ox-menu .ox-mi span{flex:1;min-width:0;font:800 15.5px/1.25 system-ui,'Cairo',sans-serif;color:var(--ink)}
 html body .mdl.ox .ox-menu .ox-mi small{flex:none;margin:0;padding:5px 11px;border-radius:99px;background:var(--surface2);font:700 11.5px/1 system-ui,'Cairo',sans-serif;color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line)}
 html body .mdl.ox .ox-menu .ox-ms{height:1px;margin:6px 14px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+/* v185: زرار PDF في قايمة تصدير الجدول (٢×٢) */
+html .tbx .tbw-eg{grid-template-columns:repeat(2,1fr)}
+html .tbx .tbw-ec.p i.mk{background:none;box-shadow:none;width:58px;height:58px;border-radius:0}
+html .tbx .tbw-ec.p i:not(.mk){background:linear-gradient(135deg,#c5252b,#ff6b6b)}
 html .tbx .tbw-st{flex-wrap:wrap;row-gap:8px;min-width:0;max-width:100%;overflow:hidden}
 html .tbx .tbw-st>*{min-width:0;max-width:100%}
 html .tbx .tbw-imp{max-width:100%;white-space:nowrap}

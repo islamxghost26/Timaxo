@@ -1480,6 +1480,123 @@ function txMeasure(ctx,W,H,bb){
  const d=ctx.getImageData(rx,ry,rw,rh).data,i=txMaskInfo(d,rw,rh,X0-rx,Y0-ry,X1-rx,Y1-ry);if(!i)return null;
  const t=i.tb;return{tb:{x0:(rx+t.x0)/W,y0:(ry+t.y0)/H,x1:(rx+t.x1)/W,y1:(ry+t.y1)/H},col:i.col?'rgb('+i.col.join(',')+')':null};}
 
+/* ===== v185: تصدير الجدول PDF بنفس أبعاد الصفحة الأصلية (كل خلية في مكانها الأصلي) ===== */
+/* ترتيب بصري للسطور العربية (زي ملفات PDF العادية): نعكس السطر ونرجّع أرقام/لاتيني لاتجاهها */
+function txVis(t){if(!/[\u0590-\u08FF]/.test(t))return t;return Array.from(t).reverse().join('').replace(/[A-Za-z0-9\u0660-\u0669][A-Za-z0-9\u0660-\u0669.,:\/\-+%()]*/g,m=>Array.from(m).reverse().join(''));}
+function txPdfBuild(pages,withText){
+ const enc=s=>new TextEncoder().encode(s),parts=[],off=[];let len=0;
+ const add=b=>{if(typeof b==='string')b=enc(b);parts.push(b);len+=b.length;};
+ const obj=(n,body)=>{off[n]=len;add(n+' 0 obj\n');add(body);add('\nendobj\n');};
+ const hex4=n=>n.toString(16).toUpperCase().padStart(4,'0'),u16=cp=>cp>0xFFFF?(cp-=0x10000,hex4(0xD800+(cp>>10))+hex4(0xDC00+(cp&1023))):hex4(cp);
+ /* خريطة الحروف → أرقام CID (للنص غير المرئي) */
+ const cmap=new Map();if(withText)pages.forEach(p=>(p.items||[]).forEach(it=>{for(const ch of txVis(it.t)){const cp=ch.codePointAt(0);if(cp>=32&&!cmap.has(cp)&&cmap.size<65000)cmap.set(cp,cmap.size+1);}}));
+ const base=withText?7:3,N=base-1+pages.length*3;
+ add(new Uint8Array([37,80,68,70,45,49,46,52,10,37,226,227,207,211,10]));
+ obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+ obj(2,'<< /Type /Pages /Kids ['+pages.map((p,i)=>(base+i*3)+' 0 R').join(' ')+'] /Count '+pages.length+' >>');
+ if(withText){
+  obj(3,'<< /Type /Font /Subtype /Type0 /BaseFont /TimaxoText /Encoding /Identity-H /DescendantFonts [4 0 R] /ToUnicode 6 0 R >>');
+  obj(4,'<< /Type /Font /Subtype /CIDFontType2 /BaseFont /TimaxoText /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 5 0 R /DW 1000 /CIDToGIDMap /Identity >>');
+  obj(5,'<< /Type /FontDescriptor /FontName /TimaxoText /Flags 4 /FontBBox [0 -250 1000 900] /ItalicAngle 0 /Ascent 900 /Descent -250 /CapHeight 700 /StemV 80 >>');
+  const ent=[...cmap.entries()];let bf='';for(let i=0;i<ent.length;i+=100){const ch=ent.slice(i,i+100);bf+=ch.length+' beginbfchar\n'+ch.map(e=>'<'+hex4(e[1])+'> <'+u16(e[0])+'>').join('\n')+'\nendbfchar\n';}
+  const cm='/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n'+bf+'endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend';
+  obj(6,'<< /Length '+enc(cm).length+' >>\nstream\n'+cm+'\nendstream');}
+ pages.forEach((p,i)=>{const pg=base+i*3,ct=pg+1,im=pg+2,w=p.w.toFixed(2),h=p.h.toFixed(2);
+  obj(pg,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+w+' '+h+'] /Resources << /XObject << /Im0 '+im+' 0 R >>'+(withText?' /Font << /F1 3 0 R >>':'')+' /ProcSet [/PDF /ImageC'+(withText?' /Text':'')+'] >> /Contents '+ct+' 0 R >>');
+  let cs='q '+w+' 0 0 '+h+' 0 0 cm /Im0 Do Q\n';
+  if(withText&&p.items&&p.items.length){cs+='BT\n3 Tr\n';
+   for(const it of p.items){const txt=[...txVis(it.t)].filter(ch=>cmap.has(ch.codePointAt(0)));if(!txt.length)continue;
+    const hx=txt.map(ch=>hex4(cmap.get(ch.codePointAt(0)))).join(''),fs=Math.max(1,it.h*.9),tz=Math.max(1,Math.min(1000,it.w/(txt.length*fs)*100));
+    cs+='/F1 '+fs.toFixed(2)+' Tf\n'+tz.toFixed(1)+' Tz\n1 0 0 1 '+it.x.toFixed(2)+' '+(p.h-it.y-it.h*.78).toFixed(2)+' Tm\n<'+hx+'> Tj\n';}
+   cs+='ET\n';}
+  obj(ct,'<< /Length '+enc(cs).length+' >>\nstream\n'+cs+'endstream');
+  off[im]=len;add(im+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+p.iw+' /Height '+p.ih+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.jpg.length+' >>\nstream\n');add(p.jpg);add('\nendstream\nendobj\n');});
+ const xr=len;let x='xref\n0 '+(N+1)+'\n0000000000 65535 f \n';for(let n=1;n<=N;n++)x+=String(off[n]).padStart(10,'0')+' 00000 n \n';
+ add(x+'trailer\n<< /Size '+(N+1)+' /Root 1 0 R >>\nstartxref\n'+xr+'\n%%EOF');
+ return new Blob(parts,{type:'application/pdf'});}
+function txDrawTable(x,g,W,H,S,rtl0,FF,items){
+ const rows=g.rows||[],nR=g.nR||rows.length,nC=g.nC||rows.reduce((m,r)=>Math.max(m,r.length),0);if(!nR||!nC)return;
+ const real=g.engine===2&&g.boxes;let B=g.boxes;
+ if(!real){const mx=W*.06,my=H*.06,cw=(W-2*mx)/nC,ch=Math.min(cw*.4,(H-2*my)/nR);B=[];for(let r=0;r<nR;r++){B[r]=[];for(let c=0;c<nC;c++)B[r][c]={x0:mx+c*cw,y0:my+r*ch,x1:mx+(c+1)*cw,y1:my+(r+1)*ch};}}
+ const LY=(window.TXExport&&real)?window.TXExport.layout(g):null,rtl=g.rtl!=null?!!g.rtl:!!rtl0;FF=FF||'Cairo,Inter,system-ui,sans-serif';
+ x.lineJoin='miter';x.textBaseline='middle';
+ for(let r=0;r<nR;r++)for(let c=0;c<nC;c++){
+  const e=LY?LY[r][c]:{k:'own',rs:1,cs:1};if(!e||e.k!=='own')continue;
+  let x0=1e12,y0=1e12,x1=-1e12,y1=-1e12;
+  for(let i=r;i<r+(e.rs||1)&&i<nR;i++)for(let j=c;j<c+(e.cs||1)&&j<nC;j++){const q=B[i]&&B[i][j];if(q&&q.x1>q.x0&&q.y1>q.y0){x0=Math.min(x0,q.x0);y0=Math.min(y0,q.y0);x1=Math.max(x1,q.x1);y1=Math.max(y1,q.y1);}}
+  if(x1<=x0)continue;x0*=S;y0*=S;x1*=S;y1*=S;
+  const st=(g.st&&g.st[r]&&g.st[r][c])||{},bw=x1-x0,bh=y1-y0;
+  if(st.bg){x.fillStyle='#'+st.bg;x.fillRect(x0,y0,bw,bh);}
+  x.strokeStyle='#3a3a3a';x.lineWidth=Math.max(1,Math.min(bw,bh)*.02,W*S*.0012);x.strokeRect(x0,y0,bw,bh);
+  const t=String((rows[r]&&rows[r][c])==null?'':rows[r][c]).trim();if(!t)continue;
+  const pad=Math.max(2,bh*.12),aw=bw-pad*2,ar=/[\u0590-\u08FF]/.test(t),num=/^[\d.,\s\-+%()/:\u0660-\u0669]+$/.test(t);
+  let fs=Math.min(bh*.5,bw*.5),lines=[t],lh=1.28;
+  x.fillStyle=st.fg?'#'+st.fg:'#111';x.direction=ar||(rtl&&!/[A-Za-z]/.test(t))?'rtl':'ltr';
+  for(let k=0;k<14;k++){x.font=(st.b?800:600)+' '+fs+'px '+FF;lines=[];
+   for(const para of t.split('\n')){let cur='';for(const wd of para.split(/\s+/)){const tr=cur?cur+' '+wd:wd;if(x.measureText(tr).width>aw&&cur){lines.push(cur);cur=wd;}else cur=tr;}lines.push(cur);}
+   const wm=Math.max(...lines.map(l=>x.measureText(l).width));if(lines.length*fs*lh<=bh-pad&&wm<=aw+.5)break;fs*=.9;}
+  const al=st.al==='l'?'left':st.al==='r'?'right':st.al==='c'?'center':num?'center':(ar||rtl)?'right':'left',px=al==='left'?x0+pad:al==='right'?x1-pad:(x0+x1)/2;
+  x.textAlign=al;const y0t=(y0+y1)/2-(lines.length-1)*fs*lh/2;lines.forEach((l,i)=>{const cy=y0t+i*fs*lh;x.fillText(l,px,cy);if(items&&l.trim()){const wl=x.measureText(l).width;items.push({t:l,x:(al==='left'?px:al==='right'?px-wl:px-wl/2)/S,y:(cy-fs*lh/2)/S,w:wl/S,h:fs*lh/S});}});}}
+async function txFontReady(ff){try{const fam=String(ff).split(',')[0].replace(/['"]/g,'').trim();await Promise.all([document.fonts.load('600 20px "'+fam+'"'),document.fonts.load('800 20px "'+fam+'"'),document.fonts.load('600 20px Cairo')]);}catch(_){}}
+/* بيرسم صفحة واحدة (جدول) على كانفس بنفس أبعاد الأصل؛ maxEdge بيحدد دقة المعاينة/التصدير */
+async function txRenderTablePage(g,W,H,rtl0,ff,maxEdge){
+ await txFontReady(ff);const S=Math.min(1,maxEdge/Math.max(W,H)),CW=Math.max(8,Math.round(W*S)),CH=Math.max(8,Math.round(H*S)),cv=document.createElement('canvas');cv.width=CW;cv.height=CH;
+ const x=cv.getContext('2d'),items=[];x.fillStyle='#fff';x.fillRect(0,0,CW,CH);txDrawTable(x,g,W,H,S,rtl0,ff,items);return{cv:cv,items:items,CW:CW,CH:CH};}
+async function txTablePdf(tables,W,H,rtl0,opt){
+ opt=opt||{};const ff=opt.ff||'Cairo,Inter,system-ui,sans-serif',pages=[];
+ for(const g of tables){const r=await txRenderTablePage(g,W,H,rtl0,ff,3200);
+  const blob=await new Promise(res=>r.cv.toBlob(res,'image/jpeg',.93));
+  pages.push({iw:r.CW,ih:r.CH,w:W*.75,h:H*.75,jpg:new Uint8Array(await blob.arrayBuffer()),items:(opt.text?r.items.map(it=>({t:it.t,x:it.x*.75,y:it.y*.75,w:it.w*.75,h:it.h*.75})):null)});}
+ return txPdfBuild(pages,!!opt.text);}
+
+/* شاشة معاينة تصدير PDF: اختيار الخط + قفل (صورة فقط) + تصدير */
+function txPdfSheet(cfg){
+ if(document.getElementById('txPdfSh'))return;const ar=!!cfg.ar,T=(a,e)=>ar?a:e;
+ if(!document.getElementById('txPdfCss')){const st=document.createElement('style');st.id='txPdfCss';st.textContent=
+ '#txPdfSh{position:fixed;inset:0;z-index:10040;display:flex;align-items:flex-end;justify-content:center}'
+ +'#txPdfSh .bk{position:absolute;inset:0;background:rgba(2,6,20,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:pdfFade .25s both}'
+ +'#txPdfSh .sh{position:relative;width:100%;max-width:560px;max-height:94vh;display:flex;flex-direction:column;gap:12px;padding:10px 14px max(16px,env(safe-area-inset-bottom));border-radius:28px 28px 0 0;background:var(--surface,#10204b);color:var(--ink,#fff);box-shadow:0 -20px 60px -20px #000;animation:pdfUp .34s cubic-bezier(.2,1,.3,1) both;overflow:hidden}'
+ +'#txPdfSh.out .sh{animation:pdfDown .24s ease both}#txPdfSh.out .bk{animation:pdfFade .24s reverse both}'
+ +'@keyframes pdfUp{from{transform:translateY(100%)}to{transform:none}}@keyframes pdfDown{to{transform:translateY(100%)}}@keyframes pdfFade{from{opacity:0}to{opacity:1}}'
+ +'#txPdfSh .gr{align-self:center;width:44px;height:5px;border-radius:9px;background:var(--line,rgba(255,255,255,.25))}'
+ +'#txPdfSh .hd{display:flex;align-items:center;gap:10px}#txPdfSh .hd b{flex:1;font:800 18px system-ui,Cairo,sans-serif}'
+ +'#txPdfSh .x{width:38px;height:38px;border:0;border-radius:12px;background:var(--surface2,rgba(255,255,255,.1));color:inherit;font-size:16px}'
+ +'#txPdfSh .pgs{display:flex;gap:6px}#txPdfSh .pgs button{min-width:34px;height:34px;padding:0 10px;border:0;border-radius:11px;background:var(--surface2,rgba(255,255,255,.1));color:inherit;font:800 13px system-ui}#txPdfSh .pgs button.on{background:var(--accent,#1b63f0);color:#fff}'
+ +'#txPdfSh .pv{position:relative;flex:1 1 auto;min-height:150px;max-height:40vh;overflow:auto;border-radius:18px;background:repeating-conic-gradient(#8b93a7 0 25%,#9aa2b5 0 50%) 0 0/16px 16px;padding:10px;display:flex;justify-content:center;align-items:flex-start;-webkit-overflow-scrolling:touch}'
+ +'#txPdfSh .pv canvas{display:block;max-width:100%;height:auto;background:#fff;border-radius:6px;box-shadow:0 10px 30px -8px #000a;transition:opacity .2s}#txPdfSh .pv.ld canvas{opacity:.35}'
+ +'#txPdfSh .pv i{position:absolute;inset:0;margin:auto;width:30px;height:30px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:pdfSp .8s linear infinite;display:none}#txPdfSh .pv.ld i{display:block}@keyframes pdfSp{to{transform:rotate(360deg)}}'
+ +'#txPdfSh .lb{font:800 12px system-ui,Cairo,sans-serif;letter-spacing:.04em;color:var(--ink2,rgba(255,255,255,.65));margin:0 4px -4px}'
+ +'#txPdfSh .lk{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-radius:18px;background:var(--surface2,rgba(255,255,255,.08));color:inherit;text-align:start;font:inherit;box-shadow:inset 0 0 0 1px var(--line,rgba(255,255,255,.14));transition:background .2s,box-shadow .2s}'
+ +'#txPdfSh .lk svg{flex:none;width:44px;height:44px;padding:11px;box-sizing:border-box;border-radius:14px;background:color-mix(in srgb,#22c27a 22%,transparent);color:#35d38a;transition:background .2s,color .2s,transform .3s cubic-bezier(.3,1.6,.5,1)}'
+ +'#txPdfSh .lk span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}#txPdfSh .lk b{font:800 15px system-ui,Cairo,sans-serif}#txPdfSh .lk small{font:600 12px system-ui,Cairo,sans-serif;color:var(--ink2,rgba(255,255,255,.65))}'
+ +'#txPdfSh .lk.on{background:color-mix(in srgb,#ff6b6b 12%,var(--surface2,#1a2a5c));box-shadow:inset 0 0 0 1.5px #ff6b6b66}#txPdfSh .lk.on svg{background:color-mix(in srgb,#ff6b6b 24%,transparent);color:#ff7d7d;transform:scale(1.06) rotate(-6deg)}'
+ +'#txPdfSh .go{height:54px;border:0;border-radius:18px;background:linear-gradient(135deg,#1b63f0,#22a8f5);color:#fff;font:800 17px system-ui,Cairo,sans-serif;box-shadow:0 14px 28px -12px #1b63f0;transition:transform .15s,opacity .2s}#txPdfSh .go:active{transform:scale(.98)}#txPdfSh .go[disabled]{opacity:.6}';
+ document.head.appendChild(st);}
+ const LOCK_C='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  LOCK_O='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 7.6-1.6"/></svg>';
+ let key=null;try{key=localStorage.getItem('tx_pdf_font');}catch(_){}if(!key||!TFONTS[key])key=cfg.rtl?'cairo':'inter';
+ let locked=false;try{locked=localStorage.getItem('tx_pdf_lock')==='1';}catch(_){}let page=0,tok=0;
+ const o=document.createElement('div');o.id='txPdfSh';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
+ const n=cfg.tables.length;
+ o.innerHTML='<div class="bk"></div><div class="sh"><i class="gr"></i><div class="hd"><button type="button" class="x" aria-label="'+T('إغلاق','Close')+'">\u2715</button><b>'+T('تصدير PDF','Export PDF')+'</b>'+(n>1?'<div class="pgs"></div>':'')+'</div>'
+  +'<div class="pv ld"><canvas width="8" height="8"></canvas><i></i></div><div class="lb">'+T('اختر خط النص','Choose the text font')+'</div><div class="fcs"></div>'
+  +'<button type="button" class="lk"></button><button type="button" class="go"></button></div>';
+ document.body.appendChild(o);
+ const pv=o.querySelector('.pv'),cv=pv.querySelector('canvas'),lk=o.querySelector('.lk'),go=o.querySelector('.go'),fcs=o.querySelector('.fcs'),pgs=o.querySelector('.pgs');
+ const close=()=>{o.classList.add('out');setTimeout(()=>o.remove(),260);};
+ o.querySelector('.bk').onclick=close;o.querySelector('.x').onclick=close;
+ const paintLock=()=>{lk.classList.toggle('on',locked);lk.setAttribute('aria-pressed',locked?'true':'false');
+  lk.innerHTML=(locked?LOCK_C:LOCK_O)+'<span><b>'+(locked?T('مقفول: صورة فقط','Locked: image only'):T('نص حقيقي قابل للتحديد','Real, selectable text'))+'</b><small>'+(locked?T('النص مش هيتحدد ولا يتنسخ — دوس لفتح القفل','Text can’t be selected or copied — tap to unlock'):T('تقدر تنسخ وتبحث جوه الملف — دوس لقفله وتحويله لصورة','You can copy and search — tap to lock it as an image'))+'</small></span>';
+  go.textContent=T('تصدير PDF','Export PDF')+(locked?' \uD83D\uDD12':'');};
+ lk.onclick=()=>{locked=!locked;try{localStorage.setItem('tx_pdf_lock',locked?'1':'0');if(navigator.vibrate&&localStorage.getItem('tx_hap')!=='0')navigator.vibrate(locked?[8,40,14]:10);}catch(_){}paintLock();};
+ const draw=async()=>{const my=++tok;pv.classList.add('ld');try{const r=await txRenderTablePage(cfg.tables[page],cfg.W,cfg.H,cfg.rtl,TFONTS[key][1],1100);if(my!==tok)return;cv.width=r.cv.width;cv.height=r.cv.height;cv.getContext('2d').drawImage(r.cv,0,0);pv.scrollTop=0;}catch(e){console.error('pdf preview',e);}finally{if(my===tok)pv.classList.remove('ld');}};
+ fontCards(fcs,key,k=>{key=k;try{localStorage.setItem('tx_pdf_font',k);}catch(_){}fontCardsSet(fcs,k);draw();});
+ if(pgs){for(let i=0;i<n;i++){const b=document.createElement('button');b.type='button';b.textContent=String(i+1);if(!i)b.className='on';b.onclick=()=>{page=i;pgs.querySelectorAll('button').forEach((x,j)=>x.classList.toggle('on',j===i));draw();};pgs.appendChild(b);}}
+ go.onclick=async()=>{if(go.disabled)return;go.disabled=true;go.textContent=T('جارٍ التصدير…','Exporting…');
+  try{const blob=await txTablePdf(cfg.tables,cfg.W,cfg.H,cfg.rtl,{ff:TFONTS[key][1],text:!locked});cfg.save(cfg.name+'.pdf',blob);toast(locked?T('اتصدّر PDF كصورة','Exported PDF as an image'):T('اتصدّر PDF بنص قابل للتحديد','Exported PDF with selectable text'));close();}
+  catch(e){console.error('pdf',e);toast(T('تعذّر تصدير PDF','PDF export failed'));go.disabled=false;paintLock();}};
+ paintLock();draw();}
+
 function applyFills(ctx,w,h,list,pg){if(pg&&pg.ink)applyInk(ctx,w,h,pg.ink);for(let a of list){let bgc=null;if(a.t==='txtr'){bgc=a.bg||null;a={k:'x',a:[a.x0,a.y0],b:[a.x1,a.y1],__t:1,id:a.id};}else if(a.t!=='fill'||a.live)continue;
  const[x0,y0,x1,y1]=fillBox(a,w,h,2),bw=Math.max(3,Math.round(w*.008)),ya=Math.max(0,y0-bw),yb=Math.min(h,y1+bw),W=x1-x0,H=yb-ya;if(W<1||H<1)continue;
  if(!bgc&&a.__t){try{if(txErase(ctx,x0,y0,x1,y1,w,h,a.id||'t'))continue;}catch(e){console.error('txErase',e);}try{if(bgCoons(ctx,x0,y0,x1,y1,w,h))continue;}catch(e){}}
@@ -3011,7 +3128,7 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   const eng2=TB.engine===2;
   const cs0=tbCur&&TB.st&&TB.st[tbCur.r]&&TB.st[tbCur.r][tbCur.c],curBg=(cs0&&cs0.bg)||'';
   const XI={copy:'<rect class="d" x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/>',xlsx:'<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5V20M15 9.5V20"/>',docx:'<path d="M7 3.5h7.5L19 8v11a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 6 19V5a1.5 1.5 0 0 1 1-1.5z"/><path d="M14 3.5V8h5M9 12.5h6M9 16h6"/>',csv:'<path d="M5 7h14M5 12h14M5 17h9"/><circle cx="18" cy="17" r="1.3"/>'};
-  const XM={
+  const XM={pdf:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gpd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a7a"/><stop offset="1" stop-color="#d1282e"/></linearGradient></defs><rect x="13" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M25 15h11M25 22h11M25 29h8" stroke="#d1282e" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="14" width="30" height="22" rx="6" fill="url(#gpd)"/><text x="18" y="29.5" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10.5" font-weight="800" fill="#fff">PDF</text></svg>',
  xlsx:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gxl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d889"/><stop offset="1" stop-color="#0c7a43"/></linearGradient></defs><rect x="15" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M27 15h11M27 22h11M27 29h11M27 36h11" stroke="#1d9a5b" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="10" width="26" height="28" rx="6" fill="url(#gxl)"/><path d="M10.5 18l11 12M21.5 18l-11 12" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/></svg>',
  docx:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gwd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5aa2ff"/><stop offset="1" stop-color="#1747b8"/></linearGradient></defs><rect x="15" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M27 15h11M27 22h11M27 29h11M27 36h11" stroke="#2f6ae0" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="10" width="26" height="28" rx="6" fill="url(#gwd)"/><path d="M8.5 18.5l3.3 11 4.2-8.5 4.2 8.5 3.3-11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  csv:'<svg viewBox="0 0 48 48"><defs><linearGradient id="gcv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb84d"/><stop offset="1" stop-color="#e2680c"/></linearGradient></defs><rect x="15" y="5" width="30" height="38" rx="6" fill="#fff" opacity=".95"/><path d="M27 15h11M27 22h11M27 29h11M27 36h11" stroke="#f08a24" stroke-width="2.3" stroke-linecap="round" opacity=".5"/><rect x="3" y="10" width="26" height="28" rx="6" fill="url(#gcv)"/><text x="16" y="29.5" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="10.5" fill="#fff">CSV</text></svg>'};
@@ -3030,7 +3147,7 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
    ED('b','<b class="tbw-t">B</b>',L2('عريض','Bold'))+ED('sz+','<b class="tbw-t">A+</b>',L2('تكبير','Larger'))+ED('sz-','<b class="tbw-t sm">A\u2212</b>',L2('تصغير','Smaller'))+TL('data-cp="1"',IC('<path class="d" d="M12 3.2s6 6 6 10.2a6 6 0 0 1-12 0C6 9.2 12 3.2 12 3.2z"/><path d="M9.2 14a3 3 0 0 0 2.2 2.6"/>'),L2('لون الخلية','Fill'),1)+'<i class="tbw-g"></i>'+
    TL('data-t="deep"',IC('<path class="d" d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'),L2('قراءة الصفحة','Read page'),0)+'</div><button type="button" class="tbw-ar l" data-sc="-1" aria-label="scroll left">\u2039</button><button type="button" class="tbw-ar r" data-sc="1" aria-label="scroll right">\u203A</button></div>':'<div class="tbw-tools"><button type="button" class="tbw-tl" data-t="deep">'+IC('<path class="d" d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>')+'<span>'+L2('قراءة أدق','Deep read')+'</span></button></div>')+
   '<div class="tbw-ex" hidden><div class="tbw-scrim" data-t="exp"></div><div class="tbw-ep"><i class="tbw-gr"></i><div class="tbw-eh">'+L2('تصدير الجدول','Export table')+'</div><div class="tbw-es">'+L2('اختار الصيغة المناسبة','Choose a format')+'</div>'+
-  XB('copy','pri',L2('نسخ الجدول','Copy table'),L2('الصقه مباشرة في Word أو Excel','Paste straight into Word or Excel'))+'<div class="tbw-eg">'+XB('xlsx','x','Excel',L2('بالدمج والألوان','Merges & colors'))+XB('docx','w','Word',L2('جاهز للطباعة','Ready to print'))+XB('csv','c','CSV',L2('نص بسيط','Plain text'))+'</div>'+
+  XB('copy','pri',L2('نسخ الجدول','Copy table'),L2('الصقه مباشرة في Word أو Excel','Paste straight into Word or Excel'))+'<div class="tbw-eg">'+XB('xlsx','x','Excel',L2('بالدمج والألوان','Merges & colors'))+XB('docx','w','Word',L2('جاهز للطباعة','Ready to print'))+XB('csv','c','CSV',L2('نص بسيط','Plain text'))+XB('pdf','p','PDF',L2('معاينة · نص قابل للتحديد','Preview · selectable text'))+'</div>'+
   '<button type="button" class="tbw-er tgl'+(tbWt?'':' off')+'" data-t="wt"><span><b>'+L2('نص برا الجدول في Word','Text outside the table in Word')+'</b><small>'+L2('العناوين والملاحظات اللي حوالين الجدول','Titles and notes around the table')+'</small></span><em>'+(tbWt?L2('شغّال','On'):L2('متوقف','Off'))+'</em></button></div></div>';
   if(tbCmp&&tbSrc)tbPaintSrc();tbWire();
   {const a=tbx.querySelector('.tbw-tools'),b=tbx.querySelector('.tbx-w'),c=tbx.querySelector('#tbSrcW'),d=tbx.querySelector('.tbw-main');if(a){a.scrollLeft=SV.tl;a.dispatchEvent(new Event('scroll'));}if(b){b.scrollTop=SV.wt;b.scrollLeft=SV.wl;}if(c){c.scrollTop=SV.st;c.scrollLeft=SV.sl;}if(d)d.scrollTop=SV.mt;}};
@@ -3053,6 +3170,7 @@ const tbBusy=title=>{const o=document.createElement('div');o.className='tbw-busy
   else if(k==='xlsx')tbSave(nm+'.xlsx',TB.engine===2&&window.TXExport?TXExport.xlsx(tbSet(rows).map((g,i)=>({g,name:L2('جدول ','Table ')+(i+1)}))):tbXlsx(rows,TB.rtl));
   else if(k==='docx')tbSave(nm+'.docx',TB.engine===2&&window.TXExport?TXExport.docx(tbSet(rows).map(g=>tbWt?g:Object.assign({},g,{before:[],tail:[]}))):tbDocx(rows,TB.rtl));
   else if(k==='csv')tbSave(nm+'.csv',new Blob([tbCsv(rows)],{type:'text/csv;charset=utf-8'}));
+  else if(k==='pdf'){const pc=tbSrc&&tbSrc.pc;txPdfSheet({tables:tbSet(rows),W:pc?pc.width:1240,H:pc?pc.height:1754,rtl:TB.rtl,name:nm,save:tbSave,ar:AR()});}
   else if(k==='deep')go(true);
   else if(k==='wt'){tbWt=!tbWt;try{localStorage.setItem('tx_tbwt',tbWt?'1':'0');}catch(_){}{const em=b.querySelector('em');if(em)em.textContent=tbWt?L2('شغّال','On'):L2('متوقف','Off');b.classList.toggle('off',!tbWt);}}
   else if(k==='refine'){const my=++tbTok,ov=tbBusy(L2('بقرأ الخلايا واحدة واحدة','Reading cells one by one'));
