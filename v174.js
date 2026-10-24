@@ -125,6 +125,19 @@ html .ox-mi>svg{flex:none;width:40px;height:40px;padding:10px;border-radius:13px
 html .ox-mi>span{flex:1;min-width:0}
 html .ox-mi small{margin-inline-start:auto;font:600 11.5px system-ui,sans-serif;color:var(--ink2)}
 html .ox-ms{height:1px;margin:6px 12px;background:var(--line)}
+/* v184: زرار الاستبدال بخط واضح + قايمة المزيد بشكل حديث (بنفس قوة تخصيص القواعد القديمة عشان تغلبها) */
+html body .mdl.ox .ox-acts .ox-btn.pri{gap:10px}
+html body .mdl.ox .ox-acts .ox-btn.pri span{font:800 17px/1.2 system-ui,'Cairo',sans-serif;letter-spacing:0;white-space:nowrap}
+html body .mdl.ox .ox-acts .ox-btn.pri svg{width:24px;height:24px}
+html body .mdl.ox .ox-acts .ox-btn:not(.pri) span{font:700 11.5px/1.2 system-ui,'Cairo',sans-serif}
+html body .mdl.ox .ox-menu{padding:10px;border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 96%,#fff 4%),var(--surface));-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border:1px solid color-mix(in srgb,var(--line) 80%,#fff 20%);box-shadow:0 30px 70px -16px #000e,0 0 0 1px rgba(255,255,255,.04) inset;transform-origin:bottom center;animation:oxMenuIn .26s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes oxMenuIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+html body .mdl.ox .ox-menu .ox-mi{display:flex;align-items:center;gap:14px;width:100%;min-height:60px;height:auto;padding:8px 12px;border-radius:20px;background:transparent;color:var(--ink);text-align:start;transition:background .18s,transform .18s}
+html body .mdl.ox .ox-menu .ox-mi:active{background:color-mix(in srgb,var(--accent,#1b63f0) 16%,transparent);transform:scale(.98)}
+html body .mdl.ox .ox-menu .ox-mi svg{flex:none;width:42px;height:42px;padding:10px;box-sizing:border-box;border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#1b63f0) 30%,transparent),color-mix(in srgb,var(--accent,#1b63f0) 10%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#1b63f0) 35%,transparent);stroke:var(--accent,#1b63f0);fill:none;color:var(--accent,#1b63f0)}
+html body .mdl.ox .ox-menu .ox-mi span{flex:1;min-width:0;font:800 15.5px/1.25 system-ui,'Cairo',sans-serif;color:var(--ink)}
+html body .mdl.ox .ox-menu .ox-mi small{flex:none;margin:0;padding:5px 11px;border-radius:99px;background:var(--surface2);font:700 11.5px/1 system-ui,'Cairo',sans-serif;color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line)}
+html body .mdl.ox .ox-menu .ox-ms{height:1px;margin:6px 14px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
 html .tbx .tbw-st{flex-wrap:wrap;row-gap:8px;min-width:0;max-width:100%;overflow:hidden}
 html .tbx .tbw-st>*{min-width:0;max-width:100%}
 html .tbx .tbw-imp{max-width:100%;white-space:nowrap}
