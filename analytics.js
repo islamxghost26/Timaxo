@@ -2,7 +2,7 @@
    مقفول تماماً لحد ما يتحط الـWebsite ID تحت. بدون cookies، وبدون أي مستند أو نص أو بيانات شخصية: أسماء أحداث بس (فتح الكاميرا، نوع الملف المصدَّر).
    بيحترم «عدم التتبع» في المتصفح، وفيه مفتاح إيقاف في الإعدادات (tx_analytics). */
 (function(){'use strict';
-var ID='';
+var ID='46c8de89-789d-4a48-ac3d-cdd658fbe16a';
 var SRC='https://cloud.umami.is/script.js',LS=null;try{LS=localStorage}catch(e){}
 function enabled(){return !!ID}
 function on(){try{return !!ID&&(!LS||LS.getItem('tx_analytics')!=='0')&&navigator.doNotTrack!=='1'&&window.doNotTrack!=='1'}catch(e){return false}}
