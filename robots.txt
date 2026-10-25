@@ -3,4 +3,4 @@ Allow: /
 Disallow: /check.html
 Disallow: /drive-callback.html
 
-Sitemap: https://timaxo.islamxghost26.workers.dev/sitemap.xml
+Sitemap: https://timaxo.timaxo-apps.workers.dev/sitemap.xml
