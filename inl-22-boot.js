@@ -251,7 +251,7 @@ function coach(b){
   show(b,r);};
  setTimeout(tick,1800);
  function show(b,r){
-  const el=document.createElement('div');el.id='tgTip';el.setAttribute('role','dialog');
+  try{localStorage.setItem('tx_guide_tip','1')}catch(e){}const el=document.createElement('div');el.id='tgTip';el.setAttribute('role','dialog');
   el.innerHTML='<i class="ar"></i><div class="tr"><span class="tic">'+ic('<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/>').replace('width="22" height="22"','width="20" height="20"')+'</span><div><b>'+L('مش عارف تبدأ منين؟','Not sure where to start?')+'</b><p>'+L('اضغط على الأيقونة اللامعة فوق، وهتلاقي دليل مبسّط بيشرح كل أدوات التطبيق خطوة بخطوة.','Tap the glowing icon above for a simple guide to every tool, step by step.')+'</p></div></div><div class="ta"><button type="button" class="p" data-t="go">'+L('افتح الدليل','Open the guide')+'</button><button type="button" data-t="no">'+L('لاحقًا','Later')+'</button></div>';
   document.body.appendChild(el);
   const w=Math.min(innerWidth-24,330);el.style.width=w+'px';
@@ -262,7 +262,7 @@ function coach(b){
   requestAnimationFrame(()=>el.classList.add('in'));
   const kill=()=>{try{localStorage.setItem('tx_guide_tip','1')}catch(e){}document.removeEventListener('pointerdown',away,true);el.classList.remove('in');setTimeout(()=>el.remove(),260);};
   const away=e=>{if(!el.contains(e.target)&&!b.contains(e.target))kill();};
-  setTimeout(()=>document.addEventListener('pointerdown',away,true),600);
+  setTimeout(()=>document.addEventListener('pointerdown',away,true),600);setTimeout(kill,9000);
   el.addEventListener('click',e=>{const t=e.target.closest('[data-t]');if(!t)return;kill();if(t.dataset.t==='go')setTimeout(()=>b.click(),120);});
  }
 }
@@ -272,7 +272,7 @@ function mount(){
  let seen=0;try{seen=localStorage.getItem(SEEN)}catch(e){}
  b.innerHTML=ic('<circle cx="12" cy="12" r="9.2"/><path d="M9.2 9.4a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"/><path d="M12 17.6h.01"/>')+(seen?'':'<i></i>');
  b.onclick=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));if(ov){close();return;}open();};
- lb.parentNode.insertBefore(b,lb);if(!seen){b.classList.add('tgpulse');coach(b);}
+ lb.parentNode.insertBefore(b,lb);if(!seen){let tp0=0;try{tp0=localStorage.getItem('tx_guide_tip')}catch(e){}if(!tp0){b.classList.add('tgpulse');setTimeout(()=>b.classList.remove('tgpulse'),12000)}coach(b);}
  const fix=()=>{b.setAttribute('aria-label',L('دليل التطبيق','App guide'));const g=document.getElementById('galFab');if(g)g.setAttribute('aria-label',L('استيراد من الجهاز','Import from device'));};
  fix();new MutationObserver(fix).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 }
