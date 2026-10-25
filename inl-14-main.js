@@ -1841,6 +1841,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
    /* 3) الأمان */
    const g2=grp(T('الأمان والخصوصية','Security & privacy'));
    row(g2,{ic:'lock',c:'#e0527a',t:T('قفل التطبيق','App lock'),s:T('رقم سري أو بصمة','PIN or fingerprint'),v:OnOff(locked()),ok:locked(),keep:1,fn:openLock});
+   if(window.TXA&&TXA.enabled())row(g2,{ic:'shield',c:'#3b82f6',t:T('إحصائيات استخدام مجهولة','Anonymous usage stats'),s:T('بدون مستندات ولا بيانات شخصية','No documents or personal data'),tog:1,on:rd('tx_analytics','1')!=='0',keep:1,fn:(x)=>{const v=rd('tx_analytics','1')==='0';wr('tx_analytics',v?'1':'0');setOn(x,v);try{TXA.setOn(v)}catch(e){}}});
    /* 4) الصوت */
    const g3=grp(T('الصوت والاهتزاز','Sound & haptics'));
    seg(g3,{ic:'snd',c:'#e08a1b',t:T('ردود فعل التطبيق','App feedback'),s:T('أصوات الكاميرا والضغط والاهتزاز','Camera, tap sounds and vibration'),cur:(window.__txFX?__txFX.mode():'all'),opts:[['all',T('صوت + اهتزاز','Sound + haptics')],['hap',T('اهتزاز فقط','Haptics only')],['off',T('صامت','Silent')]],fn:k=>{if(window.__txFX){__txFX.set(k);__txFX.play(k==='off'?'tap':'sel');}else{wr('tx_snd',k==='all'?'1':'0');wr('tx_hap',k==='off'?'0':'1');}}});
