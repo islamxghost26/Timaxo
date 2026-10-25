@@ -8,6 +8,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 (function(){
   var T_IDLE=7000, T_BUBBLE=15000, T_HIDE=8000;
   var ar=function(){return document.documentElement.lang==='ar'};
+  /* تنبيه الدليل: مرة واحدة في الجلسة، وبحد أقصى مرتين في عمر التطبيق، ويتوقف نهائيًا لو فتحت الدليل */
+  var LS=null;try{LS=localStorage}catch(_){}
+  var nGet=function(){try{return +(LS.getItem('tx_help_nudge')||0)}catch(_){return 0}};
+  var nDone=function(){try{return LS.getItem('tx_help_done')==='1'}catch(_){return false}};
+  var nFin=function(){try{LS.setItem('tx_help_done','1')}catch(_){}};
+  var started=false,sessUsed=false,glowDone=false,noteDone=false,tStop=0;
+  function nStart(){if(started)return true;if(sessUsed||nDone()||nGet()>=2)return false;started=true;sessUsed=true;try{LS.setItem('tx_help_nudge',String(nGet()+1))}catch(_){}return true}
   var reduced=false;try{reduced=matchMedia('(prefers-reduced-motion:reduce)').matches}catch(_){}
   var st=document.createElement('style');
   st.textContent=
@@ -34,12 +41,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var t7=0,t15=0,tHide=0,note=null,openPending=true,wasOn=false,noteFromIdle=false;
     var homeOn=function(){return vh.classList.contains('on')&&!document.hidden&&!lb.classList.contains('open')};
 
-    function attnOn(){if(homeOn())lb.classList.add('tgAttn')}
+    function attnOn(){if(glowDone||!homeOn()||!nStart())return;glowDone=true;lb.classList.add('tgAttn');clearTimeout(tStop);tStop=setTimeout(attnOff,5000)}
     function attnOff(){if(lb.classList.contains('tgAttn'))lb.classList.remove('tgAttn')}
 
     function noteHide(){clearTimeout(tHide);if(!note)return;var n=note;note=null;n.classList.remove('on');setTimeout(function(){n.remove()},350)}
     function noteShow(){
-      if(note||!homeOn())return;
+      if(note||noteDone||!homeOn()||!nStart())return;noteDone=true;
       var n=document.createElement('div');n.id='tgNote';n.setAttribute('role','status');
       n.innerHTML='<i></i><b>'+(ar()?'تحتاج مساعدة؟':'Need a hand?')+'</b><span>'+(ar()?'اضغط هنا لمشاهدة دليل الاستخدام':'Tap for a quick tour of the app')+'</span>';
       document.body.appendChild(n);note=n;
@@ -73,7 +80,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         openPending=false;
         if(!onIcon&&hadAttn)setTimeout(noteShow,180);       /* بعد ما الأيقونة تهدى، الإشعار يطلع منها */
       }
-      if(onIcon){noteHide();openPending=false}
+      if(onIcon){noteHide();openPending=false;nFin()}
       schedule();
     }
     ['pointerdown','touchstart','keydown','wheel','scroll'].forEach(function(ev){document.addEventListener(ev,onAct,{capture:true,passive:true})});
@@ -82,7 +89,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     function opened(){
       openPending=true;noteHide();attnOff();
       if(!homeOn())return;
-      if(!reduced||true)attnOn();                           /* توهج فوري عند الفتح */
+      
       schedule();
     }
     document.addEventListener('visibilitychange',function(){if(document.hidden){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}else opened()});
@@ -92,7 +99,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if(on&&!wasOn)opened();else if(!on){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}
       wasOn=on;
     }).observe(vh,{attributes:true,attributeFilter:['class']});
-    new MutationObserver(function(){if(lb.classList.contains('open')&&(lb.classList.contains('tgAttn')||note)){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}}).observe(lb,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(function(){if(lb.classList.contains('open')){nFin();}if(lb.classList.contains('open')&&(lb.classList.contains('tgAttn')||note)){attnOff();noteHide();clearTimeout(t7);clearTimeout(t15)}}).observe(lb,{attributes:true,attributeFilter:['class']});
     wasOn=vh.classList.contains('on');opened();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(init,600)});else setTimeout(init,600);

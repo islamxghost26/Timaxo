@@ -1357,7 +1357,7 @@ async function renderTrash(){const box=$('#libList');box.innerHTML='';const tr=(
 async function renderLib(){const trash=libMode==='trash',q=$('#libQ');q.hidden=trash;q.placeholder=Lg('ابحث بالاسم أو بنص الـOCR…','Search by name or OCR text…');
   if(trash){await renderTrash();await libChips();}else{await renderLib0();await libChips();if(norm(q.value).trim()&&$('#libList .empty p'))$('#libList .empty p').textContent=Lg('مفيش نتايج.','No results.');}
   const n=(await allTrash()).length,tb=$('#libTr');tb.textContent=trash?Lg('→ رجوع للمستندات','← Back to documents'):Lg('🗑 المحذوفات ('+n+')','🗑 Trash ('+n+')');tb.hidden=!trash&&!n;
-  try{const e=await navigator.storage.estimate();$('#libUse').textContent=Lg('المساحة المستخدمة: ','Storage used: ')+(e.usage/1048576).toFixed(1)+' MB';}catch(_){}}
+  try{const e=await navigator.storage.estimate();{const u=e.usage||0,s=u>=1073741824?(u/1073741824).toFixed(2)+' GB':(u/1048576).toFixed(u>=10485760?0:1)+' MB';const lu=$('#libUse');lu.dir=Lg('rtl','ltr');lu.textContent=Lg('المساحة المستخدمة: ','Storage used: ')+'\u2066'+s+'\u2069';}}catch(_){}}
 $('#libQ').oninput=()=>renderLib();
 $('#libTr').onclick=()=>{libMode=libMode==='trash'?'docs':'trash';renderLib();};
 idbReady.then(async()=>{for(const r of await allTrash())if(Date.now()-r.trashed>30*864e5)await tx('docs','readwrite',s=>s.delete(r.id));
@@ -1802,7 +1802,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='174';
+  const APPV='200';window.TXV=APPV;
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3540,7 +3540,7 @@ addEventListener('popstate',()=>{
 });
 window.__txBack=function(){return layers()>0?back():false};
 window.__txToast=function(m){try{toast(m)}catch(e){}};
-const st=document.createElement('style');st.textContent='#libUse::after{content:" · v19.2"}';document.head.appendChild(st);
+/* v19.2 label removed from library footer: version lives in Settings and Guide */
 })();
 /* ===== v20: target size • card & ID-photo layouts • invoice→CSV ===== */
 (function(){
