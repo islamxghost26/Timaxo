@@ -9,6 +9,12 @@
 /sw.js
   Cache-Control: no-cache
 
+/beta-control.json
+  Cache-Control: no-store
+
+/beta.js
+  Cache-Control: no-cache
+
 /drive-callback.html
   ! X-Frame-Options
   X-Frame-Options: SAMEORIGIN
