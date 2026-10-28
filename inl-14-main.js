@@ -1,6 +1,6 @@
 
 (()=>{
-'use strict';window.TXV='208';
+'use strict';window.TXV='209';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1994,7 +1994,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV=window.TXV||'208';window.TXV=APPV;
+  const APPV=window.TXV||'209';window.TXV=APPV;
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
@@ -3598,6 +3598,16 @@ function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).f
  row.innerHTML='';const bar=document.createElement('div'),rw=document.createElement('div');bar.className='tcats';rw.className='tgr';bar.hidden=true;row.append(bar,rw);
  GR.forEach((g,gi)=>{const c=document.createElement('button');c.className='tcat';c.textContent=g[0];c.onclick=()=>show(gi);bar.append(c);g[1].forEach(k=>{const b=M[k];if(!b)return;if(!b.querySelector('span')){const sp=document.createElement('span');sp.textContent=t(k);b.appendChild(sp);}if(k==='ocrbox'||k==='classo')b.classList.add('key');rw.append(b);});});
  const show=gi=>{tcat=gi;$$('.tcat',bar).forEach((c,i)=>c.classList.toggle('on',i===gi));GR.forEach((g,i)=>g[1].forEach((k,n)=>{const b=M[k];if(b){b.style.display=i===gi?'':'none';b.style.setProperty('--i',n);}}));rw.scrollLeft=0;};show(tcat);}
+/* v209: home button (replaces the theme button inside editor/review headers): the current screen shrinks into the button, then Home appears */
+(function(){const st=document.createElement('style');st.textContent='.ut.hm{background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#1b63f0) 24%,var(--surface)),var(--surface));border-color:color-mix(in srgb,var(--accent,#1b63f0) 50%,var(--line));color:var(--ink);box-shadow:0 6px 16px -8px var(--accent,#1b63f0)}.ut.hm svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.ut.hm.go{animation:txhm .34s ease-out}@keyframes txhm{50%{transform:scale(1.2);box-shadow:0 0 0 9px color-mix(in srgb,var(--accent,#1b63f0) 28%,transparent)}}@media (prefers-reduced-motion:reduce){.ut.hm.go{animation:none}}';document.head.appendChild(st);})();
+async function txGoHome(btn){if(btn._busy)return;btn._busy=1;const v=document.querySelector('.view.on'),still=!v||!v.animate||matchMedia('(prefers-reduced-motion:reduce)').matches;let id;
+ const pre=(async()=>{if(V.cur==='vEdit'){closeEditDocks();busy(true);try{await commitPage();}finally{busy(false);}id=E.page&&E.page.id;E.page=null;}})();
+ let an=null;if(!still){const r=btn.getBoundingClientRect(),vr=v.getBoundingClientRect();btn.classList.add('go');v.style.transformOrigin=(r.left+r.width/2-vr.left)+'px '+(r.top+r.height/2-vr.top)+'px';v.style.overflow='hidden';v.style.willChange='transform,opacity';
+  an=v.animate([{transform:'scale(1)',opacity:1,borderRadius:'0px'},{transform:'scale(.88)',opacity:.92,borderRadius:'26px',offset:.28},{transform:'scale(.03)',opacity:0,borderRadius:'50%'}],{duration:330,easing:'cubic-bezier(.45,0,.7,.2)',fill:'forwards'});}
+ try{await Promise.all([an?an.finished.catch(()=>{}):0,pre]);}catch(e){console.error(e);}
+ goHome(id||undefined);
+ if(an){try{an.cancel();}catch(_){}v.style.transformOrigin=v.style.overflow=v.style.willChange='';const h=document.getElementById('vHome');if(h&&h.animate)h.animate([{opacity:0,transform:'scale(1.04)'},{opacity:1,transform:'none'}],{duration:230,easing:'cubic-bezier(.2,.8,.2,1)'});}
+ btn.classList.remove('go');btn._busy=0;}
 (function(){const R=document.documentElement,K='tx_theme3',ORD=['light','blue','dark'],G={light:'☀',blue:'✦',dark:'☾'};let m=R.getAttribute('data-theme')||'blue';
  const ui=()=>{$$('.sw3').forEach(w=>{w.style.setProperty('--k',ORD.indexOf(m));$$('button',w).forEach(b=>b.classList.toggle('on',b.dataset.m===m));});$$('.ut.th').forEach(b=>b.textContent=G[m]);};
  const set=(nm,ev)=>{if(nm===m)return;const x=ev?ev.clientX:innerWidth/2,y=ev?ev.clientY:0,r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),ap=()=>{m=nm;R.setAttribute('data-theme',m);try{localStorage.setItem(K,m);}catch(_){}ui();};
@@ -3610,7 +3620,7 @@ function regroup(){const row=$('#toolRow'),ar=lang==='ar',M={};$$('.tool',row).f
   const up=e=>{if(!dg)return;dg=0;sw.classList.remove('drag');const nm=ORD[idx(e).i];if(nm===m)ui();else set(nm,e);};
   sw.addEventListener('pointerup',up);sw.addEventListener('pointercancel',()=>{dg=0;sw.classList.remove('drag');ui();});}w.append(sw);
    const lk=document.querySelector('button[aria-label=PIN]');if(lk){lk.style.cssText='';lk.className='ut';w.append(lk);}}
-  else{const b=document.createElement('button');b.className='ut th';b.setAttribute('aria-label','theme');b.onclick=e=>set(ORD[(ORD.indexOf(m)+1)%3],e);w.append(b);}
+  else{const b=document.createElement('button');b.type='button';b.className='ut hm';b.setAttribute('aria-label',AR()?'الصفحة الرئيسية':'Home');b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.8 9.7v9.3a1.2 1.2 0 0 0 1.2 1.2h3.3v-5.2h3.4v5.2H17a1.2 1.2 0 0 0 1.2-1.2V9.7"/></svg>';b.onclick=()=>txGoHome(b);w.append(b);}
   h.append(w);});ui();})();
 buildTools();window.__E=E;window.__buildTools=buildTools;
 

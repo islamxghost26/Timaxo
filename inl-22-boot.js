@@ -227,7 +227,7 @@ function open(){
  const d0=document.querySelector('#tgBtn i');if(d0)d0.remove();const pb=document.getElementById('tgBtn');if(pb)pb.classList.remove('tgpulse');const tp=document.getElementById('tgTip');if(tp)tp.remove();
  const o=document.createElement('div');o.id='tg';o.style.zIndex='9000';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
  const k=A()?0:1,gl=L('جرّبها الآن','Try it now');
- o.innerHTML='<div class="bx"><div class="hero"><div class="hd"></div><button class="x" type="button" data-a="x" aria-label="'+L('إغلاق','Close')+'">✕</button><h2>'+L('التطبيق يقدر يعمل إيه؟','What can Timaxo do?')+'</h2><p>'+L('اضغط ⚡ جنب أي خطوة وهتروح للأداة على طول.','Tap ⚡ next to any step to jump straight to the tool.')+'</p><label class="sr">'+ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>').replace('width="22" height="22"','width="18" height="18"')+'<input type="search" id="tgQ" autocomplete="off" placeholder="'+L('ابحث: قفل، PDF، بطاقة، ترجمة…','Search: lock, PDF, card, translate…')+'"></label></div><div class="ls" id="tgL"></div><div class="ft"><button class="go" type="button" id="tgGo">'+L('ابدأ التصوير','Start scanning')+'</button><div class="tgv">Timaxo · v'+(window.TXV||'208')+'</div></div></div>';
+ o.innerHTML='<div class="bx"><div class="hero"><div class="hd"></div><button class="x" type="button" data-a="x" aria-label="'+L('إغلاق','Close')+'">✕</button><h2>'+L('التطبيق يقدر يعمل إيه؟','What can Timaxo do?')+'</h2><p>'+L('اضغط ⚡ جنب أي خطوة وهتروح للأداة على طول.','Tap ⚡ next to any step to jump straight to the tool.')+'</p><label class="sr">'+ic('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>').replace('width="22" height="22"','width="18" height="18"')+'<input type="search" id="tgQ" autocomplete="off" placeholder="'+L('ابحث: قفل، PDF، بطاقة، ترجمة…','Search: lock, PDF, card, translate…')+'"></label></div><div class="ls" id="tgL"></div><div class="ft"><button class="go" type="button" id="tgGo">'+L('ابدأ التصوير','Start scanning')+'</button><div class="tgv">Timaxo · v'+(window.TXV||'209')+'</div></div></div>';
  const ls=o.querySelector('#tgL');
  ls.insertAdjacentHTML('beforeend','<div class="qh" id="tgQH">'+L('ابدأ في ٣ خطوات','Start in 3 steps')+'</div><div class="qs" id="tgQS">'+QS.map(a=>'<button type="button" class="qt" data-g="'+a[3]+'"><b>'+a[0]+'</b><span>'+a[A()?1:2]+'</span></button>').join('')+'</div><div class="qh">'+L('الأدوات حسب الموضوع','Tools by topic')+'</div>');
  const stp=t=>{const p=t.split('|');return p.length>1?'<b>'+p[0]+'</b><span>'+p[1]+'</span>':'<span>'+t+'</span>';};
@@ -301,7 +301,7 @@ function dock(){
  const th=document.createElement('button');th.id='thBtn';th.type='button';
  const paint=()=>{const m=R.getAttribute('data-theme')||'blue';th.textContent=G[m]||'✦';th.setAttribute('aria-label',L('تغيير الثيم','Change theme'));};paint();
  new MutationObserver(paint).observe(R,{attributes:true,attributeFilter:['data-theme','lang']});
- th.onclick=e=>{const b=document.querySelector('.ut.th');
+ th.onclick=e=>{if(window.__txSetTheme){window.__txSetTheme(ORD[(ORD.indexOf(R.getAttribute('data-theme')||'blue')+1)%3],e);return;}const b=document.querySelector('.ut.th');
   if(b){b.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:e.clientX,clientY:e.clientY}));return;}
   const m=R.getAttribute('data-theme')||'blue',nx=ORD[(ORD.indexOf(m)+1)%3];R.setAttribute('data-theme',nx);try{localStorage.setItem('tx_theme3',nx)}catch(_){}};
  const d=document.createElement('div');d.className='hdock';lb.parentNode.insertBefore(d,lb);
