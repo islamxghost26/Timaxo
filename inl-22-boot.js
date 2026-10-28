@@ -15,6 +15,8 @@ const D=[
  p:[['فلاتر|أصلي، تلقائي، سحري، رمادي، أبيض وأسود','Filters|Original, Auto, Magic, Gray, B&W','tab:pFilters'],
  ['ضبط|السطوع والتباين والألوان','Adjust|Brightness, contrast, colors','tab:pAdjust'],
  ['تعديل|نص، قلم، تظليل، سهم، إخفاء، توقيع','Edit|Text, pen, highlighter, arrow, redact, signature','tab:pMarkup'],
+ ['توقيعك بالتصوير|صوّره مرة واحدة واحفظ لحد ٥ توقيعات، وحطه على أي مستند بضغطة','Signature from a photo|Photograph it once, keep up to 5, place it with one tap','sig'],
+ ['التحكم في التوقيع|الحجم، ألوان أقلام حقيقية، ولف في أي اتجاه','Control your signature|Size, real pen colors, rotate any way','sig'],
  ['مسح|امسح جزء من الصورة','Erase|Wipe part of the image','tab:pErase'],
  ['الصفحة|تدوير، حواف، ترتيب، حذف','Page|Rotate, edges, order, delete','tab:pPage'],
  ['حفظ سريع|الأيقونة فوق بتحفظ الصفحة دي لوحدها','Quick save|The top icon saves just this page']]},
@@ -73,6 +75,7 @@ async function run(a){
  else if(k==='save'){if(!((typeof state!=='undefined'&&state.pages)||[]).length){msg(L('مفيش صفحات لسه. صوّر أو استورد الأول','No pages yet. Scan or import first'));return;}const b=q1('#exportBtn');b&&b.click();}
  else if(k==='qr'){const b=q1('#qrFab');b?b.click():msg(L('زرار QR بيظهر في الشاشة الرئيسية','The QR button lives on the Home screen'));}
  else if(k==='tab'){await tab(v);}
+ else if(k==='sig'){if(await tab('pMarkup')){const b=q1('#toolRow .tool[data-k="sign"]');b&&b.click();}}
  else if(k==='ocr'){if(await tab('pPage')){const b=q1('#ocrB');b&&b.click();}}
  else if(k==='edge'){if(await tab('pPage')){const b=q1('#recrop');b&&b.click();}}
  else if(k==='pg'){if(await tab('pPage')){const w=v.split('|').map(x=>x.toLowerCase()),b=[...document.querySelectorAll('#pPage button')].find(e=>{const t=(e.textContent+' '+(e.getAttribute('aria-label')||'')).toLowerCase();return w.some(x=>t.includes(x));});b&&b.click();}}
