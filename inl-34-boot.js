@@ -9,7 +9,7 @@ addEventListener('scroll',calm,{capture:true,passive:true});
 
 /* ===== v206: "What's new" sheet — shows once after an update (signature upgrade) ===== */
 (function(){
-var KEY='tx_wn',VER='sig-2',AR=function(){return document.documentElement.lang!=='en';},L=function(a,b){return AR()?a:b;};
+var KEY='tx_wn',VER='sig-3',AR=function(){return document.documentElement.lang!=='en';},L=function(a,b){return AR()?a:b;};
 function seen(){try{return localStorage.getItem(KEY)===VER;}catch(e){return true;}}
 function mark(){try{localStorage.setItem(KEY,VER);}catch(e){}}
 var ic=function(p){return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';};
