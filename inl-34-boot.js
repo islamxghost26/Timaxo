@@ -9,7 +9,7 @@ addEventListener('scroll',calm,{capture:true,passive:true});
 
 /* ===== v206: "What's new" sheet — shows once after an update (signature upgrade) ===== */
 (function(){
-var KEY='tx_wn',VER='sig-1',AR=function(){return document.documentElement.lang!=='en';},L=function(a,b){return AR()?a:b;};
+var KEY='tx_wn',VER='sig-2',AR=function(){return document.documentElement.lang!=='en';},L=function(a,b){return AR()?a:b;};
 function seen(){try{return localStorage.getItem(KEY)===VER;}catch(e){return true;}}
 function mark(){try{localStorage.setItem(KEY,VER);}catch(e){}}
 var ic=function(p){return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';};
@@ -46,9 +46,9 @@ function build(){
  if(document.getElementById('wn'))return;
  var st=document.createElement('style');st.id='wnCss';if(!document.getElementById('wnCss'))document.head.appendChild(st),st.textContent=css;
  var items=[
-  ['#e0245e','#ff6b9a',ic('<path d="M4 8a2 2 0 0 1 2-2h1.5l1.2-2h6.6l1.2 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>'),L('صوّر توقيعك','Photograph your signature'),L('نسخة نضيفة بخلفية شفافة من أي ورقة موقّعة','A clean, transparent copy from any signed paper')],
+  ['#e0245e','#ff6b9a',ic('<path d="M4 8a2 2 0 0 1 2-2h1.5l1.2-2h6.6l1.2 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>'),L('استخراج أدق','Sharper extraction'),L('تحكم في الحساسية والتنظيف ونعومة الحواف وقوة الحبر','Control sensitivity, cleanup, edge softness and ink strength')],
   ['#1b63f0','#5b9bff',ic('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 14c1.2-3 2-3 3-1s2 2 3-1 2-1 4 0"/>'),L('٥ توقيعات جاهزة','5 ready signatures'),L('اختار واحد من الشريط واضغط على الصفحة فيتحط','Pick one from the bar, tap the page, done')],
-  ['#d98a00','#ffc24a',ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),L('ألوان أقلام حقيقية','Real pen colors'),L('أسود وكحلي وأزرق بيك وأحمر وأخضر، أو لون توقيعك الأصلي','Black, blue-black, ballpoint blue, red, green, or your original ink')],
+  ['#d98a00','#ffc24a',ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),L('تأثيرات للتوقيع','Signature effects'),L('بلور وحدّة وباهت، وتغميق أو تفتيح اللون، وجودة من نقي لمبكسل','Blur, sharp or faded, darker or lighter ink, and clean-to-pixel quality')],
   ['#7c4dff','#b28cff',ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'),L('تحريك ولف وتكبير','Move, rotate, resize'),L('اسحبه لأي مكان، والف بالمقبض الدايري أو الشريط في أي اتجاه','Drag anywhere, rotate with the round handle or slider')]
  ];
  var rows=items.map(function(i){return '<div class="it"><div class="ti" style="background:linear-gradient(135deg,'+i[0]+','+i[1]+')">'+i[2]+'</div><div class="tx"><b>'+i[3]+'</b><span>'+i[4]+'</span></div></div>';}).join('');

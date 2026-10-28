@@ -1,6 +1,6 @@
 
 (()=>{
-'use strict';
+'use strict';window.TXV='207';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1646,8 +1646,34 @@ function applyInk(ctx,w,h,lv){const im=ctx.getImageData(0,0,w,h),d=im.data,o=new
 $('#pAdjust').insertAdjacentHTML('beforeend','<div class="fld"><span class="l">'+(AR()?'تحسين النص':'Text enhance')+'</span><div class="chips" id="inkRow"><button class="chip" data-v="0">'+(AR()?'بدون':'Off')+'</button><button class="chip" data-v="1">'+(AR()?'حدّة':'Sharpen')+'</button><button class="chip" data-v="2">'+(AR()?'حبر قوي':'Strong ink')+'</button></div></div>');
 $('#inkRow').onclick=e=>{const b=e.target.closest('.chip'),p=E.page;if(!b||!p)return;p.ink=+b.dataset.v;syncControls();renderEdit();};
 function sigDraw(ctx,w,h,a){if(!a.rot){sigDraw0(ctx,w,h,a);return;}ctx.save();ctx.translate(a.x*w,a.y*h);ctx.rotate(a.rot);ctx.translate(-a.x*w,-a.y*h);sigDraw0(ctx,w,h,a);ctx.restore();}
-function sigDraw0(ctx,w,h,a){const S=a.s*w,ox=a.x*w-S/2,oy=a.y*h-a.r*S/2;if(a.bm){const e=sigImg(a.bm);if(e.ok)ctx.drawImage(sigTint(e,a.c==='orig'?(a.ic||'#111111'):a.c),ox,oy,S,a.r*S);return;}ctx.save();ctx.strokeStyle=a.c==='orig'?'#16161A':a.c;ctx.lineWidth=Math.max(1.5,S*.014);ctx.lineCap=ctx.lineJoin='round';
+function sigDraw0(ctx,w,h,a){const S=a.s*w,ox=a.x*w-S/2,oy=a.y*h-a.r*S/2;
+ if(sigFxOn(a)){const f=sigFx(a);if(f){const k=S/f.w;ctx.drawImage(f.cv,ox-f.p*k,oy-f.p*k,f.cv.width*k,f.cv.height*k);return;}}
+ if(a.bm){const e=sigImg(a.bm);if(e.ok)ctx.drawImage(sigTint(e,a.c==='orig'?(a.ic||'#111111'):a.c),ox,oy,S,a.r*S);return;}ctx.save();ctx.strokeStyle=a.c==='orig'?'#16161A':a.c;ctx.lineWidth=Math.max(1.5,S*.014);ctx.lineCap=ctx.lineJoin='round';
  for(const st of a.st){ctx.beginPath();st.forEach((q,i)=>i?ctx.lineTo(ox+q[0]*S,oy+q[1]*S):ctx.moveTo(ox+q[0]*S,oy+q[1]*S));if(st.length===1)ctx.lineTo(ox+st[0][0]*S+.1,oy+st[0][1]*S);ctx.stroke();}ctx.restore();}
+/* v207: signature effects = blur (bl 0..100), sharp/fade (sp -100..100), shade dark/light (sh -100..100), quality pixelation (q 5..100) */
+function sigFxOn(a){return !!(a.bl||a.sp||a.sh||(a.q&&a.q<100));}
+function sigShade(hex,t){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m||!t)return hex;const n=parseInt(m[1],16);let r=n>>16,g=(n>>8)&255,b=n&255;const k=Math.abs(t)/100*(t>0?.72:.7),z=t>0?255:0;r=Math.round(r+(z-r)*k);g=Math.round(g+(z-g)*k);b=Math.round(b+(z-b)*k);return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
+const SGB=new WeakMap();
+function sigBase(a){if(a.bm){const e=sigImg(a.bm);return e.ok?{im:e.i,h:e}:null;}
+ let c=SGB.get(a.st);if(!c){const W=700,H=Math.max(2,Math.round(W*a.r));c=document.createElement('canvas');c.width=W+8;c.height=H+8;const x=c.getContext('2d');x.translate(4,4);x.strokeStyle='#000';x.lineWidth=Math.max(2,W*.014);x.lineCap=x.lineJoin='round';
+  for(const st of a.st){x.beginPath();st.forEach((q,i)=>i?x.lineTo(q[0]*W,q[1]*W):x.moveTo(q[0]*W,q[1]*W));if(st.length===1)x.lineTo(st[0][0]*W+.1,st[0][1]*W);x.stroke();}c.__pad=4;c.__w=W;c.t={};SGB.set(a.st,c);}
+ return {im:c,h:c,pad:4,w:c.__w};}
+function boxBlurA(A,w,h,r){if(r<1)return;const T=new Float32Array(Math.max(w,h)),n=2*r+1;
+ for(let y=0;y<h;y++){let s=0;const o=y*w;for(let i=-r;i<=r;i++)s+=A[o+Math.min(w-1,Math.max(0,i))];for(let x=0;x<w;x++){T[x]=s/n;s+=A[o+Math.min(w-1,x+r+1)]-A[o+Math.max(0,x-r)];}for(let x=0;x<w;x++)A[o+x]=T[x];}
+ for(let x=0;x<w;x++){let s=0;for(let i=-r;i<=r;i++)s+=A[Math.min(h-1,Math.max(0,i))*w+x];for(let y=0;y<h;y++){T[y]=s/n;s+=A[Math.min(h-1,y+r+1)*w+x]-A[Math.max(0,y-r)*w+x];}for(let y=0;y<h;y++)A[y*w+x]=T[y];}}
+function sigFx(a){const B=sigBase(a);if(!B)return null;const bl=a.bl||0,sp=a.sp||0,sh=a.sh||0,q=a.q==null?100:a.q,col=sigShade(a.c==='orig'?(a.ic||'#111111'):a.c,sh),key=[bl,sp,q,col].join('|'),H=B.h;
+ H.fx=H.fx||{};if(H.fx[key])return H.fx[key];if(Object.keys(H.fx).length>10)H.fx={};
+ const im=B.im,nw=B.w||im.naturalWidth,nh=im.naturalHeight||im.height,bp=B.pad||0;
+ /* work size: <=640px wide */
+ const sc=Math.min(1,640/Math.max(1,im.naturalWidth||im.width)),iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height,w0=Math.max(8,Math.round(iw*sc)),h0=Math.max(8,Math.round(ih*sc)),br=bl?Math.max(1,Math.round(bl/100*w0*.035)):0,p=br*2+3;
+ const W=w0+2*p,Hh=h0+2*p,c=document.createElement('canvas');c.width=W;c.height=Hh;const x=c.getContext('2d',{willReadFrequently:true});x.imageSmoothingQuality='high';
+ if(q<100){const f=q/100,sw=Math.max(8,Math.round(w0*(.03+.97*f*f))),sh2=Math.max(4,Math.round(h0*sw/w0)),t=document.createElement('canvas');t.width=sw;t.height=sh2;const tx=t.getContext('2d');tx.imageSmoothingQuality='high';tx.drawImage(im,0,0,sw,sh2);x.imageSmoothingEnabled=false;x.drawImage(t,p,p,w0,h0);}else x.drawImage(im,p,p,w0,h0);
+ const id=x.getImageData(0,0,W,Hh),d=id.data,N=W*Hh,A=new Float32Array(N);for(let i=0;i<N;i++)A[i]=d[i*4+3]/255;
+ if(br){boxBlurA(A,W,Hh,br);boxBlurA(A,W,Hh,br);boxBlurA(A,W,Hh,br);}
+ const m=/^#?([0-9a-f]{6})$/i.exec(col),cn=m?parseInt(m[1],16):0,R=cn>>16,G=(cn>>8)&255,Bc=cn&255;
+ const kk=sp>0?1+sp/100*5:1,ft=sp<0?1+sp/100*.8:1;
+ for(let i=0;i<N;i++){let v=A[i];if(sp>0){v=(v-.4)*kk+.5;v=v<0?0:v>1?1:v;}else if(sp<0){v*=ft;}d[i*4]=R;d[i*4+1]=G;d[i*4+2]=Bc;d[i*4+3]=Math.round(v*255);}
+ x.putImageData(id,0,0);return H.fx[key]={cv:c,p:p+bp*sc,w:w0-2*bp*sc};}
 /* v205: rotation helpers (pixel space of the overlay) */
 function sigHit(a,pt,w,h,tol){const S=a.s*w,bh=a.r*S,r=a.rot||0,dx=(pt[0]-a.x)*w,dy=(pt[1]-a.y)*h,lx=dx*Math.cos(r)+dy*Math.sin(r),ly=-dx*Math.sin(r)+dy*Math.cos(r);return Math.abs(lx)<=S/2+tol&&Math.abs(ly)<=bh/2+tol;}
 function sigHandleHit(a,pt,w,h,tol){const S=a.s*w,bh=a.r*S,off=bh/2+w*.012+w*.045,r=a.rot||0,hx=a.x*w+off*Math.sin(r),hy=a.y*h-off*Math.cos(r);return Math.hypot(pt[0]*w-hx,pt[1]*h-hy)<=Math.max(w*.035,tol*1.3);}
@@ -1666,83 +1692,130 @@ const SGI=new Map();
 function sigImg(src,cb){let e=SGI.get(src);if(!e){e={i:new Image(),ok:false,cb:[],t:{}};const fin=()=>{e.cb.forEach(f=>{try{f();}catch(_){}});e.cb=[];};e.i.onload=()=>{e.ok=true;fin();try{redrawOv();}catch(_){}};e.i.onerror=fin;e.i.src=src;SGI.set(src,e);}if(!e.ok&&cb)e.cb.push(cb);return e;}
 function sigTint(e,col){let t=e.t[col];if(!t){t=document.createElement('canvas');t.width=e.i.naturalWidth;t.height=e.i.naturalHeight;const x=t.getContext('2d');x.drawImage(e.i,0,0);x.globalCompositeOperation='source-in';x.fillStyle=col;x.fillRect(0,0,t.width,t.height);e.t[col]=t;}return t;}
 function sigWarm(list){return Promise.all((list||[]).filter(a=>a.t==='sig'&&a.bm).map(a=>new Promise(r=>{const e=sigImg(a.bm);if(e.ok)r();else e.cb.push(r);})));}
-function sigPrep(img){const MX=900,sc=Math.min(1,MX/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(8,Math.round(img.naturalWidth*sc)),h=Math.max(8,Math.round(img.naturalHeight*sc));
- const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);
- const d=x.getImageData(0,0,w,h).data,g=new Float32Array(w*h);for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
- /* paper brightness map: shrink, local max (ignores thin ink), stretch back */
+function sigPrep(img){const MX=1400,sc=Math.min(1,MX/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(8,Math.round(img.naturalWidth*sc)),h=Math.max(8,Math.round(img.naturalHeight*sc));
+ const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.imageSmoothingQuality='high';x.drawImage(img,0,0,w,h);
+ const d=x.getImageData(0,0,w,h).data,g0=new Float32Array(w*h),g=new Float32Array(w*h);for(let i=0,j=0;i<d.length;i+=4,j++)g0[j]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+ /* light 3x3 denoise (camera grain) */
+ g.set(g0);for(let y=1;y<h-1;y++)for(let xx=1;xx<w-1;xx++){const j=y*w+xx;g[j]=(g0[j-w-1]+g0[j-w]+g0[j-w+1]+g0[j-1]+g0[j]*2+g0[j+1]+g0[j+w-1]+g0[j+w]+g0[j+w+1])/10;}
+ /* paper brightness map: shrink, local max (ignores thin ink), smooth, stretch back */
  const sw=Math.max(4,w>>4),sh=Math.max(4,h>>4),b=document.createElement('canvas');b.width=sw;b.height=sh;const bx=b.getContext('2d',{willReadFrequently:true});bx.imageSmoothingQuality='high';bx.drawImage(c,0,0,sw,sh);
- const sd=bx.getImageData(0,0,sw,sh),s=new Float32Array(sw*sh),m2=new Float32Array(sw*sh);for(let i=0,j=0;i<sd.data.length;i+=4,j++)s[j]=.299*sd.data[i]+.587*sd.data[i+1]+.114*sd.data[i+2];
+ const sd=bx.getImageData(0,0,sw,sh),s=new Float32Array(sw*sh),m2=new Float32Array(sw*sh),m3=new Float32Array(sw*sh);for(let i=0,j=0;i<sd.data.length;i+=4,j++)s[j]=.299*sd.data[i]+.587*sd.data[i+1]+.114*sd.data[i+2];
  for(let y=0;y<sh;y++)for(let xx=0;xx<sw;xx++){let m=0;for(let dy=-2;dy<=2;dy++){const yy=y+dy;if(yy<0||yy>=sh)continue;for(let dx=-2;dx<=2;dx++){const x2=xx+dx;if(x2<0||x2>=sw)continue;const v=s[yy*sw+x2];if(v>m)m=v;}}m2[y*sw+xx]=m;}
- for(let i=0;i<m2.length;i++){const v=m2[i];sd.data[i*4]=sd.data[i*4+1]=sd.data[i*4+2]=v;sd.data[i*4+3]=255;}bx.putImageData(sd,0,0);
+ for(let y=0;y<sh;y++)for(let xx=0;xx<sw;xx++){let t=0,n=0;for(let dy=-1;dy<=1;dy++){const yy=y+dy;if(yy<0||yy>=sh)continue;for(let dx=-1;dx<=1;dx++){const x2=xx+dx;if(x2<0||x2>=sw)continue;t+=m2[yy*sw+x2];n++;}}m3[y*sw+xx]=t/n;}
+ for(let i=0;i<m3.length;i++){const v=m3[i];sd.data[i*4]=sd.data[i*4+1]=sd.data[i*4+2]=v;sd.data[i*4+3]=255;}bx.putImageData(sd,0,0);
  const c2=document.createElement('canvas');c2.width=w;c2.height=h;const x2=c2.getContext('2d',{willReadFrequently:true});x2.imageSmoothingQuality='high';x2.drawImage(b,0,0,w,h);
  const bd=x2.getImageData(0,0,w,h).data,bg=new Float32Array(w*h);for(let i=0,j=0;i<bd.length;i+=4,j++)bg[j]=bd[i];
  return {w,h,d,g,bg};}
-function sigMask(P,sens){const {w,h,d,g,bg}=P,hi=.78+.17*sens/100,lo=hi-.3,N=w*h,A=new Uint8ClampedArray(N),cx=new Uint32Array(w),cy=new Uint32Array(h),mx=Math.max(1,Math.round(w*.015)),my=Math.max(1,Math.round(h*.015));
- for(let y=my;y<h-my;y++)for(let x=mx;x<w-mx;x++){const j=y*w+x;let a=(hi-g[j]/Math.max(bg[j],1))/(hi-lo);if(a>0)A[j]=a>1?255:a*255;}
+/* o = {sens,clean,soft,dark} each 0..100 (default 50) */
+function sigMask(P,o){o=o||{};const sens=o.sens==null?50:o.sens,cl=o.clean==null?50:o.clean,sf=o.soft==null?50:o.soft,dk=o.dark==null?50:o.dark;
+ const {w,h,d,g,bg}=P,hi=.78+.17*sens/100,wd=.12+.36*sf/100,gam=Math.pow(2,(50-dk)/50),N=w*h,A=new Uint8ClampedArray(N),cx=new Uint32Array(w),cy=new Uint32Array(h),mx=Math.max(1,Math.round(w*.015)),my=Math.max(1,Math.round(h*.015));
+ const lut=new Uint8Array(256);for(let i=0;i<256;i++)lut[i]=Math.round(255*Math.pow(i/255,gam));
+ for(let y=my;y<h-my;y++)for(let x=mx;x<w-mx;x++){const j=y*w+x;let t=(hi-g[j]/Math.max(bg[j],1))/wd;if(t>0){t=t>1?1:t;t=t*t*(3-2*t);A[j]=lut[Math.round(t*255)];}}
  /* drop dust: connected blobs that are tiny compared with the whole ink */
  const lab=new Int32Array(N),stk=new Int32Array(N),area=[0];let tot=0;
  for(let j=0;j<N;j++){if(A[j]>89&&!lab[j]){const id=area.length;let sp=0,c=0;stk[sp++]=j;lab[j]=id;
   while(sp){const k=stk[--sp];c++;for(let dy=-w;dy<=w;dy+=w)for(let dx=-1;dx<=1;dx++){const q=k+dy+dx;if(q>=0&&q<N&&A[q]>89&&!lab[q]){lab[q]=id;stk[sp++]=q;}}}
   area.push(c);tot+=c;}}
- const minA=Math.max(12,tot*.002);let r=0,gg=0,b=0,n=0;
- for(let y=my;y<h-my;y++)for(let x=mx;x<w-mx;x++){const j=y*w+x;if(!A[j])continue;if(lab[j]&&area[lab[j]]<minA){A[j]=0;continue;}if(A[j]>89){cx[x]++;cy[y]++;if(A[j]>178){const i=j*4;r+=d[i];gg+=d[i+1];b+=d[i+2];n++;}}}
+ const minA=Math.max(14,tot*(.0005+.0035*cl/100),N*.00001);let r=0,gg=0,b=0,n=0;
+ for(let y=my;y<h-my;y++)for(let x=mx;x<w-mx;x++){const j=y*w+x;if(!A[j])continue;if(lab[j]&&area[lab[j]]<minA){A[j]=0;continue;}if(A[j]>89){cx[x]++;cy[y]++;if(A[j]>200){const i=j*4;r+=d[i];gg+=d[i+1];b+=d[i+2];n++;}}}
  if(n<30)return null;let X0=0,X1=w-1,Y0=0,Y1=h-1;while(X0<w&&cx[X0]<2)X0++;while(X1>X0&&cx[X1]<2)X1--;while(Y0<h&&cy[Y0]<2)Y0++;while(Y1>Y0&&cy[Y1]<2)Y1--;if(X1<=X0||Y1<=Y0)return null;
  const pd=Math.round(Math.max(X1-X0,Y1-Y0)*.04)+2,x0=Math.max(0,X0-pd),y0=Math.max(0,Y0-pd),x1=Math.min(w-1,X1+pd),y1=Math.min(h-1,Y1+pd),cw=x1-x0+1,ch=y1-y0+1;
  const c=document.createElement('canvas');c.width=cw;c.height=ch;const cc=c.getContext('2d'),im=cc.createImageData(cw,ch);for(let y=0;y<ch;y++)for(let x=0;x<cw;x++)im.data[(y*cw+x)*4+3]=A[(y+y0)*w+x+x0];cc.putImageData(im,0,0);
- let out=c;if(cw>700){out=document.createElement('canvas');out.width=700;out.height=Math.max(1,Math.round(ch*700/cw));const ox=out.getContext('2d');ox.imageSmoothingQuality='high';ox.drawImage(c,0,0,out.width,out.height);}
+ let out=c;if(cw>800){out=document.createElement('canvas');out.width=800;out.height=Math.max(1,Math.round(ch*800/cw));const ox=out.getContext('2d');ox.imageSmoothingQuality='high';ox.drawImage(c,0,0,out.width,out.height);}
  const hx=v=>Math.round(Math.max(0,Math.min(255,v*.85/n))).toString(16).padStart(2,'0');
  return {cv:out,r:out.height/out.width,ic:'#'+hx(r)+hx(gg)+hx(b)};}
-(function(){const s=document.createElement('style');s.textContent='.sgph{background:repeating-conic-gradient(#d9d9d9 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:14px;border:1px solid var(--line);padding:10px;display:grid;place-items:center;min-height:120px;margin:8px 0}.sgph canvas{max-width:100%;max-height:34vh}';document.head.appendChild(s);})();
-function sigPhoto(pad,pt,upd){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.style.display='none';document.body.appendChild(inp);
+(function(){const s=document.createElement('style');s.textContent='.sgph{border-radius:16px;border:1px solid var(--line);padding:10px;display:grid;place-items:center;min-height:110px;margin:0;flex:none;background:repeating-conic-gradient(#d9d9d9 0 25%,#fff 0 50%) 0 0/16px 16px}.sgph[data-bg=w]{background:#fff}.sgph[data-bg=k]{background:#1c1f26}.sgph canvas{max-width:100%;max-height:26vh}.sgv{display:flex;gap:6px;flex:none}.sgv .chip{flex:1;height:34px;font-size:12.5px}.sgctl{display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:0;flex:1 1 auto;padding:2px 2px 4px}.sgf{display:flex;flex-direction:column;gap:3px}.sgf .t{display:flex;align-items:center;gap:8px;font:700 13.5px system-ui}.sgf .t b{margin-inline-start:auto;font-variant-numeric:tabular-nums;color:var(--ink2);font-weight:700;min-width:36px;text-align:center}.sgf input{width:100%}.sgf small{font:500 11.5px/1.35 system-ui;color:var(--ink2)}.sgadv{border:1px solid var(--line);border-radius:14px;padding:2px 12px 10px}.sgadv summary{font:700 13px system-ui;padding:11px 0 6px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}.sgadv summary::-webkit-details-marker{display:none}.sgadv summary::after{content:"+";font-size:18px;color:var(--ink2)}.sgadv[open] summary::after{content:"\\2212"}.sgadv .sgctl{overflow:visible;padding-top:4px}.sgtip{font:600 12px/1.45 system-ui;color:var(--ink2);background:var(--surface2);border-radius:12px;padding:8px 11px;flex:none}.sgink{display:inline-flex;align-items:center;gap:6px;font:600 12px system-ui;color:var(--ink2)}.sgink i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);display:inline-block}.mdl.sgm{max-height:calc(var(--vvh,100vh) - 8px)}';document.head.appendChild(s);})();
+function sigPhoto(pad,pt,upd,cam){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';if(cam)inp.setAttribute('capture','environment');inp.style.display='none';document.body.appendChild(inp);
  inp.oncancel=()=>inp.remove();
- inp.onchange=()=>{const f=inp.files&&inp.files[0];inp.remove();if(!f)return;const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);if(pad)pad.remove();sigPhotoUI(im,pt,upd);};im.onerror=()=>{URL.revokeObjectURL(u);toast(AR()?'مش قادر أفتح الصورة':'Could not open the image');};im.src=u;};
+ inp.onchange=()=>{const f=inp.files&&inp.files[0];inp.remove();if(!f)return;const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);if(pad)pad.remove();sigPhotoUI(im,pt,upd,!!cam);};im.onerror=()=>{URL.revokeObjectURL(u);toast(AR()?'مش قادر أفتح الصورة':'Could not open the image');};im.src=u;};
  inp.click();}
-function sigPhotoUI(im,pt,upd){if(document.getElementById('sgPh'))return;const ar=AR(),P=sigPrep(im),m=document.createElement('div');m.id='sgPh';m.className='mdl-bd';
- m.innerHTML='<div class="mdl" role="dialog" aria-modal="true"><div class="grab"></div><div class="mdl-h"><div class="mdl-ic"><svg class="i" style="width:20px;height:20px"><use href="#i-pen"/></svg></div><div class="mdl-t">'+(ar?'استخراج التوقيع':'Extract signature')+'<small>'+(ar?'وقّع بقلم على ورقة بيضاء وصوّرها':'Sign on white paper and photograph it')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+(ar?'إغلاق':'Close')+'"><svg class="i" style="width:20px;height:20px"><use href="#i-cross"/></svg></button></div><div class="sgph"><canvas width="1" height="1"></canvas></div><label class="sgz"><span>'+(ar?'الحساسية':'Sensitivity')+'</span><input type="range" min="1" max="100" value="50"></label><div class="acts"><button type="button" class="chip" data-a="r">'+(ar?'صورة تانية':'Another photo')+'</button><button type="button" class="chip on" data-a="s">'+(ar?'حفظ التوقيع':'Save signature')+'</button></div></div>';
- document.body.appendChild(m);let R=null;const cv=m.querySelector('.sgph canvas'),rg=m.querySelector('input[type=range]');
- const pv=()=>{R=sigMask(P,+rg.value);if(!R){cv.width=cv.height=1;return;}cv.width=R.cv.width;cv.height=R.cv.height;cv.getContext('2d').drawImage(R.cv,0,0);};
- rg.oninput=pv;pv();if(!R)toast(ar?'مش لاقي توقيع في الصورة، جرّب إضاءة أحسن':'No signature found, try better light');
- m.onclick=e=>{if(e.target===m){m.remove();return;}const t=e.target.closest('[data-a]'),a=t&&t.dataset.a;if(!a)return;
-  if(a==='x'){m.remove();return;}if(a==='r'){sigPhoto(m,pt,upd);return;}
+function sigPhotoUI(im,pt,upd,cam){if(document.getElementById('sgPh'))return;const ar=AR(),P=sigPrep(im),m=document.createElement('div');m.id='sgPh';m.className='mdl-bd';
+ const T=(a,b)=>ar?a:b,F=(k,a,b,ha,hb,v)=>'<label class="sgf"><span class="t">'+T(a,b)+'<b data-v="'+k+'">'+v+'</b></span><input type="range" min="0" max="100" value="'+v+'" data-k="'+k+'"><small>'+T(ha,hb)+'</small></label>';
+ m.innerHTML='<div class="mdl sgm" role="dialog" aria-modal="true"><div class="grab"></div><div class="mdl-h"><div class="mdl-ic"><svg class="i" style="width:20px;height:20px"><use href="#i-pen"/></svg></div><div class="mdl-t">'+T('استخراج التوقيع','Extract signature')+'<small>'+T('بيشيل الورقة ويسيب الحبر بس بخلفية شفافة','Removes the paper and keeps only the ink')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+T('إغلاق','Close')+'"><svg class="i" style="width:20px;height:20px"><use href="#i-cross"/></svg></button></div>'
+ +'<div class="sgph" data-bg="c"><canvas width="1" height="1"></canvas></div>'
+ +'<div class="sgv"><button type="button" class="chip on" data-bg="c">'+T('شفاف','Transparent')+'</button><button type="button" class="chip" data-bg="w">'+T('على ورقة','On paper')+'</button><button type="button" class="chip" data-bg="k">'+T('داكن','Dark')+'</button></div>'
+ +'<div class="sgctl">'+F('sens','الحساسية','Sensitivity','زوّدها لو التوقيع باهت ومش ظاهر، وقلّلها لو ظهرت ظلال أو خلفية.','Raise it if the signature looks faint; lower it if shadows or paper show up.',50)
+ +'<details class="sgadv"><summary>'+T('ضبط متقدم','Fine tuning')+'</summary><div class="sgctl">'
+ +F('dark','قوة الحبر','Ink strength','يخلّي الحبر أغمق وأتخن أو أخف وأرفع.','Makes ink bolder and thicker, or lighter and thinner.',50)
+ +F('soft','نعومة الحواف','Edge softness','قلّلها لحواف حادة، وزوّدها لحواف أنعم وطبيعي.','Lower for crisp edges, higher for softer natural edges.',50)
+ +F('clean','التنظيف','Cleanup','بيشيل النقط والبقع الصغيرة اللي حوالين التوقيع.','Removes specks and small stains around the signature.',50)
+ +'</div></details></div>'
+ +'<div class="sgtip">'+T('نصيحة: وقّع بقلم غامق على ورقة بيضاء، وصوّرها في ضوء متساوي من فوق من غير ظل إيدك.','Tip: sign with a dark pen on white paper and shoot in even light without your hand’s shadow.')+'</div>'
+ +'<div class="acts"><button type="button" class="chip" data-a="r">'+T('صورة تانية','Another photo')+'</button><button type="button" class="chip" data-a="z">'+T('إعادة ضبط','Reset')+'</button><button type="button" class="chip on" data-a="s">'+T('حفظ التوقيع','Save signature')+'</button></div></div>';
+ document.body.appendChild(m);let R=null,tm=0;const cv=m.querySelector('.sgph canvas'),box=m.querySelector('.sgph'),O={sens:50,dark:50,soft:50,clean:50};
+ const pv=()=>{R=sigMask(P,O);if(!R){cv.width=cv.height=1;return;}cv.width=R.cv.width;cv.height=R.cv.height;const x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);x.drawImage(R.cv,0,0);x.globalCompositeOperation='source-in';x.fillStyle=R.ic;x.fillRect(0,0,cv.width,cv.height);x.globalCompositeOperation='source-over';};
+ m.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k)return;O[k]=+e.target.value;m.querySelector('[data-v='+k+']').textContent=e.target.value;clearTimeout(tm);tm=setTimeout(pv,50);});
+ pv();if(!R)toast(ar?'مش لاقي توقيع في الصورة، جرّب إضاءة أحسن':'No signature found, try better light');
+ m.onclick=e=>{if(e.target===m){m.remove();return;}const bgb=e.target.closest('[data-bg]');if(bgb){box.dataset.bg=bgb.dataset.bg;m.querySelectorAll('.sgv .chip').forEach(c=>c.classList.toggle('on',c===bgb));return;}
+  const t=e.target.closest('[data-a]'),a=t&&t.dataset.a;if(!a)return;
+  if(a==='x'){m.remove();return;}if(a==='r'){sigPhoto(m,pt,upd,cam);return;}
+  if(a==='z'){Object.keys(O).forEach(k=>{O[k]=50;const i=m.querySelector('[data-k='+k+']');i.value=50;m.querySelector('[data-v='+k+']').textContent=50;});pv();return;}
   if(a==='s'){if(!R){toast(ar?'مش لاقي توقيع في الصورة':'No signature found');return;}sigSave({r:R.r,bm:R.cv.toDataURL('image/png'),ic:R.ic},upd);m.remove();const g=getSig();
    if(g&&upd){upd.st=g.st;upd.bm=g.bm;upd.ic=g.ic;upd.r=g.r;redrawOv();}else if(g&&pt)setTimeout(()=>placeSig(pt),0);else toast(ar?'اتحفظ. اضغط على الصفحة عشان تحطه':'Saved. Tap the page to place it');}};}
 function sigPad(pt,upd){if(document.getElementById('sgPad'))return;const ar=AR(),m=document.createElement('div');m.id='sgPad';m.className='mdl-bd';
- m.innerHTML='<div class="mdl" role="dialog" aria-modal="true"><div class="grab"></div><div class="mdl-h"><div class="mdl-ic">'+'<svg class="i" style="width:20px;height:20px"><use href="#i-pen"/></svg>'+'</div><div class="mdl-t">'+(ar?'التوقيع':'Signature')+'<small>'+(ar?'بيتحفظ على جهازك بس وتقدر تغيّره في أي وقت':'Saved on this device only, change it anytime')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+(ar?'إغلاق':'Close')+'">'+'<svg class="i" style="width:20px;height:20px"><use href="#i-cross"/></svg>'+'</button></div><div class="sig-pad"><canvas class="sig-cv" width="600" height="300"></canvas><div class="ln"></div><div class="xm">×</div><div class="hn">'+(ar?'وقّع هنا بإصبعك':'Sign here with your finger')+'</div></div><div class="acts"><button type="button" class="chip" data-a="p">'+(ar?'صوّر توقيعك':'From photo')+'</button><button type="button" class="chip" data-a="c">'+(ar?'مسح':'Clear')+'</button><button type="button" class="chip on" data-a="s">'+(ar?'حفظ التوقيع':'Save signature')+'</button></div></div>';
+ m.innerHTML='<div class="mdl" role="dialog" aria-modal="true"><div class="grab"></div><div class="mdl-h"><div class="mdl-ic">'+'<svg class="i" style="width:20px;height:20px"><use href="#i-pen"/></svg>'+'</div><div class="mdl-t">'+(ar?'التوقيع':'Signature')+'<small>'+(ar?'بيتحفظ على جهازك بس وتقدر تغيّره في أي وقت':'Saved on this device only, change it anytime')+'</small></div><button type="button" class="mdl-x" data-a="x" aria-label="'+(ar?'إغلاق':'Close')+'">'+'<svg class="i" style="width:20px;height:20px"><use href="#i-cross"/></svg>'+'</button></div><div class="sig-pad"><canvas class="sig-cv" width="600" height="300"></canvas><div class="ln"></div><div class="xm">×</div><div class="hn">'+(ar?'وقّع هنا بإصبعك':'Sign here with your finger')+'</div></div><div class="acts"><button type="button" class="chip" data-a="p">'+(ar?'صوّر بالكاميرا':'Camera')+'</button><button type="button" class="chip" data-a="g">'+(ar?'من المعرض':'Gallery')+'</button><button type="button" class="chip" data-a="c">'+(ar?'مسح':'Clear')+'</button><button type="button" class="chip on" data-a="s">'+(ar?'حفظ التوقيع':'Save signature')+'</button></div></div>';
  document.body.appendChild(m);const c=m.querySelector('canvas'),x=c.getContext('2d'),hn=m.querySelector('.hn');let st=[],cur=null;x.lineWidth=4.5;x.lineCap=x.lineJoin='round';x.strokeStyle='#111';
  const P=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)/r.width*c.width,(e.clientY-r.top)/r.height*c.height];};
  c.onpointerdown=e=>{c.setPointerCapture(e.pointerId);hn.hidden=true;cur=[P(e)];st.push(cur);};
  c.onpointermove=e=>{if(!cur)return;const q=P(e),l=cur[cur.length-1];cur.push(q);x.beginPath();x.moveTo(l[0],l[1]);x.lineTo(q[0],q[1]);x.stroke();};
  c.onpointerup=c.onpointercancel=()=>{cur=null;};
- m.onclick=e=>{if(e.target===m){m.remove();return;}const t=e.target.closest('[data-a]'),a=t&&t.dataset.a;if(!a)return;if(a==='p'){sigPhoto(m,pt,upd);return;}if(a==='c'){st=[];x.clearRect(0,0,c.width,c.height);hn.hidden=false;return;}
+ m.onclick=e=>{if(e.target===m){m.remove();return;}const t=e.target.closest('[data-a]'),a=t&&t.dataset.a;if(!a)return;if(a==='p'||a==='g'){sigPhoto(m,pt,upd,a==='p');return;}if(a==='c'){st=[];x.clearRect(0,0,c.width,c.height);hn.hidden=false;return;}
   if(a==='s'){if(!st.length){hn.hidden=false;return;}let X=1e9,Y=1e9,X2=-1e9,Y2=-1e9;st.forEach(s=>s.forEach(q=>{X=Math.min(X,q[0]);Y=Math.min(Y,q[1]);X2=Math.max(X2,q[0]);Y2=Math.max(Y2,q[1]);}));
    const W=Math.max(1,X2-X),H=Math.max(1,Y2-Y);sigSave({r:H/W,st:st.map(s=>s.map(q=>[+((q[0]-X)/W).toFixed(4),+((q[1]-Y)/W).toFixed(4)]))},upd);if(!pt&&!upd)toast(AR()?'اتحفظ التوقيع، المس الصفحة لإضافته':'Saved. Tap the page to place it');}
   m.remove();if(a==='s'){const g=getSig();if(g&&upd){upd.st=g.st;upd.bm=g.bm;upd.ic=g.ic;upd.r=g.r;redrawOv();}else if(g&&pt)setTimeout(()=>placeSig(pt),0);}};}
+const SGFLD=['x','y','s','c','rot','bl','sp','sh','q'];
+function sgSnap(a){const o={};SGFLD.forEach(k=>{o[k]=k==='rot'?(a.rot||0):a[k];});return o;}
 function sgClose(){const d=document.getElementById('sgD');if(!d)return;const a=d._a,p=d._pg,sn=d._sn;d.remove();
- if(a&&p&&sn&&(a.x!==sn.x||a.y!==sn.y||a.s!==sn.s||a.c!==sn.c||(a.rot||0)!==(sn.rot||0))){p.hist.push({k:'mod',a,b:sn,n:{x:a.x,y:a.y,s:a.s,c:a.c,rot:a.rot||0}});p.fut.length=0;}
+ if(a&&p&&sn&&SGFLD.some(k=>(k==='rot'?(a.rot||0):a[k])!==sn[k])){p.hist.push({k:'mod',a,b:sn,n:sgSnap(a)});p.fut.length=0;}
  if(E.sel===a)E.sel=null;try{Z.lift=0;applyZ();}catch(_){}redrawOv();syncControls();}
-function sgOpen(a){const old=document.getElementById('sgD');if(old&&old._a===a)return;if(old)sgClose();const ar=AR(),m=document.createElement('div');m.id='sgD';m.className='tbar txdock';m._a=a;m._pg=E.page;m._sn={x:a.x,y:a.y,s:a.s,c:a.c,rot:a.rot||0};E.sel=a;
- m.innerHTML='<div class="txcap">'+(ar?'التوقيع · اسحبه لتحريكه':'Signature · drag it to move')+'</div><label class="sgz"><span>'+(ar?'الحجم':'Size')+'</span><input type="range" min="4" max="100" step="1"><b></b></label><label class="sgz"><span>'+(ar?'الدوران':'Rotate')+'</span><input type="range" min="-180" max="180" step="1" data-r><b data-rb></b></label><div class="txr2 sgc"></div><div class="txr2"><button type="button" class="txc" data-x="z">0°</button><button type="button" class="txc" data-x="r">'+(ar?'رسم تاني':'Redraw')+'</button><span style="flex:1"></span><button type="button" class="txc" data-x="d" aria-label="'+(ar?'حذف':'Delete')+'"><svg class="i" style="width:18px;height:18px"><use href="#i-trash"/></svg></button><button type="button" class="txc pri" data-x="k">'+(ar?'تم':'Done')+'</button></div>';
- document.body.appendChild(m);const rg=m.querySelector('input[type=range]'),vb=m.querySelector('.sgz b'),cr=m.querySelector('.sgc'),rr=m.querySelector('input[data-r]'),rb=m.querySelector('[data-rb]');
- const sy=()=>{const oc=cr.querySelector('[data-c=orig]');if(oc){oc.hidden=!a.bm;oc.style.background='linear-gradient(135deg,'+(a.ic||'#16161A')+' 50%,#fff 50%)';}rr.value=Math.round((a.rot||0)*180/Math.PI);rb.textContent=rr.value+'°';rg.value=Math.round(a.s*100);vb.textContent=Math.round(a.s*100)+'%';cr.querySelectorAll('.tfc').forEach(b=>b.classList.toggle('on',b.dataset.c.toLowerCase()===String(a.c).toLowerCase()));};
- [['#16161A','أسود','Black'],['#1B2A52','كحلي','Blue-black'],['#0B3D91','أزرق ملكي','Royal blue'],['#2447B8','أزرق بيك','Ballpoint blue'],['#C8202A','أحمر','Red'],['#1F7A4D','أخضر','Green']].forEach(([c,na,ne])=>{const b=document.createElement('button');b.type='button';b.className='tfc';b.style.background=c;b.dataset.c=c;b.title=b.ariaLabel=ar?na:ne;b.onclick=()=>{a.c=c;sy();redrawOv();};cr.appendChild(b);});
- const oc=document.createElement('button');oc.type='button';oc.className='tfc';oc.dataset.c='orig';oc.title=oc.ariaLabel=ar?'لون توقيعك الأصلي':'Original ink';oc.onclick=()=>{a.c='orig';sy();redrawOv();};cr.appendChild(oc);
- rr.oninput=()=>{a.rot=rr.value*Math.PI/180;rb.textContent=rr.value+'°';redrawOv();};rg.oninput=()=>{a.s=rg.value/100;vb.textContent=rg.value+'%';redrawOv();};rg.onchange=()=>m._rv();
+(function(){const st=document.createElement('style');st.textContent='#sgD{gap:6px;padding:6px 12px 10px}#sgD .txcap{flex:1 1 100%;font:600 12px/1.4 system-ui;color:var(--ink2);text-align:center;min-height:17px}#sgD .sgpn{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center}#sgD .sgpn[hidden]{display:none}#sgD .sgz span{min-width:58px;font-weight:700;color:var(--ink)}#sgD .sgz b{min-width:46px;font-size:12.5px}#sgD .sgtabs{flex:1 1 100%;display:flex;gap:6px;align-items:center;padding-top:6px;border-top:1px solid var(--line)}#sgD .sgtabs .txc{min-width:0;padding:0 12px;gap:6px}#sgD .sgtabs .txc svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}#sgD .sgsw{display:flex;gap:9px;flex-wrap:wrap;align-items:center;flex:1 1 100%;justify-content:center;padding:2px 0}#sgD .sgsw .tfc{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);padding:0;position:relative;flex:none}#sgD .sgsw .tfc.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent,#1b63f0)}#sgD .sgsw .cp input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}#sgD .sgsw .cp{background:conic-gradient(#f33,#fc3,#3c6,#3cf,#63f,#f3c,#f33)}#sgD .sgmini{flex:1 1 100%;display:flex;gap:8px;justify-content:center}#sgD .sgmini .txc{min-height:34px;font-size:12.5px}'
+ +'#sgBar{display:flex;flex-direction:column;gap:6px;margin:0 0 8px;padding:8px 10px;border-radius:16px;border:1px solid var(--line);background:var(--surface2)}#sgBar[hidden]{display:none}#sgBar .hd{display:flex;align-items:center;gap:8px;font:700 12.5px system-ui;color:var(--ink)}#sgBar .hd small{margin-inline-start:auto;font:600 11.5px system-ui;color:var(--ink2)}#sgBar .rw{display:flex;gap:8px;overflow-x:auto;padding:6px 6px 2px;scrollbar-width:none}#sgBar .rw::-webkit-scrollbar{display:none}#sgBar .sl{position:relative;flex:1 0 56px;max-width:76px;height:40px;border-radius:11px;border:2px solid var(--line);background:#fff;display:grid;place-items:center;color:#667;font:700 20px system-ui;cursor:pointer}#sgBar .sl.on{border-color:var(--accent,#1b63f0);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#1b63f0) 35%,transparent)}#sgBar .sl.nw{border-style:dashed;background:transparent;color:var(--accent,#1b63f0)}#sgBar .sl canvas{width:100%;height:100%;border-radius:8px}#sgBar .x{position:absolute;top:-7px;inset-inline-end:-7px;width:20px;height:20px;border-radius:50%;background:#C62828;color:#fff;font:700 13px/20px system-ui;text-align:center}';document.head.appendChild(st);})();
+function sgOpen(a){const old=document.getElementById('sgD');if(old&&old._a===a)return;if(old)sgClose();const ar=AR(),T=(x,y)=>ar?x:y,m=document.createElement('div');m.id='sgD';m.className='tbar txdock';m._a=a;m._pg=E.page;m._sn=sgSnap(a);E.sel=a;
+ const ic=p=>'<svg viewBox="0 0 24 24">'+p+'</svg>';
+ const SL=[
+  {k:'s',p:'s',min:4,max:100,g:a=>Math.round(a.s*100),s:(a,v)=>{a.s=v/100;},f:v=>v+'%',l:T('الحجم','Size'),h:T('كبّر أو صغّر التوقيع','Make the signature bigger or smaller')},
+  {k:'rot',p:'s',min:-180,max:180,g:a=>Math.round((a.rot||0)*180/Math.PI),s:(a,v)=>{a.rot=v*Math.PI/180;},f:v=>v+'°',l:T('الدوران','Rotate'),h:T('لف التوقيع في أي اتجاه، وزر 0° بيرجّعه مستقيم','Rotate in any direction; 0° straightens it')},
+  {k:'bl',p:'f',min:0,max:100,g:a=>a.bl||0,s:(a,v)=>{a.bl=v;},f:v=>v+'%',l:T('بلور','Blur'),h:T('بيخلي حواف التوقيع ناعمة وضبابية. صفر = من غير بلور','Softens the ink edges. 0 = no blur')},
+  {k:'sp',p:'f',min:-100,max:100,g:a=>a.sp||0,s:(a,v)=>{a.sp=v;},f:v=>v>0?'+'+v:''+v,l:T('الحدّة','Sharp'),h:T('فوق الصفر: أحدّ وأوضح · تحت الصفر: أبهت وأخف','Above 0: sharper and bolder · below 0: faded and lighter')},
+  {k:'q',p:'f',min:5,max:100,g:a=>a.q==null?100:a.q,s:(a,v)=>{a.q=v;},f:v=>v>=90?T('نقي','Clean'):v>=55?T('عادي','Normal'):v>=25?T('مبكسل','Pixel'):T('كبير','Coarse'),l:T('الجودة','Quality'),h:T('100 = نقي وواضح · كل ما قلّت بيبقى مبكسل أكتر','100 = crisp · lower values get more pixelated')},
+  {k:'sh',p:'c',min:-100,max:100,g:a=>a.sh||0,s:(a,v)=>{a.sh=v;},f:v=>v>0?'+'+v:''+v,l:T('الدرجة','Shade'),h:T('تحت الصفر: اللون أغمق · فوق الصفر: اللون أفتح','Below 0: darker · above 0: lighter')}];
+ const caps={s:T('اسحب التوقيع على الصفحة لتحريكه','Drag the signature on the page to move it'),c:T('اختار لون القلم، وغمّقه أو فتّحه','Pick the pen color, then darken or lighten it'),f:T('التأثيرات بتظهر على التوقيع مباشرة','Effects show on the signature instantly')};
+ const sld=x=>'<label class="sgz" data-h="'+x.k+'"><span>'+x.l+'</span><input type="range" min="'+x.min+'" max="'+x.max+'" step="1" data-k="'+x.k+'"><b></b></label>';
+ m.innerHTML='<div class="txcap"></div>'
+ +'<div class="sgpn" data-pn="s">'+SL.filter(x=>x.p==='s').map(sld).join('')+'<div class="sgmini"><button type="button" class="txc" data-x="z">0°</button><button type="button" class="txc" data-x="r">'+T('رسم تاني','Redraw')+'</button></div></div>'
+ +'<div class="sgpn" data-pn="c" hidden><div class="sgsw"></div>'+SL.filter(x=>x.p==='c').map(sld).join('')+'</div>'
+ +'<div class="sgpn" data-pn="f" hidden>'+SL.filter(x=>x.p==='f').map(sld).join('')+'<div class="sgmini"><button type="button" class="txc" data-x="fz">'+T('إلغاء التأثيرات','Reset effects')+'</button></div></div>'
+ +'<div class="sgtabs"><button type="button" class="txc on" data-t="s">'+ic('<path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"/>')+T('الحجم','Size')+'</button><button type="button" class="txc" data-t="c">'+ic('<path d="M12 3a9 9 0 1 0 0 18c1.7 0 2-1.2 1.4-2.2-.7-1.1 0-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-5-4-9.5-9-9.5z"/>')+T('اللون','Color')+'</button><button type="button" class="txc" data-t="f">'+ic('<path d="M12 3c3 4 6 6.5 6 10a6 6 0 0 1-12 0c0-3.5 3-6 6-10z"/>')+T('تأثيرات','Effects')+'</button><span style="flex:1"></span><button type="button" class="txc" data-x="d" aria-label="'+T('حذف','Delete')+'"><svg class="i" style="width:18px;height:18px"><use href="#i-trash"/></svg></button><button type="button" class="txc pri" data-x="k">'+T('تم','Done')+'</button></div>';
+ document.body.appendChild(m);const cap=m.querySelector('.txcap'),sw=m.querySelector('.sgsw');let tab='s',raf=0;
+ const rd=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;redrawOv();});};
+ const sy=()=>{SL.forEach(x=>{const i=m.querySelector('input[data-k='+x.k+']'),v=x.g(a);i.value=v;i.parentNode.querySelector('b').textContent=x.f(v);});
+  const oc=sw.querySelector('[data-c=orig]');if(oc){oc.hidden=!a.bm;oc.style.background='linear-gradient(135deg,'+(a.ic||'#16161A')+' 50%,#fff 50%)';}
+  sw.querySelectorAll('.tfc[data-c]').forEach(b=>b.classList.toggle('on',b.dataset.c.toLowerCase()===String(a.c).toLowerCase()));};
+ [['#16161A','أسود','Black'],['#1B2A52','كحلي','Blue-black'],['#0B3D91','أزرق ملكي','Royal blue'],['#2447B8','أزرق بيك','Ballpoint blue'],['#C8202A','أحمر','Red'],['#1F7A4D','أخضر','Green']].forEach(([c,na,ne])=>{const b=document.createElement('button');b.type='button';b.className='tfc';b.style.background=c;b.dataset.c=c;b.title=b.ariaLabel=ar?na:ne;b.onclick=()=>{a.c=c;sy();rd();};sw.appendChild(b);});
+ const oc=document.createElement('button');oc.type='button';oc.className='tfc';oc.dataset.c='orig';oc.title=oc.ariaLabel=T('لون توقيعك الأصلي','Original ink');oc.onclick=()=>{a.c='orig';sy();rd();};sw.appendChild(oc);
+ const cp=document.createElement('label');cp.className='tfc cp';cp.title=T('لون مخصص','Custom color');cp.innerHTML='<input type="color" value="#16161a" aria-label="'+T('لون مخصص','Custom color')+'">';cp.querySelector('input').oninput=e=>{a.c=e.target.value;sy();rd();};sw.appendChild(cp);
+ m.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.k,x=SL.find(y=>y.k===k);if(!x)return;x.s(a,+e.target.value);e.target.parentNode.querySelector('b').textContent=x.f(+e.target.value);cap.textContent=x.h;rd();});
+ m.addEventListener('change',()=>m._rv());
+ const go=t=>{tab=t;m.querySelectorAll('.sgpn').forEach(p=>p.hidden=p.dataset.pn!==t);m.querySelectorAll('.sgtabs [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));cap.textContent=caps[t];setTimeout(m._rv,30);setTimeout(m._rv,260);};
  m._rv=()=>{const rc=$('#ov').getBoundingClientRect(),S=a.s*rc.width,bh=a.r*S,cy=rc.top+a.y*rc.height;txRevealRect(cy-bh/2,cy+bh/2);};
- m.onclick=e=>{const b=e.target.closest('[data-x]');if(!b)return;const x=b.dataset.x;if(x==='k')sgClose();else if(x==='z'){a.rot=0;sy();redrawOv();}else if(x==='r')sigPad(null,a);else if(x==='d'){const p=E.page,i=p.ann.indexOf(a);if(i>=0){p.ann.splice(i,1);p.hist.push({k:'del',a,i});p.fut.length=0;}m._sn=null;sgClose();}};
- m._sy=sy;sy();redrawOv();setTimeout(m._rv,60);setTimeout(m._rv,420);}
+ m.onclick=e=>{const tb=e.target.closest('[data-t]');if(tb){go(tb.dataset.t);return;}const b=e.target.closest('[data-x]');if(!b)return;const x=b.dataset.x;
+  if(x==='k')sgClose();else if(x==='z'){a.rot=0;sy();rd();}else if(x==='fz'){a.bl=0;a.sp=0;a.q=100;sy();rd();}else if(x==='r')sigPad(null,a);
+  else if(x==='d'){const p=E.page,i=p.ann.indexOf(a);if(i>=0){p.ann.splice(i,1);p.hist.push({k:'del',a,i});p.fut.length=0;}m._sn=null;sgClose();}};
+ m._sy=sy;sy();cap.textContent=caps.s;redrawOv();setTimeout(m._rv,60);setTimeout(m._rv,420);}
 setInterval(()=>{const d=document.getElementById('sgD');if(d&&(E.page!==d._pg||E.tab!=='pMarkup'||E.tool!=='sign'))sgClose();},400);
-/* v203: quick bar with the 5 signature slots */
-(function(){const st=document.createElement('style');st.textContent='#sgBar{position:fixed;top:calc(env(safe-area-inset-top,0px) + 58px);left:50%;transform:translateX(-50%);z-index:480;display:flex;gap:8px;padding:7px 8px;border-radius:16px;border:1px solid var(--line);background:var(--surface);box-shadow:0 8px 24px -8px #000a}#sgBar[hidden]{display:none}#sgBar .sl{position:relative;width:54px;height:38px;border-radius:10px;border:2px solid var(--line);background:#fff;display:grid;place-items:center;color:#555;font:700 22px system-ui;cursor:pointer}#sgBar .sl.on{border-color:var(--accent,#1b63f0);box-shadow:0 0 0 2px var(--accent,#1b63f0)}#sgBar .sl canvas{width:100%;height:100%;border-radius:8px}#sgBar .x{position:absolute;top:-8px;inset-inline-end:-8px;width:20px;height:20px;border-radius:50%;background:#C62828;color:#fff;font:700 13px/20px system-ui;text-align:center}';document.head.appendChild(st);
- const bar=document.createElement('div');bar.id='sgBar';bar.hidden=true;document.body.appendChild(bar);let key='';
- const thumb=g=>{const c=document.createElement('canvas');c.width=108;c.height=76;if(g.bm)sigImg(g.bm,()=>{key='';});sigDraw(c.getContext('2d'),108,76,{s:Math.min(.86,.8*76/(g.r*108)),x:.5,y:.5,r:g.r,st:g.st,bm:g.bm,ic:g.ic,c:g.bm?'orig':'#111'});return c;};
- const render=()=>{const k=localStorage.getItem(SGK)+'|'+localStorage.getItem(SGA);if(k===key)return;key=k;const a=sigsGet(),on=sigIdx();bar.innerHTML='';
-  a.forEach((g,i)=>{const b=document.createElement('div');b.className='sl'+(i===on?' on':'');b.dataset.i=i;b.appendChild(thumb(g));const d=document.createElement('div');d.className='x';d.dataset.d=i;d.textContent='\u00d7';b.appendChild(d);bar.appendChild(b);});
-  if(a.length<5){const b=document.createElement('div');b.className='sl';b.dataset.n='1';b.textContent='+';bar.appendChild(b);}};
+/* v207: signature slots live inside the markup panel (no floating bar over the document) */
+(function(){const host=$('#pMarkup'),row=$('#toolRow');if(!host||!row)return;const bar=document.createElement('div');bar.id='sgBar';bar.hidden=true;host.insertBefore(bar,row);let key='';
+ const thumb=g=>{const c=document.createElement('canvas');c.width=132;c.height=80;if(g.bm)sigImg(g.bm,()=>{key='';});sigDraw(c.getContext('2d'),132,80,{s:Math.min(.86,.8*80/(g.r*132)),x:.5,y:.5,r:g.r,st:g.st,bm:g.bm,ic:g.ic,c:g.bm?'orig':'#111'});return c;};
+ const render=()=>{const k=localStorage.getItem(SGK)+'|'+localStorage.getItem(SGA)+'|'+lang;if(k===key)return;key=k;const a=sigsGet(),on=sigIdx(),ar=AR();bar.innerHTML='';
+  const hd=document.createElement('div');hd.className='hd';hd.innerHTML='<span>'+(ar?'توقيعاتك · اختار واحد واضغط على الصفحة':'Your signatures · pick one, tap the page')+'</span><small>'+a.length+'/5</small>';bar.appendChild(hd);
+  const rw=document.createElement('div');rw.className='rw';bar.appendChild(rw);
+  a.forEach((g,i)=>{const b=document.createElement('div');b.className='sl'+(i===on?' on':'');b.dataset.i=i;b.appendChild(thumb(g));const d=document.createElement('div');d.className='x';d.dataset.d=i;d.textContent='\u00d7';d.setAttribute('aria-label',ar?'مسح التوقيع':'Delete signature');b.appendChild(d);rw.appendChild(b);});
+  if(a.length<5){const b=document.createElement('div');b.className='sl nw';b.dataset.n='1';b.textContent='+';b.setAttribute('aria-label',ar?'إضافة توقيع':'Add signature');rw.appendChild(b);}};
  bar.onclick=e=>{const d=e.target.closest('[data-d]'),n=e.target.closest('[data-n]'),b=e.target.closest('[data-i]');
-  if(d){if(!confirm(AR()?'\u0645\u0633\u062d \u0627\u0644\u062a\u0648\u0642\u064a\u0639 \u062f\u0647\u061f':'Delete this signature?'))return;const a=sigsGet();a.splice(+d.dataset.d,1);sigsSet(a);localStorage.setItem(SGA,Math.min(sigIdx(),Math.max(a.length-1,0)));key='';render();return;}
+  if(d){if(!confirm(AR()?'مسح التوقيع ده؟':'Delete this signature?'))return;const a=sigsGet();a.splice(+d.dataset.d,1);sigsSet(a);localStorage.setItem(SGA,Math.min(sigIdx(),Math.max(a.length-1,0)));key='';render();return;}
   if(n){sigPad();return;}
-  if(b){localStorage.setItem(SGA,+b.dataset.i);render();toast(AR()?'\u0627\u0636\u063a\u0637 \u0639\u0644\u0649 \u0627\u0644\u0635\u0641\u062d\u0629 \u0639\u0634\u0627\u0646 \u062a\u0636\u0639 \u0627\u0644\u062a\u0648\u0642\u064a\u0639':'Tap the page to place it');}};
- setInterval(()=>{const o=document.getElementById('ov'),show=!!(o&&o.getClientRects().length&&E.page&&E.tab==='pMarkup'&&E.tool==='sign'&&!document.getElementById('sgD')&&!document.getElementById('sgPad'));bar.hidden=!show;if(show)render();},400);})();
+  if(b){localStorage.setItem(SGA,+b.dataset.i);render();toast(AR()?'اضغط على الصفحة عشان تضع التوقيع':'Tap the page to place it');}};
+ setInterval(()=>{const show=!!(E.page&&E.tab==='pMarkup'&&E.tool==='sign'&&!document.getElementById('sgPad'));if(bar.hidden===show)bar.hidden=!show;if(show)render();},400);})();
 $('#toolRow').addEventListener('click',e=>{const b=e.target.closest('.tool');if(b&&b.dataset.k==='sign'&&!getSig())setTimeout(()=>sigPad(),60);});
 $('#toolRow').addEventListener('dblclick',e=>{const b=e.target.closest('.tool');if(b&&b.dataset.k==='sign'){sigPad();}});
 (function(){const L=localStorage,K='tx_pin',KB='tx_bio',tt=(a,c)=>AR()?a:c,
@@ -1874,7 +1947,7 @@ html:root body #vHome .top .hdock>#setBtn.open{background:color-mix(in srgb,curr
   let x0=null,y0=0;bx.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
   bx.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if((Math.abs(dx)>80&&Math.abs(dx)>1.6*Math.abs(dy))||(dy>80&&bx.scrollTop<=0&&dy>1.6*Math.abs(dx)))close();},{passive:true});
   const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const APPV='200';window.TXV=APPV;
+  const APPV=window.TXV||'207';window.TXV=APPV;
   function build(first){
    const ar=AR(),T=(a,c)=>ar?a:c;let gi=0;
    bx.dir=ar?'rtl':'ltr';bx.setAttribute('aria-label',T('الإعدادات','Settings'));bx.classList.toggle('st',!first);
